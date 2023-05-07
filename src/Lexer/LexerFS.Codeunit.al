@@ -108,18 +108,19 @@ codeunit 69000 "Lexer FS"
                 begin
                     case NextChar() of
                         '/':
-                            ConsumeUntil(10); // TODO enum for ascii <LF>
+                            ConsumeUntil(Enum::"ASCII FS"::LF.AsInteger());
                         '*':
                             repeat
-                                // TODO error if eos
                                 ConsumeUntil('*');
-                            until (EOS()) or (PeekNextChar() = '/');
+                                if EOS() then
+                                    Error('Unexpected end of stream at line %1, character %2.', CurrentLine, CurrentChar);
+                            until PeekNextChar() = '/';
                     end;
 
                     exit(Next());
                 end;
             IsOperator(Char):
-                exit(ParseOperator(Char)); // FIXME here or in else?
+                exit(ParseOperator(Char));
             else
                 exit(ParseOther(Char));
         end;
@@ -143,7 +144,7 @@ codeunit 69000 "Lexer FS"
             Char := NextChar();
 
             if Char = Enum::"ASCII FS"::NUL.AsInteger() then
-                Error(''); // TODO EOS error
+                Error('Unexpected end of stream, expected %3 at line %1, character %2.', CurrentLine, CurrentChar, Stop);
             if Char = Stop then
                 break;
 
@@ -268,7 +269,7 @@ codeunit 69000 "Lexer FS"
                         NextChar();
                         Char := NextChar();
                         if not IsDigit(Char) then
-                            Error(''); // TODO check if digit
+                            Error('Unexpected character, expected a digit at line %1, character %2.', CurrentLine, CurrentChar);
                     end;
                 else
                     exit(Lexeme.Number(Number));
@@ -403,10 +404,8 @@ codeunit 69000 "Lexer FS"
     end;
 
     local procedure AssertChar(Char: Char; ExpectedChar: Char)
-    var
-        myInt: Integer;
     begin
         if Char <> ExpectedChar then
-            Error('AssertChar'); // TODO
+            Error('Unexpected character %3, expected %4 at line %1, character %2.', CurrentLine, CurrentChar, Char, ExpectedChar);
     end;
 }
