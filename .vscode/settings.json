@@ -10,7 +10,7 @@
     "CRS.AlSubFolderName": "None",
     "CRS.FileNamePattern": "<ObjectNameShort>.<ObjectTypeShortPascalCase>.al",
     "CRS.FileNamePatternExtensions": "<ObjectNameShort>.<ObjectTypeShortPascalCase>.al",
-    "CRS.RemovePrefixFromFilename": true,
+    "CRS.RemoveSuffixFromFilename": true,
     "CRS.ObjectNameSuffix": "FS",
     "CRS.OnSaveAlFileAction": "Rename"
 }
