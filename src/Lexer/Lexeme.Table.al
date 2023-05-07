@@ -147,9 +147,14 @@ table 69000 "Lexeme FS"
         exit(Rec."Keyword Value" = ExpectedKeyword);
     end;
 
+    procedure IsOperator(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::Operator);
+    end;
+
     procedure IsOperator(ExpectedOperator: Enum "Operator FS"): Boolean
     begin
-        if Rec.Type <> Rec.Type::Operator then
+        if not Rec.IsOperator() then
             exit(false);
         exit(Rec."Operator Value" = ExpectedOperator);
     end;

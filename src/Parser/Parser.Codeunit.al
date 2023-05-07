@@ -12,15 +12,56 @@ codeunit 69001 "Parser FS"
     procedure Parse(): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
+        Memory: Codeunit "Memory FS";
         Node: Interface "Node FS";
     begin
-        Node := ParseCompoundStatement();
+        Node := ParseProgram(Memory);
 
         AssertNextLexeme(
             Lexeme.EOS()
         );
 
-        Node.Visit();
+        Node.Visit(Memory);
+    end;
+
+    local procedure ParseProgram
+    (
+        // TODO temporary solution => return a list of variables
+        // >>>> so that the interpreter can initialize them when needed
+        Memory: Codeunit "Memory FS"
+    ): Interface "Node FS"
+    var
+        Lexeme, PeekedLexeme : Record "Lexeme FS";
+        CompoundStatement: Interface "Node FS";
+    begin
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"var")
+        );
+
+        while true do begin
+            PeekedLexeme := PeekNextLexeme();
+            if not PeekedLexeme.IsIdentifier() then
+                break;
+
+            Lexeme := NextLexeme();
+
+            Memory.DefineLocalVariable(
+                Lexeme."Identifier Name"
+            );
+
+            // TODO parse variable type
+
+            AssertNextLexeme(
+                Lexeme.Operator(Enum::"Operator FS"::";")
+            );
+        end;
+
+        CompoundStatement := ParseCompoundStatement();
+        AssertNextLexeme(
+            Lexeme.Operator(Enum::"Operator FS"::";")
+        );
+
+        exit(CompoundStatement);
     end;
 
     local procedure ParseCompoundStatement(): Interface "Node FS"
@@ -78,17 +119,22 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseAssignmentStatement(): Interface "Node FS"
     var
-        Lexeme: Record "Lexeme FS";
+        Lexeme, DummyLexeme : Record "Lexeme FS";
+        AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
     begin
-        // TODO actually do something with this
-        AssertNextLexeme(
+        Lexeme := AssertNextLexeme(
             Lexeme.Identifier('TODO') // TODO
         );
         AssertNextLexeme(
-            Lexeme.Operator(Enum::"Operator FS"::":=")
+            DummyLexeme.Operator(Enum::"Operator FS"::":=") // FIXME now this changing `Rec` makes things difficult
         );
 
-        exit(ParseExpression());
+        AssignmentStatementNode.Init(
+            Lexeme."Identifier Name",
+            ParseExpression()
+        );
+
+        exit(AssignmentStatementNode);
     end;
 
     local procedure ParseExpression(): Interface "Node FS"
@@ -112,7 +158,7 @@ codeunit 69001 "Parser FS"
             Clear(ExpressionNode); // create new instance
             ExpressionNode.Init(
                 Expression,
-                ParseTerm(), // TODO ???
+                ParseTerm(),
                 Lexeme."Operator Value"
             );
             Expression := ExpressionNode;
@@ -142,7 +188,7 @@ codeunit 69001 "Parser FS"
             Clear(TermNode); // create new instance
             TermNode.Init(
                 Term,
-                ParseFactor(), // TODO ???
+                ParseFactor(),
                 Lexeme."Operator Value"
             );
             Term := TermNode;
@@ -155,12 +201,13 @@ codeunit 69001 "Parser FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         NumberNode: Codeunit "Number Node FS";
+        VariableNode: Codeunit "Variable Node FS";
         UnaryOperatorNode: Codeunit "Unary Operator Node FS";
         ExpressionNode: Interface "Node FS";
     begin
         PeekedLexeme := PeekNextLexeme();
 
-        if PeekedLexeme.Type = PeekedLexeme.Type::Operator then
+        if PeekedLexeme.IsOperator() then
             case PeekedLexeme."Operator Value" of
                 PeekedLexeme."Operator Value"::"(":
                     begin
@@ -187,6 +234,16 @@ codeunit 69001 "Parser FS"
                         exit(UnaryOperatorNode);
                     end;
             end;
+
+        if PeekedLexeme.IsIdentifier() then begin
+            Lexeme := AssertNextLexeme(PeekedLexeme);
+
+            VariableNode.Init(
+                Lexeme."Identifier Name"
+            );
+
+            exit(VariableNode);
+        end;
 
         Lexeme := AssertNextLexeme(
             Lexeme.Number(0) // TODO ugly
@@ -257,7 +314,7 @@ codeunit 69001 "Parser FS"
 
 interface "Node FS"
 {
-    procedure Visit(): Decimal;
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
 }
 
 codeunit 69010 "Number Node FS" implements "Node FS"
@@ -265,12 +322,12 @@ codeunit 69010 "Number Node FS" implements "Node FS"
     var
         Number: Decimal;
 
-    procedure Init(Value: Decimal) // TODO init from lexeme record?
+    procedure Init(Value: Decimal)
     begin
         Number := Value;
     end;
 
-    procedure Visit(): Decimal;
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
     begin
         exit(Number);
     end;
@@ -294,13 +351,13 @@ codeunit 69011 "Term Node FS" implements "Node FS"
         Operator := NewOperator; // TODO validate?
     end;
 
-    procedure Visit(): Decimal;
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
     begin
         case Operator of
             Operator::"*":
-                exit(Left.Visit() * Right.Visit());
+                exit(Left.Visit(Memory) * Right.Visit(Memory));
             Operator::"/":
-                exit(Left.Visit() / Right.Visit());
+                exit(Left.Visit(Memory) / Right.Visit(Memory));
             else
                 Error('TODO'); // TODO
         end;
@@ -325,13 +382,13 @@ codeunit 69012 "Expression Node FS" implements "Node FS" // TODO merge with "Ter
         Operator := NewOperator; // TODO validate?
     end;
 
-    procedure Visit(): Decimal;
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
     begin
         case Operator of
             Operator::"+":
-                exit(Left.Visit() + Right.Visit());
+                exit(Left.Visit(Memory) + Right.Visit(Memory));
             Operator::"-":
-                exit(Left.Visit() - Right.Visit());
+                exit(Left.Visit(Memory) - Right.Visit(Memory));
             else
                 Error('TODO'); // TODO
         end;
@@ -354,13 +411,13 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         Operator := NewOperator; // TODO validate?
     end;
 
-    procedure Visit(): Decimal;
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
     begin
         case Operator of
             Operator::"+":
-                exit(Node.Visit());
+                exit(Node.Visit(Memory));
             Operator::"-":
-                exit(-Node.Visit());
+                exit(-Node.Visit(Memory));
             else
                 Error('TODO'); // TODO
         end;
@@ -369,7 +426,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
 
 codeunit 69015 "NoOp FS" implements "Node FS"
 {
-    procedure Visit(): Decimal;
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
     begin
     end;
 }
@@ -391,12 +448,81 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     end;
 
 
-    procedure Visit(): Decimal;
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
     var
         i: Integer;
     begin
         // TODO
         for i := 1 to StatementCount do
-            Message('%1', Statements[i].Visit());
+            Message('%1', Statements[i].Visit(Memory));
+    end;
+}
+
+codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
+{
+    var
+        LocalVariables: array[50] of Decimal; // TODO data type
+        LocalVariableCount: Integer;
+        LocalVariableMap: Dictionary of [Text, Integer];
+
+    procedure DefineLocalVariable(Name: Text)
+    begin
+        if LocalVariableCount = ArrayLen(LocalVariables) then
+            Error('Reached maximum allowed number of local variables %1.', ArrayLen(LocalVariables));
+
+        LocalVariableCount += 1;
+        LocalVariables[LocalVariableCount] := 0;
+        LocalVariableMap.Add(Name.ToLower(), LocalVariableCount); // TODO nice error if it already exists
+    end;
+
+    procedure Get(Name: Text): Decimal // TODO data type
+    begin
+        exit(LocalVariables[LocalVariableMap.Get(Name.ToLower())]);
+    end;
+
+    procedure Set(Name: Text; Value: Decimal) // TODO data type
+    begin
+        LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
+    end;
+}
+
+codeunit 69017 "Variable Node FS" implements "Node FS"
+{
+    var
+        Name: Text;
+
+    procedure Init(NewName: Text)
+    begin
+        Name := NewName;
+    end;
+
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    begin
+        exit(Memory.Get(Name));
+    end;
+}
+
+codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
+{
+    var
+        Expression: Interface "Node FS";
+        Name: Text;
+
+    procedure Init
+    (
+        NewName: Text;
+        NewExpression: Interface "Node FS"
+    )
+    begin
+        Name := NewName;
+        Expression := NewExpression;
+    end;
+
+    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    begin
+        Memory.Set(
+            Name,
+            Expression.Visit(Memory)
+        );
     end;
 }
