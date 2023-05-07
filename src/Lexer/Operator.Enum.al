@@ -2,6 +2,7 @@ enum 69003 "Operator FS"
 {
     Caption = 'Operator';
 
+    // TODO div and mod?
     value(1; "+") { }
     value(2; "-") { }
     value(3; "*") { }

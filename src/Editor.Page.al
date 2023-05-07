@@ -33,6 +33,7 @@ page 69000 "Editor FS"
         area(Promoted)
         {
             actionref("Tokenize Promoted"; Tokenize) { }
+            actionref("Parse Promoted"; Parse) { }
         }
 
         area(Processing)
@@ -58,6 +59,19 @@ page 69000 "Editor FS"
                     until Lexeme.Type = Lexeme.Type::EOS;
 
                     Page.Run(Page::"Lexemes FS", Lexeme);
+                end;
+            }
+            action(Parse)
+            {
+                Caption = 'Parse';
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    Parser: Codeunit "Parser FS";
+                begin
+                    Parser.Init(Input);
+                    Parser.Parse();
                 end;
             }
         }
