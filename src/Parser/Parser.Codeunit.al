@@ -1,8 +1,8 @@
 codeunit 69001 "Parser FS"
 {
     var
-        Lexer: Codeunit "Lexer FS";
         CachedLexeme: Record "Lexeme FS";
+        Lexer: Codeunit "Lexer FS";
 
     procedure Init(Input: Text)
     begin
@@ -11,13 +11,84 @@ codeunit 69001 "Parser FS"
 
     procedure Parse(): Interface "Node FS"
     var
+        Lexeme: Record "Lexeme FS";
         Node: Interface "Node FS";
     begin
-        Node := ParseExpression();
+        Node := ParseCompoundStatement();
 
-        // TODO ensure EOS?
+        AssertNextLexeme(
+            Lexeme.EOS()
+        );
 
-        Message('%1', Node.Visit());
+        Node.Visit();
+    end;
+
+    local procedure ParseCompoundStatement(): Interface "Node FS"
+    var
+        Lexeme: Record "Lexeme FS";
+        StatementList: Interface "Node FS";
+    begin
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"begin")
+        );
+
+        StatementList := ParseStatementList();
+
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"end")
+        );
+
+        exit(StatementList);
+    end;
+
+    local procedure ParseStatementList(): Interface "Node FS"
+    var
+        PeekedLexeme: Record "Lexeme FS";
+        StatementList: Codeunit "Statement List FS";
+    begin
+        while true do begin
+            StatementList.Add(ParseStatement());
+
+            PeekedLexeme := PeekNextLexeme();
+            if not PeekedLexeme.IsOperator(Enum::"Operator FS"::";") then
+                break;
+            AssertNextLexeme(PeekedLexeme);
+        end;
+
+        exit(StatementList);
+    end;
+
+    local procedure ParseStatement(): Interface "Node FS"
+    var
+        Lexeme: Record "Lexeme FS";
+        NoOp: Codeunit "NoOp FS";
+    begin
+        Lexeme := PeekNextLexeme();
+
+        case true of
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"begin"):
+                exit(ParseCompoundStatement());
+            Lexeme.IsIdentifier():
+                exit(ParseAssignmentStatement());
+
+        end;
+
+        exit(NoOp);
+    end;
+
+    local procedure ParseAssignmentStatement(): Interface "Node FS"
+    var
+        Lexeme: Record "Lexeme FS";
+    begin
+        // TODO actually do something with this
+        AssertNextLexeme(
+            Lexeme.Identifier('TODO') // TODO
+        );
+        AssertNextLexeme(
+            Lexeme.Operator(Enum::"Operator FS"::":=")
+        );
+
+        exit(ParseExpression());
     end;
 
     local procedure ParseExpression(): Interface "Node FS"
@@ -176,7 +247,10 @@ codeunit 69001 "Parser FS"
         case ExpectedLexeme.Type of
             ExpectedLexeme.Type::Operator:
                 if Lexeme."Operator Value" <> ExpectedLexeme."Operator Value" then
-                    Error('AssertNextLexeme type missmatch %1 vs %2', Lexeme."Operator Value", ExpectedLexeme."Operator Value"); // TODO
+                    Error('AssertNextLexeme operator missmatch %1 vs %2', Lexeme."Operator Value", ExpectedLexeme."Operator Value"); // TODO
+            ExpectedLexeme.Type::Keyword:
+                if Lexeme."Keyword Value" <> ExpectedLexeme."Keyword Value" then
+                    Error('AssertNextLexeme keyword missmatch %1 vs %2', Lexeme."Keyword Value", ExpectedLexeme."Keyword Value"); // TODO
         end;
     end;
 }
@@ -290,5 +364,39 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
             else
                 Error('TODO'); // TODO
         end;
+    end;
+}
+
+codeunit 69015 "NoOp FS" implements "Node FS"
+{
+    procedure Visit(): Decimal;
+    begin
+    end;
+}
+
+codeunit 69016 "Statement List FS" implements "Node FS"
+{
+    var
+        // TODO
+        Statements: array[50] of Interface "Node FS";
+        StatementCount: Integer;
+
+    procedure Add(Statement: Interface "Node FS")
+    begin
+        if StatementCount = ArrayLen(Statements) then
+            Error('Reached maximum allowed number of statements %1.', ArrayLen(Statements));
+
+        StatementCount += 1;
+        Statements[StatementCount] := Statement;
+    end;
+
+
+    procedure Visit(): Decimal;
+    var
+        i: Integer;
+    begin
+        // TODO
+        for i := 1 to StatementCount do
+            Message('%1', Statements[i].Visit());
     end;
 }

@@ -139,4 +139,23 @@ table 69000 "Lexeme FS"
                 Rec.FieldError(Type);
         end;
     end;
+
+    procedure IsKeyword(ExpectedKeyword: Enum "Keyword FS"): Boolean
+    begin
+        if Rec.Type <> Rec.Type::Keyword then
+            exit(false);
+        exit(Rec."Keyword Value" = ExpectedKeyword);
+    end;
+
+    procedure IsOperator(ExpectedOperator: Enum "Operator FS"): Boolean
+    begin
+        if Rec.Type <> Rec.Type::Operator then
+            exit(false);
+        exit(Rec."Operator Value" = ExpectedOperator);
+    end;
+
+    procedure IsIdentifier(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::Identifier);
+    end;
 }
