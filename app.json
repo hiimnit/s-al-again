@@ -1,0 +1,37 @@
+{
+  "id": "f2f164b7-a4de-41d3-88ee-5c38e14ffba3",
+  "name": "SAL2",
+  "publisher": "FS",
+  "version": "1.0.0.0",
+  "brief": "",
+  "description": "",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "http://localhost",
+  "logo": "",
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "1.0.0.0",
+  "application": "21.0.0.0",
+  "idRanges": [
+    {
+      "from": 69000,
+      "to": 69999
+    }
+  ],
+  "suppressWarnings": [
+    "AS0084",
+    "AS0051"
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "10.0",
+  "features": [
+    "NoImplicitWith",
+    "TranslationFile"
+  ]
+}

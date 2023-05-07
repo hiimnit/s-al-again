@@ -1,0 +1,16 @@
+{
+    "al.enableCodeAnalysis": true,
+    "al.enableCodeActions": true,
+    "al.codeAnalyzers": [
+        "${AppSourceCop}",
+        "${PerTenantExtensionCop}",
+        "${CodeCop}",
+        "${UICop}"
+    ],
+    "CRS.AlSubFolderName": "None",
+    "CRS.FileNamePattern": "<ObjectNameShort>.<ObjectTypeShortPascalCase>.al",
+    "CRS.FileNamePatternExtensions": "<ObjectNameShort>.<ObjectTypeShortPascalCase>.al",
+    "CRS.RemovePrefixFromFilename": true,
+    "CRS.ObjectNameSuffix": "FS",
+    "CRS.OnSaveAlFileAction": "Rename"
+}
