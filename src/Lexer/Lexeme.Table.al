@@ -163,4 +163,9 @@ table 69000 "Lexeme FS"
     begin
         exit(Rec.Type = Rec.Type::Identifier);
     end;
+
+    procedure IsBoolean(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::Bool);
+    end;
 }

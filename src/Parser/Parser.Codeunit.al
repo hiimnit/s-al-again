@@ -21,7 +21,9 @@ codeunit 69001 "Parser FS"
             Lexeme.EOS()
         );
 
-        Node.Visit(Memory);
+        Node.Evaluate(Memory);
+
+        Memory.DebugMessage();
     end;
 
     local procedure ParseProgram
@@ -111,7 +113,6 @@ codeunit 69001 "Parser FS"
                 exit(ParseCompoundStatement());
             Lexeme.IsIdentifier():
                 exit(ParseAssignmentStatement());
-
         end;
 
         exit(NoOp);
@@ -140,7 +141,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseExpression(): Interface "Node FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
-        ExpressionNode: Codeunit "Expression Node FS";
+        BinaryOperatorNode: Codeunit "Binary Operator Node FS";
         Expression: Interface "Node FS";
     begin
         Expression := ParseTerm();
@@ -149,19 +150,23 @@ codeunit 69001 "Parser FS"
             PeekedLexeme := PeekNextLexeme();
 
             if (PeekedLexeme.Type <> PeekedLexeme.Type::Operator)
-                or not (PeekedLexeme."Operator Value" in [PeekedLexeme."Operator Value"::"+", PeekedLexeme."Operator Value"::"-"])
+                or not (PeekedLexeme."Operator Value" in [
+                    PeekedLexeme."Operator Value"::"+",
+                    PeekedLexeme."Operator Value"::"-",
+                    PeekedLexeme."Operator Value"::"or"
+                ])
             then
                 break;
 
             Lexeme := NextLexeme();
 
-            Clear(ExpressionNode); // create new instance
-            ExpressionNode.Init(
+            Clear(BinaryOperatorNode); // create new instance
+            BinaryOperatorNode.Init(
                 Expression,
                 ParseTerm(),
                 Lexeme."Operator Value"
             );
-            Expression := ExpressionNode;
+            Expression := BinaryOperatorNode;
         end;
 
         exit(Expression);
@@ -170,7 +175,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseTerm(): Interface "Node FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
-        TermNode: Codeunit "Term Node FS";
+        BinaryOperatorNode: Codeunit "Binary Operator Node FS";
         Term: Interface "Node FS";
     begin
         Term := ParseFactor();
@@ -179,19 +184,24 @@ codeunit 69001 "Parser FS"
             PeekedLexeme := PeekNextLexeme();
 
             if (PeekedLexeme.Type <> PeekedLexeme.Type::Operator)
-                or not (PeekedLexeme."Operator Value" in [PeekedLexeme."Operator Value"::"*", PeekedLexeme."Operator Value"::"/"])
+                or not (PeekedLexeme."Operator Value" in [
+                    PeekedLexeme."Operator Value"::"*",
+                    PeekedLexeme."Operator Value"::"/",
+                    PeekedLexeme."Operator Value"::"and",
+                    PeekedLexeme."Operator Value"::"xor"
+                ])
             then
                 break;
 
             Lexeme := NextLexeme();
 
-            Clear(TermNode); // create new instance
-            TermNode.Init(
+            Clear(BinaryOperatorNode); // create new instance
+            BinaryOperatorNode.Init(
                 Term,
                 ParseFactor(),
                 Lexeme."Operator Value"
             );
-            Term := TermNode;
+            Term := BinaryOperatorNode;
         end;
 
         exit(Term);
@@ -200,7 +210,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseFactor(): Interface "Node FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
-        NumberNode: Codeunit "Number Node FS";
+        LiteralValueNode: Codeunit "Literal Value Node FS";
         VariableNode: Codeunit "Variable Node FS";
         UnaryOperatorNode: Codeunit "Unary Operator Node FS";
         ExpressionNode: Interface "Node FS";
@@ -222,7 +232,8 @@ codeunit 69001 "Parser FS"
                         exit(ExpressionNode);
                     end;
                 PeekedLexeme."Operator Value"::"+",
-                PeekedLexeme."Operator Value"::"-":
+                PeekedLexeme."Operator Value"::"-",
+                PeekedLexeme."Operator Value"::"not":
                     begin
                         Lexeme := NextLexeme();
 
@@ -245,13 +256,21 @@ codeunit 69001 "Parser FS"
             exit(VariableNode);
         end;
 
+        if PeekedLexeme.IsBoolean() then begin
+            Lexeme := AssertNextLexeme(PeekedLexeme);
+
+            LiteralValueNode.Init(Lexeme."Boolean Value");
+
+            exit(LiteralValueNode);
+        end;
+
         Lexeme := AssertNextLexeme(
             Lexeme.Number(0) // TODO ugly
         );
 
-        NumberNode.Init(Lexeme."Number Value");
+        LiteralValueNode.Init(Lexeme."Number Value");
 
-        exit(NumberNode);
+        exit(LiteralValueNode);
     end;
 
     local procedure NextLexeme(): Record "Lexeme FS"
@@ -314,26 +333,37 @@ codeunit 69001 "Parser FS"
 
 interface "Node FS"
 {
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
 }
 
-codeunit 69010 "Number Node FS" implements "Node FS"
+codeunit 69010 "Literal Value Node FS" implements "Node FS"
 {
     var
-        Number: Decimal;
+        LiteralValue: Interface "Value FS";
 
     procedure Init(Value: Decimal)
+    var
+        NumericValue: Codeunit "Numeric Value FS";
     begin
-        Number := Value;
+        NumericValue.SetValue(Value);
+        LiteralValue := NumericValue;
     end;
 
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Init(Value: Boolean)
+    var
+        BooleanValue: Codeunit "Boolean Value FS";
     begin
-        exit(Number);
+        BooleanValue.SetValue(Value);
+        LiteralValue := BooleanValue;
+    end;
+
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    begin
+        exit(LiteralValue);
     end;
 }
 
-codeunit 69011 "Term Node FS" implements "Node FS"
+codeunit 69012 "Binary Operator Node FS" implements "Node FS"
 {
     var
         Left, Right : Interface "Node FS";
@@ -351,47 +381,82 @@ codeunit 69011 "Term Node FS" implements "Node FS"
         Operator := NewOperator; // TODO validate?
     end;
 
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    var
+        LeftValueVariant, RightValueVariant : Variant;
     begin
+        LeftValueVariant := Left.Evaluate(Memory).GetValue();
+        RightValueVariant := Right.Evaluate(Memory).GetValue();
+
         case Operator of
-            Operator::"*":
-                exit(Left.Visit(Memory) * Right.Visit(Memory));
+            Operator::"+",
+            Operator::"-",
+            Operator::"*",
             Operator::"/":
-                exit(Left.Visit(Memory) / Right.Visit(Memory));
+                exit(EvaluateNumeric(LeftValueVariant, RightValueVariant));
+            Operator::"or",
+            Operator::"and",
+            Operator::"xor":
+                exit(EvaluateBoolean(LeftValueVariant, RightValueVariant));
             else
-                Error('TODO'); // TODO
+                Error('Unimplemented operator %1.', Operator); // TODO
         end;
     end;
-}
 
-codeunit 69012 "Expression Node FS" implements "Node FS" // TODO merge with "Term Node"
-{
-    var
-        Left, Right : Interface "Node FS";
-        Operator: Enum "Operator FS";
-
-    procedure Init
+    local procedure EvaluateNumeric
     (
-        NewLeft: Interface "Node FS";
-        NewRight: Interface "Node FS";
-        NewOperator: Enum "Operator FS"
-    )
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant
+    ): Interface "Value FS";
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+        LeftValue, RightValue, Result : Decimal;
     begin
-        Left := NewLeft;
-        Right := NewRight;
-        Operator := NewOperator; // TODO validate?
-    end;
+        LeftValue := LeftValueVariant;
+        RightValue := RightValueVariant;
 
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
-    begin
         case Operator of
             Operator::"+":
-                exit(Left.Visit(Memory) + Right.Visit(Memory));
+                Result := LeftValue + RightValue;
             Operator::"-":
-                exit(Left.Visit(Memory) - Right.Visit(Memory));
+                Result := LeftValue - RightValue;
+            Operator::"*":
+                Result := LeftValue * RightValue;
+            Operator::"/":
+                Result := LeftValue / RightValue;
             else
-                Error('TODO'); // TODO
+                Error('Unimplemented operator %1.', Operator);
         end;
+
+        NumericValue.SetValue(Result);
+        exit(NumericValue);
+    end;
+
+    local procedure EvaluateBoolean
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant
+    ): Interface "Value FS";
+    var
+        BooleanValue: Codeunit "Boolean Value FS";
+        LeftValue, RightValue, Result : Boolean;
+    begin
+        LeftValue := LeftValueVariant;
+        RightValue := RightValueVariant;
+
+        case Operator of
+            Operator::"or":
+                Result := LeftValue or RightValue;
+            Operator::"and":
+                Result := LeftValue and RightValue;
+            Operator::"xor":
+                Result := LeftValue xor RightValue;
+            else
+                Error('Unimplemented operator %1.', Operator);
+        end;
+
+        BooleanValue.SetValue(Result);
+        exit(BooleanValue);
     end;
 }
 
@@ -411,23 +476,69 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         Operator := NewOperator; // TODO validate?
     end;
 
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    var
+        ValueVariant: Variant;
     begin
+        ValueVariant := Node.Evaluate(Memory).GetValue();
+
+        case Operator of
+            Operator::"+",
+            Operator::"-":
+                exit(EvaluateNumeric(ValueVariant));
+            Operator::"not":
+                exit(EvaluateBoolean(ValueVariant));
+            else
+                Error('Unimplemented operator %1.', Operator); // TODO
+        end;
+    end;
+
+    local procedure EvaluateNumeric(ValueVariant: Variant): Interface "Value FS";
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+        Value, Result : Decimal;
+    begin
+        Value := ValueVariant; // TODO runtime type checking?
+
         case Operator of
             Operator::"+":
-                exit(Node.Visit(Memory));
+                Result := Value;
             Operator::"-":
-                exit(-Node.Visit(Memory));
+                Result := -Value;
             else
-                Error('TODO'); // TODO
+                Error('Unimplemented operator %1.', Operator); // TODO
         end;
+
+        NumericValue.SetValue(Result);
+        exit(NumericValue);
+    end;
+
+    local procedure EvaluateBoolean(ValueVariant: Variant): Interface "Value FS";
+    var
+        BooleanValue: Codeunit "Boolean Value FS";
+        Value, Result : Boolean;
+    begin
+        Value := ValueVariant; // TODO runtime type checking?
+
+        case Operator of
+            Operator::"not":
+                Result := not Value;
+            else
+                Error('Unimplemented operator %1.', Operator); // TODO
+        end;
+
+        BooleanValue.SetValue(Result);
+        exit(BooleanValue);
     end;
 }
 
 codeunit 69015 "NoOp FS" implements "Node FS"
 {
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    var
+        VoidValue: Codeunit "Void Value FS";
     begin
+        exit(VoidValue);
     end;
 }
 
@@ -448,20 +559,93 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     end;
 
 
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
     var
+        VoidValue: Codeunit "Void Value FS";
         i: Integer;
     begin
-        // TODO
         for i := 1 to StatementCount do
-            Message('%1', Statements[i].Visit(Memory));
+            Statements[i].Evaluate(Memory);
+        exit(VoidValue);
+    end;
+}
+
+interface "Value FS"
+{
+    procedure GetValue(): Variant;
+    procedure SetValue(NewValue: Variant);
+}
+
+codeunit 69100 "Void Value FS" implements "Value FS"
+{
+    SingleInstance = true;
+
+    procedure GetValue(): Variant;
+    begin
+        Error('Cannot get value of void.');
+    end;
+
+    procedure SetValue(NewValue: Variant);
+    begin
+        Error('Cannot set value of void.');
+    end;
+}
+
+codeunit 69101 "Numeric Value FS" implements "Value FS"
+{
+    var
+        Value: Decimal;
+
+    procedure GetValue(): Variant;
+    begin
+        exit(Value);
+    end;
+
+    procedure SetValue(NewValue: Variant);
+    begin
+        // TODO runtime data type checking?
+        Value := NewValue;
+    end;
+}
+
+codeunit 69102 "Boolean Value FS" implements "Value FS"
+{
+    var
+        Value: Boolean;
+
+    procedure GetValue(): Variant;
+    begin
+        exit(Value);
+    end;
+
+    procedure SetValue(NewValue: Variant);
+    begin
+        // TODO runtime data type checking?
+        Value := NewValue;
+    end;
+}
+
+codeunit 69103 "Text Value FS" implements "Value FS"
+{
+    var
+        Value: Text;
+
+    procedure GetValue(): Variant;
+    begin
+        exit(Value);
+    end;
+
+    procedure SetValue(NewValue: Variant);
+    begin
+        // TODO runtime data type checking?
+        Value := NewValue;
     end;
 }
 
 codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
 {
     var
-        LocalVariables: array[50] of Decimal; // TODO data type
+        LocalVariables: array[50] of Interface "Value FS";
         LocalVariableCount: Integer;
         LocalVariableMap: Dictionary of [Text, Integer];
 
@@ -471,18 +655,29 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
             Error('Reached maximum allowed number of local variables %1.', ArrayLen(LocalVariables));
 
         LocalVariableCount += 1;
-        LocalVariables[LocalVariableCount] := 0;
+        // TODO initial value LocalVariables[LocalVariableCount] := 0;
         LocalVariableMap.Add(Name.ToLower(), LocalVariableCount); // TODO nice error if it already exists
     end;
 
-    procedure Get(Name: Text): Decimal // TODO data type
+    procedure Get(Name: Text): Interface "Value FS"
     begin
         exit(LocalVariables[LocalVariableMap.Get(Name.ToLower())]);
     end;
 
-    procedure Set(Name: Text; Value: Decimal) // TODO data type
+    procedure Set(Name: Text; Value: Interface "Value FS")
     begin
         LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
+    end;
+
+    procedure DebugMessage()
+    var
+        TextBuilder: TextBuilder;
+        k: Text;
+    begin
+        TextBuilder.Append('Memory:\\');
+        foreach k in LocalVariableMap.Keys() do
+            TextBuilder.Append(StrSubstNo('%1: %2\', k, LocalVariables[LocalVariableMap.Get(k)].GetValue()));
+        Message(TextBuilder.ToText());
     end;
 }
 
@@ -496,7 +691,7 @@ codeunit 69017 "Variable Node FS" implements "Node FS"
         Name := NewName;
     end;
 
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
     begin
         exit(Memory.Get(Name));
     end;
@@ -518,11 +713,15 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
-    procedure Visit(Memory: Codeunit "Memory FS"): Decimal;
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    var
+        VoidValue: Codeunit "Void Value FS";
     begin
         Memory.Set(
             Name,
-            Expression.Visit(Memory)
+            Expression.Evaluate(Memory)
         );
+
+        exit(VoidValue);
     end;
 }
