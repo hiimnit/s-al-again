@@ -1,5 +1,7 @@
 codeunit 69000 "Lexer FS"
 {
+    // TODO error show incorrect position!
+
     var
         Lines: List of [Text];
         CurrentLine, CurrentChar : Integer;
@@ -110,11 +112,15 @@ codeunit 69000 "Lexer FS"
                         '/':
                             ConsumeUntil(Enum::"ASCII FS"::LF.AsInteger());
                         '*':
-                            repeat
-                                ConsumeUntil('*');
-                                if EOS() then
-                                    Error('Unexpected end of stream at line %1, character %2.', CurrentLine, CurrentChar);
-                            until PeekNextChar() = '/';
+                            begin
+                                repeat
+                                    ConsumeUntil('*');
+                                    if EOS() then
+                                        Error('Unexpected end of stream at line %1, character %2.', CurrentLine, CurrentChar);
+                                until PeekNextChar() = '/';
+
+                                AssertChar(NextChar(), '/');
+                            end;
                     end;
 
                     exit(Next());
