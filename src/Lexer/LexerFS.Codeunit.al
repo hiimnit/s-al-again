@@ -4,6 +4,7 @@ codeunit 69000 "Lexer FS"
         Lines: List of [Text];
         CurrentLine, CurrentChar : Integer;
         OperatorMap: Dictionary of [Text, Enum "Operator FS"];
+        BooleanOperatorMap: Dictionary of [Text, Enum "Operator FS"];
         KeywordMap: Dictionary of [Text, Enum "Keyword FS"];
 
     procedure Init(Input: Text)
@@ -18,6 +19,7 @@ codeunit 69000 "Lexer FS"
         CurrentChar := 1;
 
         InitOperatorMap();
+        InitBooleanOperatorMap();
         InitKeywordMap();
     end;
 
@@ -48,11 +50,14 @@ codeunit 69000 "Lexer FS"
         OperatorMap.Add('<>', Enum::"Operator FS"::"<>");
         OperatorMap.Add('<=', Enum::"Operator FS"::"<=");
         OperatorMap.Add('>=', Enum::"Operator FS"::">=");
+    end;
 
-        OperatorMap.Add('and', Enum::"Operator FS"::"and");
-        OperatorMap.Add('or', Enum::"Operator FS"::"or");
-        OperatorMap.Add('xor', Enum::"Operator FS"::"xor");
-        OperatorMap.Add('not', Enum::"Operator FS"::"not");
+    local procedure InitBooleanOperatorMap()
+    begin
+        BooleanOperatorMap.Add('and', Enum::"Operator FS"::"and");
+        BooleanOperatorMap.Add('or', Enum::"Operator FS"::"or");
+        BooleanOperatorMap.Add('xor', Enum::"Operator FS"::"xor");
+        BooleanOperatorMap.Add('not', Enum::"Operator FS"::"not");
     end;
 
     local procedure InitKeywordMap()
@@ -113,9 +118,8 @@ codeunit 69000 "Lexer FS"
 
                     exit(Next());
                 end;
-            IsSeparator(Char),
             IsOperator(Char):
-                ;
+                exit(ParseOperator(Char)); // FIXME here or in else?
             else
                 exit(ParseOther(Char));
         end;
@@ -193,46 +197,24 @@ codeunit 69000 "Lexer FS"
         exit(Char in ['0' .. '9']);
     end;
 
-    // TODO
-    // FIXME what about := ? and :: ?
-    local procedure IsOperator(Char: Char): Boolean
+    local procedure IsOperator(Operator: Text): Boolean
     begin
-        case Char of
-            '+',
-            '-',
-            '*',
-            '/',
-            '=',
-            '<',
-            '>':
-                exit(true);
-        end;
-
-        exit(false);
+        exit(OperatorMap.ContainsKey(Operator));
     end;
 
-    local procedure IsSeparator(Char: Char): Boolean
+    local procedure IsBooleanOperator(Operator: Text): Boolean
     begin
-        case Char of
-            '.',
-            ',',
-            ':',
-            ';',
-            ')',
-            '(',
-            '[',
-            ']':
-                exit(true);
-        end;
+        exit(BooleanOperatorMap.ContainsKey(Operator.ToLower()));
+    end;
 
-        exit(false);
+    local procedure GetBooleanOperator(Operator: Text): Enum "Operator FS"
+    begin
+        exit(BooleanOperatorMap.Get(Operator.ToLower()));
     end;
 
     local procedure EOS(): Boolean
     begin
-        if CurrentLine > Lines.Count() then
-            exit(true);
-        exit(CurrentChar > StrLen(Lines.Get(CurrentLine)));
+        exit(CurrentLine > Lines.Count());
     end;
 
     local procedure IsWhiteSpace(Char: Char): Boolean
@@ -280,24 +262,54 @@ codeunit 69000 "Lexer FS"
             case true of
                 IsDigit(PeekedChar):
                     Char := NextChar();
-                PeekedChar = '.':
+                (PeekedChar = '.') and not DecimalSeparatorFound:
                     begin
-                        if DecimalSeparatorFound then
-                            Error(''); // TODO
-
                         DecimalSeparatorFound := true;
                         NextChar();
                         Char := NextChar();
                         if not IsDigit(Char) then
                             Error(''); // TODO check if digit
                     end;
-                PeekedChar = 0, // TODO EOS enum
-                IsOperator(PeekedChar):
-                    exit(Lexeme.Number(Number));
                 else
-                    Error(''); // TODO
+                    exit(Lexeme.Number(Number));
             end;
         until false;
+    end;
+
+    local procedure ParseOperator(Char: Char): Record "Lexeme FS"
+    var
+        Lexeme: Record "Lexeme FS";
+        PeekedChar: Char;
+        Operator: Text;
+    begin
+        Operator := Char;
+
+        PeekedChar := PeekNextChar();
+        case Char of
+            '+',
+            '-',
+            '*',
+            '/',
+            '>':
+                if PeekedChar = '=' then
+                    Operator += NextChar();
+            ':':
+                case PeekedChar of
+                    ':',
+                    '=':
+                        Operator += NextChar();
+                end;
+            '<':
+                case PeekedChar of
+                    '>',
+                    '=':
+                        Operator += NextChar();
+                end;
+        end;
+
+        exit(Lexeme.Operator(
+            OperatorMap.Get(Operator)
+        ));
     end;
 
     local procedure ParseOther(Char: Char): Record "Lexeme FS"
@@ -356,11 +368,9 @@ codeunit 69000 "Lexer FS"
 
             PeekedChar := PeekNextChar();
             case true of
-                // TODO what about new lines?
                 PeekedChar = 0,
                 PeekedChar = '"',
-                IsSeparator(Char),
-                IsOperator(Char),
+                IsOperator(PeekedChar),
                 IsWhiteSpace(PeekedChar):
                     break;
             end;
@@ -370,19 +380,33 @@ codeunit 69000 "Lexer FS"
 
         Identifier := IdentifierBuilder.ToText();
 
-        case Identifier of
-            'true', 'false':
-                ; // TODO boolean literal
-                  // TODO check for keywords
+        case true of
+            Identifier.ToLower() in ['true', 'false']:
+                exit(Lexeme.Bool(Identifier.ToLower() = 'true'));
+            IsBooleanOperator(Identifier):
+                exit(Lexeme.Operator(GetBooleanOperator(Identifier)));
+            IsKeyword(Identifier):
+                exit(Lexeme.Keyword(GetKeyword(Identifier)));
             else
                 exit(Lexeme.Identifier(Identifier));
         end;
+    end;
+
+    local procedure IsKeyword(Identifier: Text): Boolean
+    begin
+        exit(KeywordMap.ContainsKey(Identifier.ToLower()));
+    end;
+
+    local procedure GetKeyword(Identifier: Text): Enum "Keyword FS"
+    begin
+        exit(KeywordMap.Get(Identifier.ToLower()));
     end;
 
     local procedure AssertChar(Char: Char; ExpectedChar: Char)
     var
         myInt: Integer;
     begin
-        Error(''); // TODO
+        if Char <> ExpectedChar then
+            Error('AssertChar'); // TODO
     end;
 }

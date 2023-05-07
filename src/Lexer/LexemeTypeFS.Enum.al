@@ -6,7 +6,6 @@ enum 69001 "Lexeme Type FS"
     value(0; EOS) { }
     value(1; Keyword) { }
     value(2; Operator) { }
-    value(3; Separator) { }
     value(4; Identifier) { }
     value(5; Number) { }
     value(6; Bool) { }

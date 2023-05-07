@@ -3,15 +3,23 @@ table 69000 "Lexeme FS"
     Caption = 'Lexeme';
     DataClassification = CustomerContent;
     TableType = Temporary;
+    LookupPageId = "Lexemes FS";
+    DrillDownPageId = "Lexemes FS";
 
     fields
     {
         field(1; "Entry No."; Integer) { }
         field(2; Type; Enum "Lexeme Type FS") { }
 
+        field(1000; "Keyword Value"; Enum "Keyword FS") { }
+
+        field(2000; "Operator Value"; Enum "Operator FS") { }
+
         field(4000; "Identifier Name"; Text[120]) { }
 
         field(5000; "Number Value"; Decimal) { }
+
+        field(6000; "Boolean Value"; Boolean) { }
 
         field(7000; "String Value"; Text[250]) { }
         field(7001; "String Value Blob"; Blob) { }
@@ -37,6 +45,14 @@ table 69000 "Lexeme FS"
         exit(Rec);
     end;
 
+    procedure Bool(Value: Boolean): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Bool;
+        Rec."Boolean Value" := Value;
+        exit(Rec);
+    end;
+
     procedure Identifier(Name: Text): Record "Lexeme FS"
     begin
         if StrLen(Name) > MaxStrLen(Rec."Identifier Name") then
@@ -45,6 +61,22 @@ table 69000 "Lexeme FS"
         Rec.Init();
         Rec.Type := Rec.Type::Identifier;
         Rec."Identifier Name" := Name;
+        exit(Rec);
+    end;
+
+    procedure Keyword(Value: Enum "Keyword FS"): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Keyword;
+        Rec."Keyword Value" := Value;
+        exit(Rec);
+    end;
+
+    procedure Operator(Value: Enum "Operator FS"): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Operator;
+        Rec."Operator Value" := Value;
         exit(Rec);
     end;
 
@@ -84,5 +116,27 @@ table 69000 "Lexeme FS"
             InStream,
             TypeHelper.LFSeparator()
         ));
+    end;
+
+    procedure GetValue(): Text
+    begin
+        case Rec.Type of
+            Rec.Type::EOS:
+                exit('');
+            Rec.Type::Bool:
+                exit(Format(Rec."Boolean Value"));
+            Rec.Type::Identifier:
+                exit(Rec."Identifier Name");
+            Rec.Type::Keyword:
+                exit(Format(Rec."Keyword Value"));
+            Rec.Type::Operator:
+                exit(Format(Rec."Operator Value"));
+            Rec.Type::Number:
+                exit(Format(Rec."Number Value", 0, 9));
+            Rec.Type::String:
+                exit(Rec.GetStringValue());
+            else
+                Rec.FieldError(Type);
+        end;
     end;
 }
