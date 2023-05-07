@@ -28,13 +28,15 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseProgram
     (
-        // TODO temporary solution => return a list of variables
+        // TODO temporary solution => return a list of variables - symbol table
         // >>>> so that the interpreter can initialize them when needed
         Memory: Codeunit "Memory FS"
     ): Interface "Node FS"
     var
         Lexeme, PeekedLexeme : Record "Lexeme FS";
         CompoundStatement: Interface "Node FS";
+        VariableName: Text;
+        VariableType: Enum "Built-in Type FS";
     begin
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"var")
@@ -46,12 +48,22 @@ codeunit 69001 "Parser FS"
                 break;
 
             Lexeme := NextLexeme();
+            VariableName := Lexeme."Identifier Name";
 
-            Memory.DefineLocalVariable(
-                Lexeme."Identifier Name"
+            AssertNextLexeme(
+                Lexeme.Operator(Enum::"Operator FS"::":")
             );
 
-            // TODO parse variable type
+            Lexeme := AssertNextLexeme(
+                Lexeme.Identifier('TODO') // TODO
+            );
+            VariableType := ParseBuiltinType(Lexeme."Identifier Name");
+
+            // TODO variables should not be initialized here
+            Memory.DefineLocalVariable(
+                VariableName,
+                VariableType
+            );
 
             AssertNextLexeme(
                 Lexeme.Operator(Enum::"Operator FS"::";")
@@ -327,6 +339,21 @@ codeunit 69001 "Parser FS"
             ExpectedLexeme.Type::Keyword:
                 if Lexeme."Keyword Value" <> ExpectedLexeme."Keyword Value" then
                     Error('AssertNextLexeme keyword missmatch %1 vs %2', Lexeme."Keyword Value", ExpectedLexeme."Keyword Value"); // TODO
+        end;
+    end;
+
+    local procedure ParseBuiltinType(Identifier: Text): Enum "Built-in Type FS"
+    begin
+        case Identifier.ToLower() of
+            // TODO support standard integer and decimal types?
+            'number':
+                exit(Enum::"Built-in Type FS"::Number);
+            'text':
+                exit(Enum::"Built-in Type FS"::Text);
+            'boolean':
+                exit(Enum::"Built-in Type FS"::Boolean);
+            else
+                Error('Unknown type %1.', Identifier);
         end;
     end;
 }
@@ -649,14 +676,32 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
         LocalVariableCount: Integer;
         LocalVariableMap: Dictionary of [Text, Integer];
 
-    procedure DefineLocalVariable(Name: Text)
+    procedure DefineLocalVariable
+    (
+        Name: Text;
+        Type: Enum "Built-in Type FS"
+    )
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+        BooleanValue: Codeunit "Boolean Value FS";
+        TextValue: Codeunit "Text Value FS";
     begin
         if LocalVariableCount = ArrayLen(LocalVariables) then
             Error('Reached maximum allowed number of local variables %1.', ArrayLen(LocalVariables));
 
         LocalVariableCount += 1;
-        // TODO initial value LocalVariables[LocalVariableCount] := 0;
         LocalVariableMap.Add(Name.ToLower(), LocalVariableCount); // TODO nice error if it already exists
+
+        case Type of
+            Type::Number:
+                LocalVariables[LocalVariableCount] := NumericValue;
+            Type::Boolean:
+                LocalVariables[LocalVariableCount] := BooleanValue;
+            Type::Text:
+                LocalVariables[LocalVariableCount] := TextValue;
+            else
+                Error('Unimplemented built-in type initilization %1.', Type);
+        end;
     end;
 
     procedure Get(Name: Text): Interface "Value FS"
@@ -724,4 +769,14 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
 
         exit(VoidValue);
     end;
+}
+
+enum 69004 "Built-in Type FS"
+{
+    Caption = 'Built-in Type';
+    Extensible = false;
+
+    value(1; Number) { }
+    value(2; Boolean) { }
+    value(3; Text) { }
 }

@@ -68,12 +68,6 @@ codeunit 69000 "Lexer FS"
         KeywordMap.Add('end', Enum::"Keyword FS"::"end");
         KeywordMap.Add('procedure', Enum::"Keyword FS"::"procedure");
         KeywordMap.Add('var', Enum::"Keyword FS"::"var");
-        KeywordMap.Add('record', Enum::"Keyword FS"::"record");
-        KeywordMap.Add('integer', Enum::"Keyword FS"::"integer");
-        KeywordMap.Add('decimal', Enum::"Keyword FS"::"decimal");
-        KeywordMap.Add('boolean', Enum::"Keyword FS"::"boolean");
-        KeywordMap.Add('text', Enum::"Keyword FS"::"text");
-        KeywordMap.Add('code', Enum::"Keyword FS"::"code");
         KeywordMap.Add('local', Enum::"Keyword FS"::"local");
         KeywordMap.Add('if', Enum::"Keyword FS"::"if");
         KeywordMap.Add('then', Enum::"Keyword FS"::"then");
