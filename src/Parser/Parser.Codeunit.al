@@ -276,6 +276,14 @@ codeunit 69001 "Parser FS"
             exit(LiteralValueNode);
         end;
 
+        if PeekedLexeme.IsString() then begin
+            Lexeme := AssertNextLexeme(PeekedLexeme);
+
+            LiteralValueNode.Init(Lexeme.GetStringValue());
+
+            exit(LiteralValueNode);
+        end;
+
         Lexeme := AssertNextLexeme(
             Lexeme.Number(0) // TODO ugly
         );
@@ -384,6 +392,14 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         LiteralValue := BooleanValue;
     end;
 
+    procedure Init(Value: Text)
+    var
+        TextValue: Codeunit "Text Value FS";
+    begin
+        TextValue.SetValue(Value);
+        LiteralValue := TextValue;
+    end;
+
     procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
     begin
         exit(LiteralValue);
@@ -415,18 +431,18 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         LeftValueVariant := Left.Evaluate(Memory).GetValue();
         RightValueVariant := Right.Evaluate(Memory).GetValue();
 
-        case Operator of
-            Operator::"+",
-            Operator::"-",
-            Operator::"*",
-            Operator::"/":
+        case true of
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal():
                 exit(EvaluateNumeric(LeftValueVariant, RightValueVariant));
-            Operator::"or",
-            Operator::"and",
-            Operator::"xor":
+            LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
                 exit(EvaluateBoolean(LeftValueVariant, RightValueVariant));
+            LeftValueVariant.IsText() and RightValueVariant.IsText():
+                exit(EvaluateText(LeftValueVariant, RightValueVariant));
+            LeftValueVariant.IsText() and RightValueVariant.IsDecimal(),
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsText():
+                exit(EvaluateTextMultiplication(LeftValueVariant, RightValueVariant));
             else
-                Error('Unimplemented operator %1.', Operator); // TODO
+                Error('Unimplemented binary operator input types.'); // TODO
         end;
     end;
 
@@ -452,7 +468,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             Operator::"/":
                 Result := LeftValue / RightValue;
             else
-                Error('Unimplemented operator %1.', Operator);
+                Error('Unimplemented binary operator %1.', Operator);
         end;
 
         NumericValue.SetValue(Result);
@@ -479,11 +495,75 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             Operator::"xor":
                 Result := LeftValue xor RightValue;
             else
-                Error('Unimplemented operator %1.', Operator);
+                Error('Unimplemented binary operator %1.', Operator);
         end;
 
         BooleanValue.SetValue(Result);
         exit(BooleanValue);
+    end;
+
+    local procedure EvaluateText
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant
+    ): Interface "Value FS";
+    var
+        TextValue: Codeunit "Text Value FS";
+        LeftValue, RightValue, Result : Text;
+    begin
+        LeftValue := LeftValueVariant;
+        RightValue := RightValueVariant;
+
+        case Operator of
+            Operator::"+":
+                Result := LeftValue + RightValue;
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        TextValue.SetValue(Result);
+        exit(TextValue);
+    end;
+
+    local procedure EvaluateTextMultiplication
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant
+    ): Interface "Value FS";
+    var
+        TextValue: Codeunit "Text Value FS";
+        Text: Text;
+        Number: Decimal;
+        i: Integer;
+        ResultBuilder: TextBuilder;
+    begin
+        case true of
+            LeftValueVariant.IsText() and RightValueVariant.IsDecimal():
+                begin
+                    Text := LeftValueVariant;
+                    Number := RightValueVariant;
+                end;
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsText():
+                begin
+                    Number := LeftValueVariant;
+                    Text := RightValueVariant;
+                end;
+            else
+                Error('Invalid argument types.');
+        end;
+
+
+        case Operator of
+            Operator::"*":
+                // TODO check negative number?
+                for i := 1 to Number do
+                    ResultBuilder.Append(Text);
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        TextValue.SetValue(ResultBuilder.ToText());
+        exit(TextValue);
     end;
 }
 
@@ -516,7 +596,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
             Operator::"not":
                 exit(EvaluateBoolean(ValueVariant));
             else
-                Error('Unimplemented operator %1.', Operator); // TODO
+                Error('Unimplemented unary operator %1.', Operator); // TODO
         end;
     end;
 
@@ -533,7 +613,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
             Operator::"-":
                 Result := -Value;
             else
-                Error('Unimplemented operator %1.', Operator); // TODO
+                Error('Unimplemented unary operator %1.', Operator); // TODO
         end;
 
         NumericValue.SetValue(Result);
@@ -551,7 +631,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
             Operator::"not":
                 Result := not Value;
             else
-                Error('Unimplemented operator %1.', Operator); // TODO
+                Error('Unimplemented unary operator %1.', Operator); // TODO
         end;
 
         BooleanValue.SetValue(Result);
