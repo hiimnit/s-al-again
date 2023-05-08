@@ -79,18 +79,38 @@ codeunit 69001 "Parser FS"
     end;
 
     local procedure ParseCompoundStatement(): Interface "Node FS"
+    begin
+        exit(ParseCompoundStatement(
+            Enum::"Keyword FS"::"begin",
+            Enum::"Keyword FS"::"end"
+        ));
+    end;
+
+    local procedure ParseRepeatCompoundStatement(): Interface "Node FS"
+    begin
+        exit(ParseCompoundStatement(
+            Enum::"Keyword FS"::"repeat",
+            Enum::"Keyword FS"::"until"
+        ));
+    end;
+
+    local procedure ParseCompoundStatement
+    (
+        OpeningKeyword: Enum "Keyword FS";
+        ClosingKeyword: Enum "Keyword FS"
+    ): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
         StatementList: Interface "Node FS";
     begin
         AssertNextLexeme(
-            Lexeme.Keyword(Enum::"Keyword FS"::"begin")
+            Lexeme.Keyword(OpeningKeyword)
         );
 
         StatementList := ParseStatementList();
 
         AssertNextLexeme(
-            Lexeme.Keyword(Enum::"Keyword FS"::"end")
+            Lexeme.Keyword(ClosingKeyword)
         );
 
         exit(StatementList);
@@ -191,6 +211,49 @@ codeunit 69001 "Parser FS"
         exit(ForStatementNode);
     end;
 
+    local procedure ParseWhileStatement(): Interface "Node FS"
+    var
+        Lexeme: Record "Lexeme FS";
+        WhileStatementNode: Codeunit "While Statement Node FS";
+        Expression, Statement : Interface "Node FS";
+    begin
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"while")
+        );
+
+        Expression := ParseExpression();
+
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"do")
+        );
+
+        Statement := ParseStatement();
+
+        WhileStatementNode.Init(
+            Expression,
+            Statement
+        );
+
+        exit(WhileStatementNode);
+    end;
+
+    local procedure ParseRepeatStatement(): Interface "Node FS"
+    var
+        RepeatStatementNode: Codeunit "Repeat Statement Node FS";
+        Expression, Statement : Interface "Node FS";
+    begin
+        Statement := ParseRepeatCompoundStatement();
+
+        Expression := ParseExpression();
+
+        RepeatStatementNode.Init(
+            Expression,
+            Statement
+        );
+
+        exit(RepeatStatementNode);
+    end;
+
     local procedure ParseStatementList(): Interface "Node FS"
     var
         PeekedLexeme: Record "Lexeme FS";
@@ -222,6 +285,10 @@ codeunit 69001 "Parser FS"
                 exit(ParseIfStatement());
             Lexeme.IsKeyword(Enum::"Keyword FS"::"for"):
                 exit(ParseForStatement());
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"while"):
+                exit(ParseWhileStatement());
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"repeat"):
+                exit(ParseRepeatStatement());
             Lexeme.IsIdentifier():
                 exit(ParseAssignmentStatement());
         end;
