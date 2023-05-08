@@ -40,6 +40,7 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
 
     procedure Set(Name: Text; Value: Interface "Value FS")
     begin
+        // TODO currently it is possible to change the variable data type in runtime
         LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
     end;
 

@@ -33,6 +33,16 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         Operator: Enum "Operator FS"
     ): Interface "Value FS";
     begin
+        case Operator of
+            Operator::"<",
+            Operator::"<=",
+            Operator::"<>",
+            Operator::">=",
+            Operator::">",
+            Operator::"=":
+                exit(EvaluateComparison(LeftValueVariant, RightValueVariant, Operator));
+        end;
+
         case true of
             LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal():
                 exit(EvaluateNumeric(LeftValueVariant, RightValueVariant, Operator));
@@ -174,5 +184,105 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
 
         TextValue.SetValue(ResultBuilder.ToText());
         exit(TextValue);
+    end;
+
+    local procedure EvaluateComparison
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    var
+        BooleanValue: Codeunit "Boolean Value FS";
+        Result: Boolean;
+    begin
+        case true of
+            LeftValueVariant.IsText() and RightValueVariant.IsText():
+                Result := CompareText(LeftValueVariant, RightValueVariant, Operator);
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal():
+                Result := CompareNumber(LeftValueVariant, RightValueVariant, Operator);
+            LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
+                Result := CompareBoolean(LeftValueVariant, RightValueVariant, Operator);
+            else
+                Error('Comparison between types is not implemented'); // TODO nicer error?
+        end;
+
+        BooleanValue.SetValue(Result);
+        exit(BooleanValue);
+    end;
+
+    local procedure CompareText
+    (
+        LeftValue: Text;
+        RightValue: Text;
+        Operator: Enum "Operator FS"
+    ): Boolean
+    begin
+        case Operator of
+            Operator::"<":
+                exit(LeftValue < RightValue);
+            Operator::"<=":
+                exit(LeftValue <= RightValue);
+            Operator::"<>":
+                exit(LeftValue <> RightValue);
+            Operator::">=":
+                exit(LeftValue >= RightValue);
+            Operator::">":
+                exit(LeftValue > RightValue);
+            Operator::"=":
+                exit(LeftValue = RightValue);
+            else
+                Error('Unexpected comparison operator %1.', Operator);
+        end;
+    end;
+
+    local procedure CompareNumber
+    (
+        LeftValue: Decimal;
+        RightValue: Decimal;
+        Operator: Enum "Operator FS"
+    ): Boolean
+    begin
+        case Operator of
+            Operator::"<":
+                exit(LeftValue < RightValue);
+            Operator::"<=":
+                exit(LeftValue <= RightValue);
+            Operator::"<>":
+                exit(LeftValue <> RightValue);
+            Operator::">=":
+                exit(LeftValue >= RightValue);
+            Operator::">":
+                exit(LeftValue > RightValue);
+            Operator::"=":
+                exit(LeftValue = RightValue);
+            else
+                Error('Unexpected comparison operator %1.', Operator);
+        end;
+    end;
+
+    local procedure CompareBoolean
+    (
+        LeftValue: Boolean;
+        RightValue: Boolean;
+        Operator: Enum "Operator FS"
+    ): Boolean
+    begin
+        case Operator of
+            Operator::"<":
+                exit(LeftValue < RightValue);
+            Operator::"<=":
+                exit(LeftValue <= RightValue);
+            Operator::"<>":
+                exit(LeftValue <> RightValue);
+            Operator::">=":
+                exit(LeftValue >= RightValue);
+            Operator::">":
+                exit(LeftValue > RightValue);
+            Operator::"=":
+                exit(LeftValue = RightValue);
+            else
+                Error('Unexpected comparison operator %1.', Operator);
+        end;
     end;
 }

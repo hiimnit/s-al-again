@@ -327,12 +327,54 @@ codeunit 69001 "Parser FS"
     end;
 
     local procedure ParseExpression(): Interface "Node FS"
+    begin
+        exit(ParseComparison());
+    end;
+
+    local procedure ParseComparison(): Interface "Node FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
-        Expression: Interface "Node FS";
+        Term: Interface "Node FS";
     begin
-        Expression := ParseTerm();
+        Term := ParseTerm();
+
+        while true do begin
+            PeekedLexeme := PeekNextLexeme();
+
+            if (PeekedLexeme.Type <> PeekedLexeme.Type::Operator)
+                or not (PeekedLexeme."Operator Value" in [
+                    PeekedLexeme."Operator Value"::"<",
+                    PeekedLexeme."Operator Value"::"<=",
+                    PeekedLexeme."Operator Value"::"<>",
+                    PeekedLexeme."Operator Value"::">=",
+                    PeekedLexeme."Operator Value"::">",
+                    PeekedLexeme."Operator Value"::"="
+                ])
+            then
+                break;
+
+            Lexeme := NextLexeme();
+
+            Clear(BinaryOperatorNode); // create new instance
+            BinaryOperatorNode.Init(
+                Term,
+                ParseTerm(),
+                Lexeme."Operator Value"
+            );
+            Term := BinaryOperatorNode;
+        end;
+
+        exit(Term);
+    end;
+
+    local procedure ParseTerm(): Interface "Node FS"
+    var
+        PeekedLexeme, Lexeme : Record "Lexeme FS";
+        BinaryOperatorNode: Codeunit "Binary Operator Node FS";
+        Factor: Interface "Node FS";
+    begin
+        Factor := ParseFactor();
 
         while true do begin
             PeekedLexeme := PeekNextLexeme();
@@ -350,23 +392,23 @@ codeunit 69001 "Parser FS"
 
             Clear(BinaryOperatorNode); // create new instance
             BinaryOperatorNode.Init(
-                Expression,
-                ParseTerm(),
+                Factor,
+                ParseFactor(),
                 Lexeme."Operator Value"
             );
-            Expression := BinaryOperatorNode;
+            Factor := BinaryOperatorNode;
         end;
 
-        exit(Expression);
+        exit(Factor);
     end;
 
-    local procedure ParseTerm(): Interface "Node FS"
+    local procedure ParseFactor(): Interface "Node FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
-        Term: Interface "Node FS";
+        Unary: Interface "Node FS";
     begin
-        Term := ParseFactor();
+        Unary := ParseUnary();
 
         while true do begin
             PeekedLexeme := PeekNextLexeme();
@@ -387,17 +429,17 @@ codeunit 69001 "Parser FS"
 
             Clear(BinaryOperatorNode); // create new instance
             BinaryOperatorNode.Init(
-                Term,
-                ParseFactor(),
+                Unary,
+                ParseUnary(),
                 Lexeme."Operator Value"
             );
-            Term := BinaryOperatorNode;
+            Unary := BinaryOperatorNode;
         end;
 
-        exit(Term);
+        exit(Unary);
     end;
 
-    local procedure ParseFactor(): Interface "Node FS"
+    local procedure ParseUnary(): Interface "Node FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         LiteralValueNode: Codeunit "Literal Value Node FS";
@@ -428,7 +470,7 @@ codeunit 69001 "Parser FS"
                         Lexeme := NextLexeme();
 
                         UnaryOperatorNode.Init(
-                            ParseFactor(),
+                            ParseUnary(),
                             Lexeme."Operator Value"
                         );
 
