@@ -96,6 +96,46 @@ codeunit 69001 "Parser FS"
         exit(StatementList);
     end;
 
+    local procedure ParseIfStatement(): Interface "Node FS"
+    var
+        Lexeme, PeekedLexeme : Record "Lexeme FS";
+        IfStatementNode: Codeunit "If Statement Node FS";
+        Expression, Statement, ElseStatement : Interface "Node FS";
+    begin
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"if")
+        );
+
+        Expression := ParseExpression();
+
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"then")
+        );
+
+        Statement := ParseStatement();
+
+        IfStatementNode.InitIf(
+            Expression,
+            Statement
+        );
+
+        PeekedLexeme := PeekNextLexeme();
+
+        if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"else") then begin
+            AssertNextLexeme(
+                Lexeme.Keyword(Enum::"Keyword FS"::"else")
+            );
+
+            ElseStatement := ParseStatement();
+
+            IfStatementNode.InitElse(
+                ElseStatement
+            );
+        end;
+
+        exit(IfStatementNode);
+    end;
+
     local procedure ParseStatementList(): Interface "Node FS"
     var
         PeekedLexeme: Record "Lexeme FS";
@@ -123,6 +163,8 @@ codeunit 69001 "Parser FS"
         case true of
             Lexeme.IsKeyword(Enum::"Keyword FS"::"begin"):
                 exit(ParseCompoundStatement());
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"if"):
+                exit(ParseIfStatement());
             Lexeme.IsIdentifier():
                 exit(ParseAssignmentStatement());
         end;
@@ -648,7 +690,6 @@ codeunit 69015 "NoOp FS" implements "Node FS"
         exit(VoidValue);
     end;
 }
-
 codeunit 69016 "Statement List FS" implements "Node FS"
 {
     var
@@ -673,6 +714,49 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     begin
         for i := 1 to StatementCount do
             Statements[i].Evaluate(Memory);
+        exit(VoidValue);
+    end;
+}
+
+codeunit 69019 "If Statement Node FS" implements "Node FS"
+{
+    var
+        // TODO
+        Expression, IfStatement, ElseStatement : Interface "Node FS";
+        ElseStatementSet: Boolean;
+
+    procedure InitIf
+    (
+        NewExpression: Interface "Node FS";
+        NewIfStatement: Interface "Node FS"
+    )
+    begin
+        Expression := NewExpression;
+        IfStatement := NewIfStatement;
+    end;
+
+    procedure InitElse
+    (
+        NewElseStatement: Interface "Node FS"
+    )
+    begin
+        ElseStatement := NewElseStatement;
+        ElseStatementSet := true;
+    end;
+
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    var
+        VoidValue: Codeunit "Void Value FS";
+        ExpressionValue: Interface "Value FS";
+    begin
+        ExpressionValue := Expression.Evaluate(Memory);
+
+        if ExpressionValue.GetValue() then
+            IfStatement.Evaluate(Memory)
+        else
+            if ElseStatementSet then
+                ElseStatement.Evaluate(Memory);
+
         exit(VoidValue);
     end;
 }
