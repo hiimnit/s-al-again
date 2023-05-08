@@ -375,6 +375,8 @@ codeunit 69001 "Parser FS"
                 or not (PeekedLexeme."Operator Value" in [
                     PeekedLexeme."Operator Value"::"*",
                     PeekedLexeme."Operator Value"::"/",
+                    PeekedLexeme."Operator Value"::"div",
+                    PeekedLexeme."Operator Value"::"mod",
                     PeekedLexeme."Operator Value"::"and",
                     PeekedLexeme."Operator Value"::"xor"
                 ])

@@ -70,6 +70,10 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 Result := LeftValue * RightValue;
             Operator::"/":
                 Result := LeftValue / RightValue;
+            Operator::"div":
+                Result := LeftValue div RightValue;
+            Operator::"mod":
+                Result := LeftValue mod RightValue;
             else
                 Error('Unimplemented binary operator %1.', Operator);
         end;

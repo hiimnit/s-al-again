@@ -6,7 +6,7 @@ codeunit 69000 "Lexer FS"
         Lines: List of [Text];
         CurrentLine, CurrentChar : Integer;
         OperatorMap: Dictionary of [Text, Enum "Operator FS"];
-        BooleanOperatorMap: Dictionary of [Text, Enum "Operator FS"];
+        KeywordOperatorMap: Dictionary of [Text, Enum "Operator FS"];
         KeywordMap: Dictionary of [Text, Enum "Keyword FS"];
 
     procedure Init(Input: Text)
@@ -21,7 +21,7 @@ codeunit 69000 "Lexer FS"
         CurrentChar := 1;
 
         InitOperatorMap();
-        InitBooleanOperatorMap();
+        InitKeywordOperatorMap();
         InitKeywordMap();
     end;
 
@@ -54,12 +54,15 @@ codeunit 69000 "Lexer FS"
         OperatorMap.Add('>=', Enum::"Operator FS"::">=");
     end;
 
-    local procedure InitBooleanOperatorMap()
+    local procedure InitKeywordOperatorMap()
     begin
-        BooleanOperatorMap.Add('and', Enum::"Operator FS"::"and");
-        BooleanOperatorMap.Add('or', Enum::"Operator FS"::"or");
-        BooleanOperatorMap.Add('xor', Enum::"Operator FS"::"xor");
-        BooleanOperatorMap.Add('not', Enum::"Operator FS"::"not");
+        KeywordOperatorMap.Add('and', Enum::"Operator FS"::"and");
+        KeywordOperatorMap.Add('or', Enum::"Operator FS"::"or");
+        KeywordOperatorMap.Add('xor', Enum::"Operator FS"::"xor");
+        KeywordOperatorMap.Add('not', Enum::"Operator FS"::"not");
+
+        KeywordOperatorMap.Add('div', Enum::"Operator FS"::"div");
+        KeywordOperatorMap.Add('mod', Enum::"Operator FS"::"mod");
     end;
 
     local procedure InitKeywordMap()
@@ -203,14 +206,14 @@ codeunit 69000 "Lexer FS"
         exit(OperatorMap.ContainsKey(Operator));
     end;
 
-    local procedure IsBooleanOperator(Operator: Text): Boolean
+    local procedure IsKeywordOperator(Operator: Text): Boolean
     begin
-        exit(BooleanOperatorMap.ContainsKey(Operator.ToLower()));
+        exit(KeywordOperatorMap.ContainsKey(Operator.ToLower()));
     end;
 
-    local procedure GetBooleanOperator(Operator: Text): Enum "Operator FS"
+    local procedure GetKeywordOperator(Operator: Text): Enum "Operator FS"
     begin
-        exit(BooleanOperatorMap.Get(Operator.ToLower()));
+        exit(KeywordOperatorMap.Get(Operator.ToLower()));
     end;
 
     local procedure EOS(): Boolean
@@ -384,8 +387,8 @@ codeunit 69000 "Lexer FS"
         case true of
             Identifier.ToLower() in ['true', 'false']:
                 exit(Lexeme.Bool(Identifier.ToLower() = 'true'));
-            IsBooleanOperator(Identifier):
-                exit(Lexeme.Operator(GetBooleanOperator(Identifier)));
+            IsKeywordOperator(Identifier):
+                exit(Lexeme.Operator(GetKeywordOperator(Identifier)));
             IsKeyword(Identifier):
                 exit(Lexeme.Keyword(GetKeyword(Identifier)));
             else

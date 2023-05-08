@@ -4,7 +4,7 @@ enum 69003 "Operator FS"
     Extensible = false;
 
     value(0; " ") { }
-    // TODO div and mod?
+
     value(1; "+") { }
     value(2; "-") { }
     value(3; "*") { }
@@ -36,4 +36,7 @@ enum 69003 "Operator FS"
     value(10001; "or") { }
     value(10002; "xor") { }
     value(10003; "not") { }
+
+    value(20000; "div") { }
+    value(20001; "mod") { }
 }
