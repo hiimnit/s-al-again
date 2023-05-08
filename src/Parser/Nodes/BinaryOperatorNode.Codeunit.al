@@ -2,7 +2,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
 {
     var
         Left, Right : Interface "Node FS";
-        Operator: Enum "Operator FS";
+        BinaryOperator: Enum "Operator FS";
 
     procedure Init
     (
@@ -13,7 +13,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     begin
         Left := NewLeft;
         Right := NewRight;
-        Operator := NewOperator; // TODO validate?
+        BinaryOperator := NewOperator; // TODO validate?
     end;
 
     procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
@@ -23,16 +23,26 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         LeftValueVariant := Left.Evaluate(Memory).GetValue();
         RightValueVariant := Right.Evaluate(Memory).GetValue();
 
+        exit(Evaluate(LeftValueVariant, RightValueVariant, BinaryOperator));
+    end;
+
+    procedure Evaluate
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    begin
         case true of
             LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal():
-                exit(EvaluateNumeric(LeftValueVariant, RightValueVariant));
+                exit(EvaluateNumeric(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
-                exit(EvaluateBoolean(LeftValueVariant, RightValueVariant));
+                exit(EvaluateBoolean(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsText() and RightValueVariant.IsText():
-                exit(EvaluateText(LeftValueVariant, RightValueVariant));
+                exit(EvaluateText(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsText() and RightValueVariant.IsDecimal(),
             LeftValueVariant.IsDecimal() and RightValueVariant.IsText():
-                exit(EvaluateTextMultiplication(LeftValueVariant, RightValueVariant));
+                exit(EvaluateTextMultiplication(LeftValueVariant, RightValueVariant, Operator));
             else
                 Error('Unimplemented binary operator input types.'); // TODO
         end;
@@ -41,7 +51,8 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     local procedure EvaluateNumeric
     (
         LeftValueVariant: Variant;
-        RightValueVariant: Variant
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
     ): Interface "Value FS";
     var
         NumericValue: Codeunit "Numeric Value FS";
@@ -70,7 +81,8 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     local procedure EvaluateBoolean
     (
         LeftValueVariant: Variant;
-        RightValueVariant: Variant
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
     ): Interface "Value FS";
     var
         BooleanValue: Codeunit "Boolean Value FS";
@@ -97,7 +109,8 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     local procedure EvaluateText
     (
         LeftValueVariant: Variant;
-        RightValueVariant: Variant
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
     ): Interface "Value FS";
     var
         TextValue: Codeunit "Text Value FS";
@@ -120,7 +133,8 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     local procedure EvaluateTextMultiplication
     (
         LeftValueVariant: Variant;
-        RightValueVariant: Variant
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
     ): Interface "Value FS";
     var
         TextValue: Codeunit "Text Value FS";

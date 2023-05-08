@@ -298,19 +298,29 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseAssignmentStatement(): Interface "Node FS"
     var
-        Lexeme, DummyLexeme : Record "Lexeme FS";
+        Lexeme, OperatorLexeme : Record "Lexeme FS";
         AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
     begin
         Lexeme := AssertNextLexeme(
             Lexeme.Identifier('TODO') // TODO
         );
-        AssertNextLexeme(
-            DummyLexeme.Operator(Enum::"Operator FS"::":=") // FIXME now this changing `Rec` makes things difficult
-        );
+
+        OperatorLexeme := NextLexeme();
+        if not OperatorLexeme.IsOperator() or
+            not (OperatorLexeme."Operator Value" in [
+                Enum::"Operator FS"::":=",
+                Enum::"Operator FS"::"+=",
+                Enum::"Operator FS"::"-=",
+                Enum::"Operator FS"::"*=",
+                Enum::"Operator FS"::"/="
+            ])
+        then
+            Error('Unexpected token %1 - expected an assignment operator.', OperatorLexeme.Type);
 
         AssignmentStatementNode.Init(
             Lexeme."Identifier Name",
-            ParseExpression()
+            ParseExpression(),
+            OperatorLexeme."Operator Value"
         );
 
         exit(AssignmentStatementNode);

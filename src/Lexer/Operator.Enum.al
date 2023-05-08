@@ -1,7 +1,9 @@
 enum 69003 "Operator FS"
 {
     Caption = 'Operator';
+    Extensible = false;
 
+    value(0; " ") { }
     // TODO div and mod?
     value(1; "+") { }
     value(2; "-") { }
@@ -25,10 +27,10 @@ enum 69003 "Operator FS"
     value(1002; "*=") { }
     value(1003; "/=") { }
     value(1004; ":=") { }
-    value(1005; "::") { }
-    value(1006; "<>") { }
-    value(1007; "<=") { }
-    value(1008; ">=") { }
+    value(1005; "::") { } // unimplemented
+    value(1006; "<>") { } // unimplemented
+    value(1007; "<=") { } // unimplemented
+    value(1008; ">=") { } // unimplemented
 
     value(10000; "and") { }
     value(10001; "or") { }
