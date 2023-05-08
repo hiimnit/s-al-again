@@ -136,6 +136,61 @@ codeunit 69001 "Parser FS"
         exit(IfStatementNode);
     end;
 
+    local procedure ParseForStatement(): Interface "Node FS"
+    var
+        Lexeme: Record "Lexeme FS";
+        ForStatementNode: Codeunit "For Statement Node FS";
+        InitialValueExpression, FinalValueExpression, Statement : Interface "Node FS";
+        IdentifierName: Text;
+        DownToLoop: Boolean;
+    begin
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"for")
+        );
+
+        IdentifierName := AssertNextLexeme(
+            Lexeme.Identifier('TODO') // TODO
+        )."Identifier Name";
+
+        AssertNextLexeme(
+            Lexeme.Operator(Enum::"Operator FS"::":=")
+        );
+
+        InitialValueExpression := ParseExpression();
+
+        Lexeme := NextLexeme();
+        case true of
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"to"):
+                DownToLoop := false;
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"downto"):
+                DownToLoop := true;
+            else
+                Error(
+                    'Unexpected lexeme, expected keyword %1 or %2.',
+                    Enum::"Keyword FS"::"to",
+                    Enum::"Keyword FS"::"downto"
+                );
+        end;
+
+        FinalValueExpression := ParseExpression();
+
+        AssertNextLexeme(
+            Lexeme.Keyword(Enum::"Keyword FS"::"do")
+        );
+
+        Statement := ParseStatement();
+
+        ForStatementNode.Init(
+            Statement,
+            IdentifierName,
+            InitialValueExpression,
+            FinalValueExpression,
+            DownToLoop
+        );
+
+        exit(ForStatementNode);
+    end;
+
     local procedure ParseStatementList(): Interface "Node FS"
     var
         PeekedLexeme: Record "Lexeme FS";
@@ -165,6 +220,8 @@ codeunit 69001 "Parser FS"
                 exit(ParseCompoundStatement());
             Lexeme.IsKeyword(Enum::"Keyword FS"::"if"):
                 exit(ParseIfStatement());
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"for"):
+                exit(ParseForStatement());
             Lexeme.IsIdentifier():
                 exit(ParseAssignmentStatement());
         end;
@@ -721,7 +778,6 @@ codeunit 69016 "Statement List FS" implements "Node FS"
 codeunit 69019 "If Statement Node FS" implements "Node FS"
 {
     var
-        // TODO
         Expression, IfStatement, ElseStatement : Interface "Node FS";
         ElseStatementSet: Boolean;
 
@@ -758,6 +814,79 @@ codeunit 69019 "If Statement Node FS" implements "Node FS"
                 ElseStatement.Evaluate(Memory);
 
         exit(VoidValue);
+    end;
+}
+
+codeunit 69020 "For Statement Node FS" implements "Node FS"
+{
+    var
+        Statement: Interface "Node FS";
+        IdentifierName: Text;
+        InitialValueExpression, FinalValueExpression : Interface "Node FS";
+        DownToLoop: Boolean;
+
+    procedure Init
+    (
+        NewStatement: Interface "Node FS";
+        NewIdentifierName: Text;
+        NewInitialValueExpression: Interface "Node FS";
+        NewFinalValueExpression: Interface "Node FS";
+        NewDownToLoop: Boolean
+    )
+    begin
+        Statement := NewStatement;
+        IdentifierName := NewIdentifierName;
+        InitialValueExpression := NewInitialValueExpression;
+        FinalValueExpression := NewFinalValueExpression;
+        DownToLoop := NewDownToLoop;
+    end;
+
+    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    var
+        VoidValue: Codeunit "Void Value FS";
+        NumericValue: Codeunit "Numeric Value FS";
+        InitialValue: Interface "Value FS";
+        Value, FinalValue : Decimal;
+    begin
+        InitialValue := InitialValueExpression.Evaluate(Memory);
+        Memory.Set(IdentifierName, InitialValue);
+        FinalValue := FinalValueExpression.Evaluate(Memory).GetValue();
+
+        Value := Memory.Get(IdentifierName).GetValue();
+        if not CheckCondition(Value, FinalValue) then
+            while true do begin
+                Statement.Evaluate(Memory);
+
+                // TODO this is not correct, investigate further
+                // >>>> when using decimals, end value can different from the final value
+                // >>>> maybe check for equality first?
+                Value := Increment(Memory.Get(IdentifierName).GetValue());
+                if CheckCondition(Value, FinalValue) then
+                    break;
+
+                NumericValue.SetValue(Value);
+                Memory.Set(IdentifierName, NumericValue);
+            end;
+
+        exit(VoidValue);
+    end;
+
+    local procedure CheckCondition
+    (
+        Value: Decimal;
+        FinalValue: Decimal
+    ): Boolean
+    begin
+        if DownToLoop then
+            exit(Value < FinalValue);
+        exit(Value > FinalValue);
+    end;
+
+    local procedure Increment(Value: Decimal): Decimal
+    begin
+        if DownToLoop then
+            exit(Value - 1);
+        exit(Value + 1);
     end;
 }
 
