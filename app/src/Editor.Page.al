@@ -74,8 +74,59 @@ page 69000 "Editor FS"
                     Parser.Parse();
                 end;
             }
+            action(Test)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    i: Decimal;
+                begin
+                    for i := 1 to Get10() do
+                        ;
+                    Message('i := 1 to Get10(): %1', i);
+
+                    for i := Get10() downto 1 do
+                        ;
+                    Message('i := Get10() downto 1: %1', i);
+
+                    for i := 1 to 1.5 do
+                        Message('i := 1 to 1.5: %1', i);
+                    Message('>> i := 1 to 1.5: %1', i);
+
+                    for i := 3.5 to 5.1 do
+                        Message('i := 3.5 to 5.1: %1', i);
+                    Message('>> i := 3.5 to 5.1: %1', i);
+                end;
+            }
+            action("Expression Tests")
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                var
+                    i: Decimal;
+                begin
+                    if true <> false <> true then
+                        ;
+
+                    if true = false = true then
+                        ;
+
+                    if 1 = 1 = true then
+                        ;
+                    if 1 <> 1 + 1 = true and false then
+                        ;
+                end;
+            }
         }
     }
+
+    local procedure Get10(): Integer
+    begin
+        Message('Get10');
+        exit(10);
+    end;
 
     var
         Input: Text;

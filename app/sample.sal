@@ -1,0 +1,68 @@
+var
+    hi: boolean;
+    hey: boolean;
+    text: text;
+    i: number;
+begin
+    hi := true;
+    hey := false;
+    hi := hey and true or hey;
+    
+    text := 'dva';
+    text := text * 3;
+
+    if hi then
+        text := 'true';
+
+    if not hi then
+        text := 'true'
+    else begin
+        i := 1;
+    end;
+
+    text := '';
+    for i := 10 downto 0 do begin
+        text := text + '0 ';
+    end;
+end;
+
+var
+    i: number;
+begin
+    i := 1;
+    i += 1;
+    i += i;
+end;
+
+var
+    i: number;
+    t: text;
+begin
+    t := 'hello';
+    t *= 4;
+end;
+
+var
+    i: number;
+    j: number;
+begin
+    i := 4 mod 2;
+    j := 4 div 2;
+end;
+
+var
+    i: number;
+    j: number;
+begin
+    if true <> false <> true then
+        ;
+
+    if true = false = true then
+        ;
+
+    if 1 = 1 = true then
+        ;
+    if 1 <> 1 + 1 = true and false then
+        ;
+end;
+
