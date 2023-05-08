@@ -3,6 +3,10 @@
     {
       "name": "app",
       "path": "./app"
+    },
+    {
+      "name": "editor",
+      "path": "./editor"
     }
   ]
 }
