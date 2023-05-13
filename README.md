@@ -20,28 +20,13 @@ Scripts start with a `var` keyword followed by variable declarations.
 ```sal
 var
     hello: boolean;
-    i: number;
+    text: text;
 begin
-    hi := true;
-    hey := false;
-    hi := hey and true or hey;
+    text := 'h' + 'e' + 'l' * 2 + 'o';
+    hello := 'hello' = text;
     
-    text := 'hello';
-    text := text * 3;
-
-    if hi then
-        text := 'true';
-
-    if not hi then
-        text := 'true'
-    else begin
-        i := 1;
-    end;
-
-    text := '';
-    for i := 10 downto 0 do begin
-        text := text + '0 ';
-    end;
+    if hello then
+        text += ' ' + 'world!';
 end;
 ```
 
@@ -73,4 +58,4 @@ Right now only a handful of basic types is supported:
 
 ## editor
 
-React app addin for using the [Monaco Editor](https://github.com/microsoft/monaco-editor) for script input.
+React app addin using the [Monaco Editor](https://github.com/microsoft/monaco-editor) for script input.
