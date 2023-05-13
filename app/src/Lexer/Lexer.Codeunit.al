@@ -1,6 +1,6 @@
 codeunit 69000 "Lexer FS"
 {
-    // TODO error show incorrect position!
+    // TODO error shows incorrect position!
 
     var
         Lines: List of [Text];
@@ -14,8 +14,6 @@ codeunit 69000 "Lexer FS"
         TypeHelper: Codeunit "Type Helper";
     begin
         Lines := Input.Split(TypeHelper.LFSeparator());
-
-        // TODO remove all <CR> (13)?
 
         CurrentLine := 1;
         CurrentChar := 1;
@@ -146,7 +144,7 @@ codeunit 69000 "Lexer FS"
         repeat
             Char := NextChar();
 
-            if Char = Enum::"ASCII FS"::NUL.AsInteger() then
+            if Char in [Enum::"ASCII FS"::NUL.AsInteger(), Enum::"ASCII FS"::LF.AsInteger()] then
                 Error('Unexpected end of stream, expected %3 at line %1, character %2.', CurrentLine, CurrentChar, Stop);
             if Char = Stop then
                 break;
@@ -336,7 +334,7 @@ codeunit 69000 "Lexer FS"
         AssertChar(Char, '''');
 
         repeat
-            StringBuilder.Append(TakeUntil('''')); // TODO this allow multiline strings!
+            StringBuilder.Append(TakeUntil(''''));
 
             if PeekNextChar() <> '''' then
                 break;
@@ -355,7 +353,7 @@ codeunit 69000 "Lexer FS"
     begin
         AssertChar(Char, '"');
 
-        Identifier := TakeUntil('"'); // TODO this allow multiline identifiers!
+        Identifier := TakeUntil('"');
 
         exit(Lexeme.Identifier(Identifier));
     end;
