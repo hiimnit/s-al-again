@@ -7,6 +7,23 @@
     {
       "name": "editor",
       "path": "./editor"
+    },
+    {
+      "name": "project",
+      "path": "."
     }
-  ]
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/CVS": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true,
+      ".snapshots": true,
+      "app": true,
+      "editor": true
+    }
+  }
 }
