@@ -29,4 +29,17 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
 
         exit(VoidValue);
     end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        Symbol := Expression.ValidateSemantics(SymbolTable);
+        if Symbol.Type <> Symbol.Type::Boolean then
+            Error('While condition must evaluate to a boolean value.');
+
+        Statement.ValidateSemantics(SymbolTable);
+
+        exit(SymbolTable.VoidSymbol());
+    end;
 }

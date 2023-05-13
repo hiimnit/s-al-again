@@ -13,14 +13,18 @@ codeunit 69001 "Parser FS"
     var
         Lexeme: Record "Lexeme FS";
         Memory: Codeunit "Memory FS";
+        SymbolTable: Codeunit "Symbol Table FS";
         Node: Interface "Node FS";
     begin
-        Node := ParseProgram(Memory);
+        Node := ParseProgram(SymbolTable);
 
         AssertNextLexeme(
             Lexeme.EOS()
         );
 
+        Node.ValidateSemantics(SymbolTable);
+
+        Memory.Init(SymbolTable);
         Node.Evaluate(Memory);
 
         Memory.DebugMessage();
@@ -28,15 +32,13 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseProgram
     (
-        // TODO temporary solution => return a list of variables - symbol table
-        // >>>> so that the interpreter can initialize them when needed
-        Memory: Codeunit "Memory FS"
+        SymbolTable: Codeunit "Symbol Table FS"
     ): Interface "Node FS"
     var
         Lexeme, PeekedLexeme : Record "Lexeme FS";
         CompoundStatement: Interface "Node FS";
-        VariableName: Text;
-        VariableType: Enum "Built-in Type FS";
+        VariableName: Text[120];
+        VariableType: Enum "Type FS";
     begin
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"var")
@@ -57,10 +59,9 @@ codeunit 69001 "Parser FS"
             Lexeme := AssertNextLexeme(
                 Lexeme.Identifier('TODO') // TODO
             );
-            VariableType := ParseBuiltinType(Lexeme."Identifier Name");
+            VariableType := ParseType(Lexeme."Identifier Name");
 
-            // TODO variables should not be initialized here
-            Memory.DefineLocalVariable(
+            SymbolTable.Define(
                 VariableName,
                 VariableType
             );
@@ -161,7 +162,7 @@ codeunit 69001 "Parser FS"
         Lexeme: Record "Lexeme FS";
         ForStatementNode: Codeunit "For Statement Node FS";
         InitialValueExpression, FinalValueExpression, Statement : Interface "Node FS";
-        IdentifierName: Text;
+        IdentifierName: Text[120];
         DownToLoop: Boolean;
     begin
         AssertNextLexeme(
@@ -574,16 +575,17 @@ codeunit 69001 "Parser FS"
         end;
     end;
 
-    local procedure ParseBuiltinType(Identifier: Text): Enum "Built-in Type FS"
+    local procedure ParseType(Identifier: Text): Enum "Type FS"
     begin
         case Identifier.ToLower() of
             // TODO support standard integer and decimal types?
             'number':
-                exit(Enum::"Built-in Type FS"::Number);
+                exit(Enum::"Type FS"::Number);
+            // TODO support code type?
             'text':
-                exit(Enum::"Built-in Type FS"::Text);
+                exit(Enum::"Type FS"::Text);
             'boolean':
-                exit(Enum::"Built-in Type FS"::Boolean);
+                exit(Enum::"Type FS"::Boolean);
             else
                 Error('Unknown type %1.', Identifier);
         end;

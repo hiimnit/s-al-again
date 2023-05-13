@@ -38,4 +38,19 @@ codeunit 69019 "If Statement Node FS" implements "Node FS"
 
         exit(VoidValue);
     end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        Symbol := Expression.ValidateSemantics(SymbolTable);
+        if Symbol.Type <> Symbol.Type::Boolean then
+            Error('If condition must evaluate to a boolean value.');
+
+        IfStatement.ValidateSemantics(SymbolTable);
+        if ElseStatementSet then
+            ElseStatement.ValidateSemantics(SymbolTable);
+
+        exit(SymbolTable.VoidSymbol());
+    end;
 }

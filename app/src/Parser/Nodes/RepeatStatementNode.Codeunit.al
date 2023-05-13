@@ -29,4 +29,17 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
 
         exit(VoidValue);
     end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        Statement.ValidateSemantics(SymbolTable);
+
+        Symbol := Expression.ValidateSemantics(SymbolTable);
+        if Symbol.Type <> Symbol.Type::Boolean then
+            Error('Repeat condition must evaluate to a boolean value.');
+
+        exit(SymbolTable.VoidSymbol());
+    end;
 }

@@ -5,10 +5,21 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
         LocalVariableCount: Integer;
         LocalVariableMap: Dictionary of [Text, Integer];
 
-    procedure DefineLocalVariable
+    procedure Init(SymbolTable: Codeunit "Symbol Table FS")
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        if not SymbolTable.FindSet(Symbol) then
+            exit;
+
+        repeat
+            DefineLocalVariable(Symbol);
+        until not SymbolTable.Next(Symbol);
+    end;
+
+    local procedure DefineLocalVariable
     (
-        Name: Text;
-        Type: Enum "Built-in Type FS"
+        Symbol: Record "Symbol FS"
     )
     var
         NumericValue: Codeunit "Numeric Value FS";
@@ -19,17 +30,17 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
             Error('Reached maximum allowed number of local variables %1.', ArrayLen(LocalVariables));
 
         LocalVariableCount += 1;
-        LocalVariableMap.Add(Name.ToLower(), LocalVariableCount); // TODO nice error if it already exists
+        LocalVariableMap.Add(Symbol.Name.ToLower(), LocalVariableCount);
 
-        case Type of
-            Type::Number:
+        case Symbol.Type of
+            Symbol.Type::Number:
                 LocalVariables[LocalVariableCount] := NumericValue;
-            Type::Boolean:
+            Symbol.Type::Boolean:
                 LocalVariables[LocalVariableCount] := BooleanValue;
-            Type::Text:
+            Symbol.Type::Text:
                 LocalVariables[LocalVariableCount] := TextValue;
             else
-                Error('Unimplemented built-in type initilization %1.', Type);
+                Error('Initilization of type %1 is not supported.', Symbol.Type);
         end;
     end;
 
@@ -41,6 +52,7 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
     procedure Set(Name: Text; Value: Interface "Value FS")
     begin
         // TODO currently it is possible to change the variable data type in runtime
+        // >>>> semantic analysis should not let this happen (if implemented properly)
         LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
     end;
 

@@ -68,4 +68,25 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         BooleanValue.SetValue(Result);
         exit(BooleanValue);
     end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        Symbol := Node.ValidateSemantics(SymbolTable);
+
+        case Operator of
+            Operator::"+",
+            Operator::"-":
+                if Symbol.Type <> Symbol.Type::Number then
+                    Error('Unary operator %1 can not be applied to symbol %2.', Operator, Symbol.Type);
+            Operator::"not":
+                if Symbol.Type <> Symbol.Type::Boolean then
+                    Error('Unary operator %1 can not be applied to symbol %2.', Operator, Symbol.Type);
+            else
+                Error('Unimplemented unary operator %1.', Operator);
+        end;
+
+        exit(Symbol);
+    end;
 }

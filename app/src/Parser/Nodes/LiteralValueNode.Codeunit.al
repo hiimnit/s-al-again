@@ -31,4 +31,9 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     begin
         exit(LiteralValue);
     end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    begin
+        exit(SymbolTable.SymbolFromType(LiteralValue.GetType()));
+    end;
 }

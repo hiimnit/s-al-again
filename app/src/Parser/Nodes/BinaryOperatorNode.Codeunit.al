@@ -172,7 +172,6 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 Error('Invalid argument types.');
         end;
 
-
         case Operator of
             Operator::"*":
                 // TODO check negative number?
@@ -284,5 +283,180 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             else
                 Error('Unexpected comparison operator %1.', Operator);
         end;
+    end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    var
+        LeftSymbol, RightSymbol : Record "Symbol FS";
+    begin
+        LeftSymbol := Left.ValidateSemantics(SymbolTable);
+        RightSymbol := Right.ValidateSemantics(SymbolTable);
+
+        exit(ValidateSemantics(
+            SymbolTable,
+            LeftSymbol,
+            RightSymbol,
+            BinaryOperator
+        ));
+    end;
+
+    procedure ValidateSemantics
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS";
+    var
+        ResultSymbol: Record "Symbol FS";
+    begin
+        case true of
+            Operator in [
+                Operator::"<",
+                Operator::"<=",
+                Operator::"<>",
+                Operator::">=",
+                Operator::">",
+                Operator::"="
+            ]:
+                ResultSymbol := ValidateComparison(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Number):
+                ResultSymbol := ValidateNumeric(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            (LeftSymbol.Type = LeftSymbol.Type::Boolean) and (RightSymbol.Type = RightSymbol.Type::Boolean):
+                ResultSymbol := ValidateBoolean(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Text):
+                ResultSymbol := ValidateText(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Number),
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Text):
+                ResultSymbol := ValidateTextMultiplication(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(ResultSymbol);
+    end;
+
+    local procedure ValidateComparison
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        case true of
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Text),
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Number),
+            (LeftSymbol.Type = LeftSymbol.Type::Boolean) and (RightSymbol.Type = RightSymbol.Type::Boolean):
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.BooleanSymbol());
+    end;
+
+    local procedure ValidateNumeric
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        case Operator of
+            Operator::"+",
+            Operator::"-",
+            Operator::"*",
+            Operator::"/",
+            Operator::"div",
+            Operator::"mod":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.NumbericSymbol());
+    end;
+
+    local procedure ValidateBoolean
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        case Operator of
+            Operator::"or",
+            Operator::"and",
+            Operator::"xor":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.BooleanSymbol());
+    end;
+
+    local procedure ValidateText
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        case Operator of
+            Operator::"+":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.TextSymbol());
+    end;
+
+    local procedure ValidateTextMultiplication
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        case Operator of
+            Operator::"*":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.TextSymbol());
     end;
 }

@@ -13,4 +13,9 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
         // TODO runtime data type checking?
         Value := NewValue;
     end;
+
+    procedure GetType(): Enum "Type FS"
+    begin
+        exit(Enum::"Type FS"::Number);
+    end;
 }

@@ -2,12 +2,12 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
 {
     var
         Expression: Interface "Node FS";
-        Name: Text;
+        Name: Text[120];
         Operator: Enum "Operator FS";
 
     procedure Init
     (
-        NewName: Text;
+        NewName: Text[120];
         NewExpression: Interface "Node FS";
         NewOperator: Enum "Operator FS"
     )
@@ -60,5 +60,44 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         );
 
         exit(VoidValue);
+    end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    var
+        VariableSymbol, ExpressionSymbol : Record "Symbol FS";
+        BinaryOperatorNode: Codeunit "Binary Operator Node FS";
+        BinaryOperator: Enum "Operator FS";
+    begin
+        VariableSymbol := SymbolTable.Lookup(Name);
+
+        ExpressionSymbol := Expression.ValidateSemantics(SymbolTable);
+
+        case Operator of
+            Operator::"+=":
+                BinaryOperator := BinaryOperator::"+";
+            Operator::"-=":
+                BinaryOperator := BinaryOperator::"-";
+            Operator::"*=":
+                BinaryOperator := BinaryOperator::"*";
+            Operator::"/=":
+                BinaryOperator := BinaryOperator::"/";
+            Operator::":=":
+                BinaryOperator := BinaryOperator::" ";
+            else
+                Error('Unimplemented assignment operator %1.', Operator);
+        end;
+
+        if BinaryOperator <> BinaryOperator::" " then
+            ExpressionSymbol := BinaryOperatorNode.ValidateSemantics(
+                SymbolTable,
+                VariableSymbol,
+                ExpressionSymbol,
+                BinaryOperator
+            );
+
+        if ExpressionSymbol.Type <> VariableSymbol.Type then
+            Error('Cannot assign type %1 to variable %2 of type %3.', ExpressionSymbol.Type, Name, VariableSymbol.Type);
+
+        exit(SymbolTable.VoidSymbol());
     end;
 }

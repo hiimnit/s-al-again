@@ -2,14 +2,14 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
 {
     var
         Statement: Interface "Node FS";
-        IdentifierName: Text;
+        IdentifierName: Text[120];
         InitialValueExpression, FinalValueExpression : Interface "Node FS";
         DownToLoop: Boolean;
 
     procedure Init
     (
         NewStatement: Interface "Node FS";
-        NewIdentifierName: Text;
+        NewIdentifierName: Text[120];
         NewInitialValueExpression: Interface "Node FS";
         NewFinalValueExpression: Interface "Node FS";
         NewDownToLoop: Boolean
@@ -68,5 +68,26 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         if DownToLoop then
             exit(Value - 1);
         exit(Value + 1);
+    end;
+
+    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        Symbol := SymbolTable.Lookup(IdentifierName);
+        if Symbol.Type <> Symbol.Type::Number then
+            Error('For variable must be of a number type.');
+
+        Symbol := InitialValueExpression.ValidateSemantics(SymbolTable);
+        if Symbol.Type <> Symbol.Type::Number then
+            Error('For initial expression must evaluate to a number type.');
+
+        Symbol := FinalValueExpression.ValidateSemantics(SymbolTable);
+        if Symbol.Type <> Symbol.Type::Number then
+            Error('For final expression must evaluate to a number type.');
+
+        Statement.ValidateSemantics(SymbolTable);
+
+        exit(SymbolTable.VoidSymbol());
     end;
 }
