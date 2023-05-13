@@ -478,14 +478,12 @@ codeunit 69001 "Parser FS"
                     end;
             end;
 
-        if PeekedLexeme.IsIdentifier() then begin
+        if PeekedLexeme.IsNumber() then begin
             Lexeme := AssertNextLexeme(PeekedLexeme);
 
-            VariableNode.Init(
-                Lexeme."Identifier Name"
-            );
+            LiteralValueNode.Init(Lexeme."Number Value");
 
-            exit(VariableNode);
+            exit(LiteralValueNode);
         end;
 
         if PeekedLexeme.IsBoolean() then begin
@@ -505,12 +503,18 @@ codeunit 69001 "Parser FS"
         end;
 
         Lexeme := AssertNextLexeme(
-            Lexeme.Number(0) // TODO ugly
+            Lexeme.Identifier('TODO') // TODO
         );
 
-        LiteralValueNode.Init(Lexeme."Number Value");
+        VariableNode.Init(
+            Lexeme."Identifier Name"
+        );
 
-        exit(LiteralValueNode);
+        // TODO . or () operator
+        // >>>> its basically a function invocation? but what about assignment?
+        // Lexeme."Identifier Name" := Lexeme."Identifier Name".ToLower().ToUpper().PadLeft(1).PadRight(2);
+
+        exit(VariableNode);
     end;
 
     local procedure NextLexeme(): Record "Lexeme FS"
