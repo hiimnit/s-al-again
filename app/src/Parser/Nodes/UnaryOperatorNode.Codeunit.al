@@ -11,7 +11,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
     )
     begin
         Node := NewNode;
-        Operator := NewOperator; // TODO validate?
+        Operator := NewOperator;
     end;
 
     procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
@@ -27,7 +27,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
             Operator::"not":
                 exit(EvaluateBoolean(ValueVariant));
             else
-                Error('Unimplemented unary operator %1.', Operator); // TODO
+                Error('Unimplemented unary operator %1.', Operator);
         end;
     end;
 
@@ -44,7 +44,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
             Operator::"-":
                 Result := -Value;
             else
-                Error('Unimplemented unary operator %1.', Operator); // TODO
+                Error('Unimplemented unary operator %1.', Operator);
         end;
 
         NumericValue.SetValue(Result);
@@ -62,7 +62,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
             Operator::"not":
                 Result := not Value;
             else
-                Error('Unimplemented unary operator %1.', Operator); // TODO
+                Error('Unimplemented unary operator %1.', Operator);
         end;
 
         BooleanValue.SetValue(Result);

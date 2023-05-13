@@ -33,6 +33,7 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         Memory.Set(IdentifierName, InitialValue);
         FinalValue := FinalValueExpression.Evaluate(Memory).GetValue();
 
+        // TODO rework using the standard for loop?
         Value := Memory.Get(IdentifierName).GetValue();
         if not CheckCondition(Value, FinalValue) then
             while true do begin

@@ -10,7 +10,6 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
 
     procedure SetValue(NewValue: Variant);
     begin
-        // TODO runtime data type checking?
         Value := NewValue;
     end;
 

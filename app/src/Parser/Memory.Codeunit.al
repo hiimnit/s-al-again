@@ -1,4 +1,4 @@
-codeunit 69009 "Memory FS" // TODO or Stack/Runtime?
+codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
 {
     var
         LocalVariables: array[50] of Interface "Value FS";
