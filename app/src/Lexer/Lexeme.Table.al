@@ -53,6 +53,13 @@ table 69000 "Lexeme FS"
         exit(Rec);
     end;
 
+    procedure Identifier(): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Identifier;
+        exit(Rec);
+    end;
+
     procedure Identifier(Name: Text): Record "Lexeme FS"
     begin
         if StrLen(Name) > MaxStrLen(Rec."Identifier Name") then

@@ -56,9 +56,7 @@ codeunit 69001 "Parser FS"
                 Lexeme.Operator(Enum::"Operator FS"::":")
             );
 
-            Lexeme := AssertNextLexeme(
-                Lexeme.Identifier('TODO') // TODO
-            );
+            Lexeme := AssertNextLexeme(Lexeme.Identifier());
             VariableType := ParseType(Lexeme."Identifier Name");
 
             SymbolTable.Define(
@@ -169,9 +167,7 @@ codeunit 69001 "Parser FS"
             Lexeme.Keyword(Enum::"Keyword FS"::"for")
         );
 
-        IdentifierName := AssertNextLexeme(
-            Lexeme.Identifier('TODO') // TODO
-        )."Identifier Name";
+        IdentifierName := AssertNextLexeme(Lexeme.Identifier())."Identifier Name";
 
         AssertNextLexeme(
             Lexeme.Operator(Enum::"Operator FS"::":=")
@@ -302,9 +298,7 @@ codeunit 69001 "Parser FS"
         Lexeme, OperatorLexeme : Record "Lexeme FS";
         AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
     begin
-        Lexeme := AssertNextLexeme(
-            Lexeme.Identifier('TODO') // TODO
-        );
+        Lexeme := AssertNextLexeme(Lexeme.Identifier());
 
         OperatorLexeme := NextLexeme();
         if not OperatorLexeme.IsOperator() or
@@ -503,9 +497,7 @@ codeunit 69001 "Parser FS"
             exit(LiteralValueNode);
         end;
 
-        Lexeme := AssertNextLexeme(
-            Lexeme.Identifier('TODO') // TODO
-        );
+        Lexeme := AssertNextLexeme(Lexeme.Identifier());
 
         VariableNode.Init(
             Lexeme."Identifier Name"
