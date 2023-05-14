@@ -3,7 +3,13 @@ import "./index.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-import App from "./App.tsx";
+import App, { ConsoleManager } from "./App.tsx";
+
+declare global {
+  interface Window {
+    WriteLine: (input: string) => void;
+  }
+}
 
 ReactDOM.createRoot(
   document.getElementById("controlAddIn") as HTMLElement
@@ -13,8 +19,13 @@ ReactDOM.createRoot(
   </React.StrictMode>
 );
 
-// @ts-ignore
 if (window.Microsoft !== undefined) {
-  // @ts-ignore
-  Microsoft.Dynamics.NAV.InvokeExtensibilityMethod("Ready", []);
+  window.Microsoft.Dynamics.NAV.InvokeExtensibilityMethod("Ready", []);
 }
+
+// TODO buffering messages in BC is probably better
+export const writeLine = (input: string) => {
+  ConsoleManager.instance.writeLine(input);
+};
+
+window.WriteLine = writeLine;

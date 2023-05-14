@@ -3,8 +3,8 @@ controladdin "Monaco Editor FS"
     VerticalStretch = true;
     HorizontalStretch = true;
 
-    StyleSheets = 'src/MonacoEditor/resources/index-dd053950.css';
-    StartupScript = 'src/MonacoEditor/resources/index-fe7da3b9.js';
+    StyleSheets = 'src/MonacoEditor/resources/index.css';
+    StartupScript = 'src/MonacoEditor/resources/index.js';
 
     event Tokenize(Input: Text)
     event Parse(Input: Text)

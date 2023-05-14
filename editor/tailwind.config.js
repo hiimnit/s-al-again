@@ -1,8 +1,14 @@
+const tailwindcss = import("tailwindcss");
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        monaco: ["Menlo", "Monaco", '"Courier New"', "monospace"],
+      },
+    },
   },
   plugins: [],
 };
