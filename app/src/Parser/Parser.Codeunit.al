@@ -9,10 +9,11 @@ codeunit 69001 "Parser FS"
         Lexer.Init(Input);
     end;
 
-    procedure Parse(): Interface "Node FS"
+    procedure Parse(MonacoEditor: ControlAddIn "Monaco Editor FS"): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
         Memory: Codeunit "Memory FS";
+        Runtime: Codeunit "Runtime FS";
         SymbolTable: Codeunit "Symbol Table FS";
         Node: Interface "Node FS";
     begin
@@ -22,10 +23,15 @@ codeunit 69001 "Parser FS"
             Lexeme.EOS()
         );
 
+        SymbolTable.Initialize();
         Node.ValidateSemantics(SymbolTable);
 
         Memory.Init(SymbolTable);
-        Node.Evaluate(Memory);
+        Runtime.Init(
+            Memory,
+            MonacoEditor
+        );
+        Node.Evaluate(Runtime);
 
         Memory.DebugMessage();
     end;
@@ -293,6 +299,7 @@ codeunit 69001 "Parser FS"
         exit(NoOp);
     end;
 
+    // TODO rename
     local procedure ParseAssignmentStatement(): Interface "Node FS"
     var
         Lexeme, OperatorLexeme : Record "Lexeme FS";
@@ -300,7 +307,10 @@ codeunit 69001 "Parser FS"
     begin
         Lexeme := AssertNextLexeme(Lexeme.Identifier());
 
-        OperatorLexeme := NextLexeme();
+        OperatorLexeme := PeekNextLexeme();
+        if OperatorLexeme.IsOperator(Enum::"Operator FS"::"(") then
+            exit(ParseCall(Lexeme));
+
         if not OperatorLexeme.IsOperator() or
             not (OperatorLexeme."Operator Value" in [
                 Enum::"Operator FS"::":=",
@@ -311,6 +321,8 @@ codeunit 69001 "Parser FS"
             ])
         then
             Error('Unexpected token %1 - expected an assignment operator.', OperatorLexeme.Type);
+
+        AssertNextLexeme(PeekNextLexeme());
 
         AssignmentStatementNode.Init(
             Lexeme."Identifier Name",
@@ -438,7 +450,6 @@ codeunit 69001 "Parser FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         LiteralValueNode: Codeunit "Literal Value Node FS";
-        VariableNode: Codeunit "Variable Node FS";
         UnaryOperatorNode: Codeunit "Unary Operator Node FS";
         ExpressionNode: Interface "Node FS";
     begin
@@ -497,15 +508,55 @@ codeunit 69001 "Parser FS"
             exit(LiteralValueNode);
         end;
 
-        Lexeme := AssertNextLexeme(Lexeme.Identifier());
+        exit(ParseCall(
+            NextLexeme()
+        ));
+    end;
+
+    local procedure ParseCall
+    (
+        Lexeme: Record "Lexeme FS"
+    ): Interface "Node FS"
+    var
+        PeekedLexeme: Record "Lexeme FS";
+        VariableNode: Codeunit "Variable Node FS";
+        ProcedureCallNode: Codeunit "Procedure Call Node FS";
+        Argument: Interface "Node FS";
+    begin
+        AssertLexeme(Lexeme, PeekedLexeme.Identifier());
+
+        PeekedLexeme := PeekNextLexeme();
+
+        if PeekedLexeme.IsOperator(Enum::"Operator FS"::"(") then begin
+            AssertNextLexeme(PeekedLexeme);
+
+            ProcedureCallNode.Init(Lexeme."Identifier Name");
+
+            PeekedLexeme := PeekNextLexeme();
+            if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
+                repeat
+                    Argument := ParseExpression();
+                    ProcedureCallNode.AddArgument(Argument);
+
+                    PeekedLexeme := PeekNextLexeme();
+                    if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"comma") then
+                        break;
+
+                    AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"comma"));
+                until false;
+
+            AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::")"));
+
+            exit(ProcedureCallNode);
+
+            // TODO . or () operator
+            // >>>> its basically a function invocation? but what about assignment?
+            // Lexeme."Identifier Name" := Lexeme."Identifier Name".ToLower().ToUpper().PadLeft(1).PadRight(2);
+        end;
 
         VariableNode.Init(
             Lexeme."Identifier Name"
         );
-
-        // TODO . or () operator
-        // >>>> its basically a function invocation? but what about assignment?
-        // Lexeme."Identifier Name" := Lexeme."Identifier Name".ToLower().ToUpper().PadLeft(1).PadRight(2);
 
         exit(VariableNode);
     end;
@@ -539,7 +590,7 @@ codeunit 69001 "Parser FS"
     begin
         Lexeme := NextLexeme();
 
-        AssetLexeme(
+        AssertLexeme(
             Lexeme,
             ExpectedLexeme
         );
@@ -547,7 +598,7 @@ codeunit 69001 "Parser FS"
         exit(Lexeme);
     end;
 
-    local procedure AssetLexeme
+    local procedure AssertLexeme
     (
         Lexeme: Record "Lexeme FS";
         ExpectedLexeme: Record "Lexeme FS"

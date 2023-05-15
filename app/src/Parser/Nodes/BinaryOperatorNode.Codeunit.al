@@ -16,12 +16,12 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         BinaryOperator := NewOperator; // TODO validate?
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         LeftValueVariant, RightValueVariant : Variant;
     begin
-        LeftValueVariant := Left.Evaluate(Memory).GetValue();
-        RightValueVariant := Right.Evaluate(Memory).GetValue();
+        LeftValueVariant := Left.Evaluate(Runtime).GetValue();
+        RightValueVariant := Right.Evaluate(Runtime).GetValue();
 
         exit(Evaluate(LeftValueVariant, RightValueVariant, BinaryOperator));
     end;

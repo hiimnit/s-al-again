@@ -8,9 +8,9 @@ codeunit 69017 "Variable Node FS" implements "Node FS"
         Name := NewName;
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     begin
-        exit(Memory.Get(Name));
+        exit(Runtime.GetMemory().Get(Name));
     end;
 
     procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";

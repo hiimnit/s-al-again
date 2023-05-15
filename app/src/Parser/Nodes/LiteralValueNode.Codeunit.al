@@ -27,7 +27,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         LiteralValue := TextValue;
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     begin
         exit(LiteralValue);
     end;

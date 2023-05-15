@@ -14,11 +14,11 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         Operator := NewOperator;
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         ValueVariant: Variant;
     begin
-        ValueVariant := Node.Evaluate(Memory).GetValue();
+        ValueVariant := Node.Evaluate(Runtime).GetValue();
 
         case Operator of
             Operator::"+",

@@ -1,10 +1,10 @@
-codeunit 69919 "Linked List FS"
+codeunit 69921 "Value Linked List FS"
 {
     var
-        FirstNode, LastNode : Codeunit "Linked List Node FS";
+        FirstNode, LastNode : Codeunit "Value Linked List Node FS";
         Count: Integer;
 
-    procedure First(var Node: Codeunit "Linked List Node FS"): Boolean
+    procedure First(var Node: Codeunit "Value Linked List Node FS"): Boolean
     begin
         if Count = 0 then
             exit(false);
@@ -12,9 +12,9 @@ codeunit 69919 "Linked List FS"
         exit(true);
     end;
 
-    procedure Insert(Value: Interface "Node FS")
+    procedure Insert(Value: Interface "Value FS")
     var
-        NewNode: Codeunit "Linked List Node FS";
+        NewNode: Codeunit "Value Linked List Node FS";
     begin
         NewNode.Value(Value);
 

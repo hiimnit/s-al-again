@@ -14,15 +14,15 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
         Value: Interface "Value FS";
     begin
         while true do begin
-            Statement.Evaluate(Memory);
+            Statement.Evaluate(Runtime);
 
-            Value := Expression.Evaluate(Memory);
+            Value := Expression.Evaluate(Runtime);
             if Value.GetValue() then
                 break;
         end;

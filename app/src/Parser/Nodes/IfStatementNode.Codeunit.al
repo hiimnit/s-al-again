@@ -23,18 +23,18 @@ codeunit 69019 "If Statement Node FS" implements "Node FS"
         ElseStatementSet := true;
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
         ExpressionValue: Interface "Value FS";
     begin
-        ExpressionValue := Expression.Evaluate(Memory);
+        ExpressionValue := Expression.Evaluate(Runtime);
 
         if ExpressionValue.GetValue() then
-            IfStatement.Evaluate(Memory)
+            IfStatement.Evaluate(Runtime)
         else
             if ElseStatementSet then
-                ElseStatement.Evaluate(Memory);
+                ElseStatement.Evaluate(Runtime);
 
         exit(VoidValue);
     end;

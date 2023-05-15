@@ -17,7 +17,7 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         Operator := NewOperator; // TODO check on assignment?
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
@@ -39,10 +39,10 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
                 Error('Unimplemented assignment operator %1.', Operator);
         end;
 
-        NewValue := Expression.Evaluate(Memory);
+        NewValue := Expression.Evaluate(Runtime);
 
         if BinaryOperator <> BinaryOperator::" " then begin
-            PreviousValue := Memory.Get(Name);
+            PreviousValue := Runtime.GetMemory().Get(Name);
 
             // TODO multiplying strings is going to cause issues
             // >>>> currently it changes the datatype of the variable
@@ -54,7 +54,7 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
             );
         end;
 
-        Memory.Set(
+        Runtime.GetMemory().Set(
             Name,
             NewValue
         );

@@ -1,21 +1,21 @@
-codeunit 69920 "Linked List Node FS"
+codeunit 69922 "Value Linked List Node FS"
 {
     var
-        NextNode: Codeunit "Linked List Node FS";
+        NextNode: Codeunit "Value Linked List Node FS";
         HasNextNode: Boolean;
-        InnerValue: Interface "Node FS";
+        InnerValue: Interface "Value FS";
 
-    procedure Value(NewValue: Interface "Node FS")
+    procedure Value(NewValue: Interface "Value FS")
     begin
         InnerValue := NewValue;
     end;
 
-    procedure Value(): Interface "Node FS"
+    procedure Value(): Interface "Value FS"
     begin
         exit(InnerValue);
     end;
 
-    procedure SetNext(NewNext: Codeunit "Linked List Node FS")
+    procedure SetNext(NewNext: Codeunit "Value Linked List Node FS")
     begin
         NextNode := NewNext;
         HasNextNode := true;
@@ -26,7 +26,7 @@ codeunit 69920 "Linked List Node FS"
         exit(HasNextNode);
     end;
 
-    procedure Next(var Node: Codeunit "Linked List Node FS"): Boolean
+    procedure Next(var Node: Codeunit "Value Linked List Node FS"): Boolean
     begin
         if not HasNextNode then
             exit(false);

@@ -14,17 +14,17 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
         Value: Interface "Value FS";
     begin
         while true do begin
-            Value := Expression.Evaluate(Memory);
+            Value := Expression.Evaluate(Runtime);
             if not Value.GetValue() then
                 break;
 
-            Statement.Evaluate(Memory);
+            Statement.Evaluate(Runtime);
         end;
 
         exit(VoidValue);
