@@ -15,18 +15,21 @@ Currently? Not much. Code is parsed, semantically analyzed and executed. Message
 ### Sample code
 
 Procedures are not supported - yet.
-Scripts start with a `var` keyword followed by variable declarations.
+Scripts start with a `var` keyword followed by variable declarations. **!TODO rewrite**
 
 ```sal
+trigger OnRun()
 var
     hello: boolean;
     text: text;
 begin
     text := 'h' + 'e' + 'l' * 2 + 'o';
     hello := 'hello' = text;
-    
+
     if hello then
         text += ' ' + 'world!';
+
+    WriteLine(text);
 end;
 ```
 
@@ -55,6 +58,14 @@ Right now only a handful of basic types is supported:
   - numeric (`+`, `-`, `*`, `/`, `mod`, `div`)
   - boolean (`and`, `or`, `xor`)
   - text (`+`, `*`)
+
+#### Built-in functions
+
+- `Message(Text: Text)`
+- `Error(Text: Text)`
+- `WriteLine(Text: Text)`
+- `Abs(Number: Number): Number`
+- `Power(Number: Number, Power: Number): Number`
 
 ## editor
 
