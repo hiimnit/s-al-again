@@ -7,7 +7,7 @@ codeunit 69015 "NoOp FS" implements "Node FS"
         exit(VoidValue);
     end;
 
-    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     begin
         exit(SymbolTable.VoidSymbol());
     end;

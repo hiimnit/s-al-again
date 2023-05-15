@@ -20,13 +20,13 @@ codeunit 69016 "Statement List FS" implements "Node FS"
         exit(VoidValue);
     end;
 
-    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
         LinkedListNode: Codeunit "Node Linked List Node FS";
     begin
         if StatementsList.First(LinkedListNode) then
             repeat
-                LinkedListNode.Value().ValidateSemantics(SymbolTable);
+                LinkedListNode.Value().ValidateSemantics(Runtime, SymbolTable);
             until not LinkedListNode.Next(LinkedListNode);
 
         exit(SymbolTable.VoidSymbol());

@@ -34,9 +34,9 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
         exit(Function.Evaluate(Runtime, ArgumentValues));
     end;
 
-    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     begin
-        Function := SymbolTable.LookupFunction(Name);
+        Function := Runtime.LookupFunction(Name);
 
         // FIXME 
         // >>>>> lookup function, validate its parameters and return its return type

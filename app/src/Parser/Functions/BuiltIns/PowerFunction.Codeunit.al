@@ -1,5 +1,10 @@
 codeunit 69201 "Power Function FS" implements "Function FS"
 {
+    procedure GetName(): Text[120];
+    begin
+        exit('Power');
+    end;
+
     procedure GetReturnType(): Enum "Type FS"
     begin
         exit(Enum::"Type FS"::Number);
@@ -20,5 +25,10 @@ codeunit 69201 "Power Function FS" implements "Function FS"
         NumericValue.SetValue(Result);
 
         exit(NumericValue);
+    end;
+
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
+    begin
+        // TODO do not call this for built ins?
     end;
 }

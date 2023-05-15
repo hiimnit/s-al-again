@@ -1,5 +1,10 @@
 codeunit 69203 "Error Function FS" implements "Function FS"
 {
+    procedure GetName(): Text[120];
+    begin
+        exit('Error');
+    end;
+
     procedure GetReturnType(): Enum "Type FS"
     begin
         exit(Enum::"Type FS"::Void);
@@ -17,5 +22,10 @@ codeunit 69203 "Error Function FS" implements "Function FS"
         Error(Text);
 
         exit(VoidValue);
+    end;
+
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
+    begin
+        // TODO do not call this for built ins?
     end;
 }

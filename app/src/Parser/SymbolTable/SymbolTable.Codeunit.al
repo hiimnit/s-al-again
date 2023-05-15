@@ -2,47 +2,6 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
 {
     var
         Symbol: Record "Symbol FS";
-        Functions: array[50] of Interface "Function FS";
-        FunctionMap: Dictionary of [Text[120], Integer];
-        FunctionCount: Integer;
-
-    procedure Initialize()
-    var
-        AbsFunction: Codeunit "Abs Function FS";
-        PowerFunction: Codeunit "Power Function FS";
-        MessageFunction: Codeunit "Message Function FS";
-        ErrorFunction: Codeunit "Error Function FS";
-        WriteLineFunction: Codeunit "Write Line Function FS";
-    begin
-        DefineFunction('Abs', AbsFunction);
-        DefineFunction('Power', PowerFunction);
-        DefineFunction('Message', MessageFunction);
-        DefineFunction('Error', ErrorFunction);
-        DefineFunction('WriteLine', WriteLineFunction);
-    end;
-
-    procedure DefineFunction
-    (
-        Name: Text[120];
-        Function: Interface "Function FS"
-    )
-    begin
-        // TODO check lenght and name uniqueness?
-        FunctionCount += 1;
-        FunctionMap.Add(Name.ToLower(), FunctionCount);
-        Functions[FunctionCount] := Function;
-    end;
-
-    procedure LookupFunction(Name: Text[120]): Interface "Function FS"
-    var
-        i: Integer;
-    begin
-        if not FunctionMap.ContainsKey(Name) then
-            Error('Function %1 does not exist.', Name);
-
-        i := FunctionMap.Get(Name.ToLower());
-        exit(Functions[i]);
-    end;
 
     procedure Define
     (

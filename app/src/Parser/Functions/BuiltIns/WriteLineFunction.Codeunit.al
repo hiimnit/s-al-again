@@ -1,5 +1,10 @@
 codeunit 69204 "Write Line Function FS" implements "Function FS"
 {
+    procedure GetName(): Text[120];
+    begin
+        exit('WriteLine');
+    end;
+
     procedure GetReturnType(): Enum "Type FS"
     begin
         exit(Enum::"Type FS"::Void);
@@ -17,5 +22,10 @@ codeunit 69204 "Write Line Function FS" implements "Function FS"
         Runtime.WriteLine(Text);
 
         exit(VoidValue);
+    end;
+
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
+    begin
+        // TODO do not call this for built ins?
     end;
 }

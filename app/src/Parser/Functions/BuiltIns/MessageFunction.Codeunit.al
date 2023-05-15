@@ -1,5 +1,10 @@
 codeunit 69202 "Message Function FS" implements "Function FS"
 {
+    procedure GetName(): Text[120];
+    begin
+        exit('Message');
+    end;
+
     procedure GetReturnType(): Enum "Type FS"
     begin
         exit(Enum::"Type FS"::Void);
@@ -17,5 +22,10 @@ codeunit 69202 "Message Function FS" implements "Function FS"
         Message(Text);
 
         exit(VoidValue);
+    end;
+
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
+    begin
+        // TODO do not call this for built ins?
     end;
 }

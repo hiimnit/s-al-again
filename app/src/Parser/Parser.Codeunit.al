@@ -12,31 +12,116 @@ codeunit 69001 "Parser FS"
     procedure Parse(MonacoEditor: ControlAddIn "Monaco Editor FS"): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
-        Memory: Codeunit "Memory FS";
         Runtime: Codeunit "Runtime FS";
-        SymbolTable: Codeunit "Symbol Table FS";
-        Node: Interface "Node FS";
+        EmptyValueLinkedList: Codeunit "Value Linked List FS";
+        Function: Interface "Function FS";
     begin
-        Node := ParseProgram(SymbolTable);
+        ParseFunctions(Runtime);
 
-        AssertNextLexeme(
-            Lexeme.EOS()
-        );
+        AssertNextLexeme(Lexeme.EOS());
 
-        SymbolTable.Initialize();
-        Node.ValidateSemantics(SymbolTable);
+        Runtime.Init(MonacoEditor);
 
-        Memory.Init(SymbolTable);
-        Runtime.Init(
-            Memory,
-            MonacoEditor
-        );
-        Node.Evaluate(Runtime);
+        // TODO nicer error if "main" does not exist
+        Function := Runtime.LookupFunction('OnRun');
 
-        Memory.DebugMessage();
+        // TODO validate all user defined functions!
+        Function.ValidateSemantics(Runtime);
+
+        Function.Evaluate(Runtime, EmptyValueLinkedList);
     end;
 
-    local procedure ParseProgram
+    local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
+    var
+        PeekedLexeme: Record "Lexeme FS";
+        Function: Interface "Function FS";
+    begin
+        while true do begin
+            PeekedLexeme := PeekNextLexeme();
+            if PeekedLexeme.IsEOS() then
+                break;
+
+            case true of
+                PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure"):
+                    Function := ParseProcedure();
+                PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger"):
+                    Function := ParseOnRun();
+                else
+                    Error('Expected keyword ''procedure'' or ''trigger''');
+            end;
+
+            Runtime.DefineFunction(
+                Function
+            );
+        end;
+    end;
+
+    local procedure ParseOnRun(): Interface "Function FS"
+    var
+        Lexeme: Record "Lexeme FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        UserFunction: Codeunit "User Function FS";
+        Statements: Interface "Node FS";
+        Name: Text[120];
+    begin
+        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"trigger"));
+
+        Lexeme := AssertNextLexeme(Lexeme.Identifier());
+        if Lexeme."Identifier Name".ToLower() <> 'onrun' then
+            Error('Trigger must be named ''OnRun''');
+        Name := Lexeme."Identifier Name";
+
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
+
+        Statements := ParseProcedure(SymbolTable);
+
+        UserFunction.Init(
+            Name,
+            SymbolTable,
+            Statements,
+            Enum::"Type FS"::Void
+        );
+        exit(UserFunction);
+    end;
+
+    local procedure ParseProcedure(): Interface "Function FS"
+    var
+        PeekedLexeme, Lexeme : Record "Lexeme FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        UserFunction: Codeunit "User Function FS";
+        Statements: Interface "Node FS";
+        Name: Text[120];
+    begin
+        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
+
+        Lexeme := AssertNextLexeme(Lexeme.Identifier());
+        Name := Lexeme."Identifier Name";
+
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
+
+        while true do begin
+            PeekedLexeme := PeekNextLexeme();
+            if PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
+                break;
+
+            Error('Unimplementd: Parse parameters'); // TODO
+        end;
+
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
+
+        Statements := ParseProcedure(SymbolTable);
+
+        UserFunction.Init(
+            Name,
+            SymbolTable,
+            Statements,
+            Enum::"Type FS"::Void
+        );
+        exit(UserFunction);
+    end;
+
+    local procedure ParseProcedure
     (
         SymbolTable: Codeunit "Symbol Table FS"
     ): Interface "Node FS"
@@ -46,33 +131,34 @@ codeunit 69001 "Parser FS"
         VariableName: Text[120];
         VariableType: Enum "Type FS";
     begin
-        AssertNextLexeme(
-            Lexeme.Keyword(Enum::"Keyword FS"::"var")
-        );
+        PeekedLexeme := PeekNextLexeme();
+        if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
+            AssertNextLexeme(PeekedLexeme);
 
-        while true do begin
-            PeekedLexeme := PeekNextLexeme();
-            if not PeekedLexeme.IsIdentifier() then
-                break;
+            while true do begin
+                PeekedLexeme := PeekNextLexeme();
+                if not PeekedLexeme.IsIdentifier() then
+                    break;
 
-            Lexeme := NextLexeme();
-            VariableName := Lexeme."Identifier Name";
+                Lexeme := NextLexeme();
+                VariableName := Lexeme."Identifier Name";
 
-            AssertNextLexeme(
-                Lexeme.Operator(Enum::"Operator FS"::":")
-            );
+                AssertNextLexeme(
+                    Lexeme.Operator(Enum::"Operator FS"::":")
+                );
 
-            Lexeme := AssertNextLexeme(Lexeme.Identifier());
-            VariableType := ParseType(Lexeme."Identifier Name");
+                Lexeme := AssertNextLexeme(Lexeme.Identifier());
+                VariableType := ParseType(Lexeme."Identifier Name");
 
-            SymbolTable.Define(
-                VariableName,
-                VariableType
-            );
+                SymbolTable.Define(
+                    VariableName,
+                    VariableType
+                );
 
-            AssertNextLexeme(
-                Lexeme.Operator(Enum::"Operator FS"::";")
-            );
+                AssertNextLexeme(
+                    Lexeme.Operator(Enum::"Operator FS"::";")
+                );
+            end;
         end;
 
         CompoundStatement := ParseCompoundStatement();

@@ -62,7 +62,7 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         exit(VoidValue);
     end;
 
-    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
         VariableSymbol, ExpressionSymbol : Record "Symbol FS";
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
@@ -70,7 +70,7 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
     begin
         VariableSymbol := SymbolTable.Lookup(Name);
 
-        ExpressionSymbol := Expression.ValidateSemantics(SymbolTable);
+        ExpressionSymbol := Expression.ValidateSemantics(Runtime, SymbolTable);
 
         case Operator of
             Operator::"+=":

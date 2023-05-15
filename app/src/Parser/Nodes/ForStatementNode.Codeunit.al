@@ -71,7 +71,7 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         exit(Value + 1);
     end;
 
-    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
         Symbol: Record "Symbol FS";
     begin
@@ -79,15 +79,15 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         if Symbol.Type <> Symbol.Type::Number then
             Error('For variable must be of a number type.');
 
-        Symbol := InitialValueExpression.ValidateSemantics(SymbolTable);
+        Symbol := InitialValueExpression.ValidateSemantics(Runtime, SymbolTable);
         if Symbol.Type <> Symbol.Type::Number then
             Error('For initial expression must evaluate to a number type.');
 
-        Symbol := FinalValueExpression.ValidateSemantics(SymbolTable);
+        Symbol := FinalValueExpression.ValidateSemantics(Runtime, SymbolTable);
         if Symbol.Type <> Symbol.Type::Number then
             Error('For final expression must evaluate to a number type.');
 
-        Statement.ValidateSemantics(SymbolTable);
+        Statement.ValidateSemantics(Runtime, SymbolTable);
 
         exit(SymbolTable.VoidSymbol());
     end;

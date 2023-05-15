@@ -285,12 +285,12 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         end;
     end;
 
-    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
         LeftSymbol, RightSymbol : Record "Symbol FS";
     begin
-        LeftSymbol := Left.ValidateSemantics(SymbolTable);
-        RightSymbol := Right.ValidateSemantics(SymbolTable);
+        LeftSymbol := Left.ValidateSemantics(Runtime, SymbolTable);
+        RightSymbol := Right.ValidateSemantics(Runtime, SymbolTable);
 
         exit(ValidateSemantics(
             SymbolTable,
