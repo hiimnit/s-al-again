@@ -10,14 +10,19 @@ Business Central extension adding a code editor for running scripts.
 
 ### What does it do?
 
-Currently? Not much. Code is parsed, semantically analyzed and executed. Message with the memory state is displayed at the end.
+Currently? Not much. Code is parsed, semantically analyzed and executed. Message with the memory state is displayed at the end of each procedure execution.
 
 ### Sample code
 
-Procedures are not supported - yet.
-Scripts start with a `var` keyword followed by variable declarations. **!TODO rewrite**
+The entry point is a parameterless `trigger` called `OnRun`. You can define additional procedures (for now without reference parameters or return values).
+Global variables are not supported (yet?).
 
 ```sal
+procedure WriteLineMultiplied(text: text; count: number)
+begin
+    WriteLine(text * count);
+end;
+
 trigger OnRun()
 var
     hello: boolean;
@@ -30,6 +35,8 @@ begin
         text += ' ' + 'world!';
 
     WriteLine(text);
+
+    WriteLineMultiplied(text + ' ', 3);
 end;
 ```
 
