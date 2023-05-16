@@ -67,6 +67,12 @@ Right now only a handful of basic types is supported:
 - `Abs(Number: Number): Number`
 - `Power(Number: Number, Power: Number): Number`
 
+### Planned
+
+1. function returns
+1. records and methods
+1. `date`/`time`/`datetime`
+
 ## editor
 
 React app addin using the [Monaco Editor](https://github.com/microsoft/monaco-editor) for script input.

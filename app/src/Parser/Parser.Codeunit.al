@@ -87,7 +87,7 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseProcedure(): Interface "Function FS"
     var
-        PeekedLexeme, Lexeme : Record "Lexeme FS";
+        PeekedLexeme, Lexeme, ParameterNameLexeme, ParameterTypeLexeme : Record "Lexeme FS";
         SymbolTable: Codeunit "Symbol Table FS";
         UserFunction: Codeunit "User Function FS";
         Statements: Interface "Node FS";
@@ -100,13 +100,25 @@ codeunit 69001 "Parser FS"
 
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
 
-        while true do begin
-            PeekedLexeme := PeekNextLexeme();
-            if PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
-                break;
+        PeekedLexeme := PeekNextLexeme();
+        if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
+            while true do begin
+                ParameterNameLexeme := AssertNextLexeme(Lexeme.Identifier());
+                AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
 
-            Error('Unimplementd: Parse parameters'); // TODO
-        end;
+                ParameterTypeLexeme := AssertNextLexeme(Lexeme.Identifier());
+
+                SymbolTable.DefineParameter(
+                    ParameterNameLexeme."Identifier Name",
+                    ParseType(ParameterTypeLexeme."Identifier Name")
+                );
+
+                PeekedLexeme := PeekNextLexeme();
+                if PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
+                    break;
+
+                AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::";"));
+            end;
 
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
 
@@ -116,7 +128,7 @@ codeunit 69001 "Parser FS"
             Name,
             SymbolTable,
             Statements,
-            Enum::"Type FS"::Void
+            Enum::"Type FS"::Void // TODO next step - return values
         );
         exit(UserFunction);
     end;
@@ -150,7 +162,7 @@ codeunit 69001 "Parser FS"
                 Lexeme := AssertNextLexeme(Lexeme.Identifier());
                 VariableType := ParseType(Lexeme."Identifier Name");
 
-                SymbolTable.Define(
+                SymbolTable.DefineLocal(
                     VariableName,
                     VariableType
                 );

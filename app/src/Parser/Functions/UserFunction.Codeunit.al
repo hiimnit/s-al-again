@@ -1,7 +1,6 @@
 codeunit 69025 "User Function FS" implements "Function FS"
 {
     var
-        FunctionParameter: Record "Function Parameter FS";
         SymbolTable: Codeunit "Symbol Table FS";
         Statements: Interface "Node FS";
         ReturnType: Enum "Type FS";
@@ -21,17 +20,6 @@ codeunit 69025 "User Function FS" implements "Function FS"
         ReturnType := NewReturnType;
     end;
 
-    procedure DefineParameter
-    (
-        Type: Enum "Type FS"
-    )
-    begin
-        FunctionParameter.Init();
-        FunctionParameter.Order += 1;
-        FunctionParameter.Type := Type;
-        FunctionParameter.Insert();
-    end;
-
     procedure GetName(): Text[120];
     begin
         exit(Name);
@@ -42,14 +30,22 @@ codeunit 69025 "User Function FS" implements "Function FS"
         exit(ReturnType);
     end;
 
+    procedure GetArity(): Integer
+    begin
+        exit(SymbolTable.GetParameterCount());
+    end;
+
+    procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
+    begin
+        SymbolTable.GetParameters(ParameterSymbol);
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
     var
         Memory: Codeunit "Memory FS";
         Value: Interface "Value FS";
     begin
-        // TODO initialize parameters from ValueLinkedList
-        // TODO move parameters to symbol table?
-        Memory.Init(SymbolTable);
+        Memory.Init(SymbolTable, ValueLinkedList);
 
         Runtime.PushMemory(Memory);
 
@@ -60,7 +56,7 @@ codeunit 69025 "User Function FS" implements "Function FS"
         exit(Value);
     end;
 
-    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS")
     begin
         Statements.ValidateSemantics(Runtime, SymbolTable);
     end;

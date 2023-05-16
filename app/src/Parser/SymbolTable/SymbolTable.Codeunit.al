@@ -3,10 +3,37 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
     var
         Symbol: Record "Symbol FS";
 
-    procedure Define
+    procedure DefineLocal
     (
         Name: Text[120];
         Type: Enum "Type FS"
+    )
+    begin
+        Define(
+            Name,
+            Type,
+            Enum::"Scope FS"::Local
+        );
+    end;
+
+    procedure DefineParameter
+    (
+        Name: Text[120];
+        Type: Enum "Type FS"
+    )
+    begin
+        Define(
+            Name,
+            Type,
+            Enum::"Scope FS"::Parameter
+        );
+    end;
+
+    local procedure Define
+    (
+        Name: Text[120];
+        Type: Enum "Type FS";
+        Scope: Enum "Scope FS"
     )
     begin
         if Symbol.Get(Name) then
@@ -15,7 +42,20 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Symbol.Init();
         Symbol.Name := Name;
         Symbol.Type := Type;
+        Symbol.Scope := Scope;
+        Symbol.Order := GetNextOrder();
         Symbol.Insert();
+    end;
+
+    local procedure GetNextOrder(): Integer
+    var
+        OrderedSymbol: Record "Symbol FS";
+    begin
+        OrderedSymbol.Copy(Symbol, true);
+        OrderedSymbol.SetCurrentKey(Order);
+        if not OrderedSymbol.FindLast() then
+            exit(1);
+        exit(OrderedSymbol.Order + 1);
     end;
 
     procedure Lookup(Name: Text[120]): Record "Symbol FS"
@@ -75,6 +115,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
 
     procedure FindSet(var OutSymbol: Record "Symbol FS"): Boolean
     begin
+        Symbol.SetCurrentKey(Order);
         if not Symbol.FindSet() then
             exit(false);
         OutSymbol := Symbol;
@@ -83,9 +124,33 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
 
     procedure Next(var OutSymbol: Record "Symbol FS"): Boolean
     begin
+        Symbol.SetCurrentKey(Order);
         if Symbol.Next() = 0 then
             exit(false);
         OutSymbol := Symbol;
         exit(true);
+    end;
+
+    procedure GetParameterCount(): Integer
+    var
+        ParameterSymbol: Record "Symbol FS";
+    begin
+        ParameterSymbol.Copy(Symbol, true);
+        ParameterSymbol.SetRange(Scope, ParameterSymbol.Scope::Parameter);
+        exit(ParameterSymbol.Count());
+    end;
+
+    procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
+    begin
+        ParameterSymbol.Reset();
+        ParameterSymbol.DeleteAll();
+
+        Symbol.SetRange(Scope, ParameterSymbol.Scope::Parameter);
+        if Symbol.FindSet() then
+            repeat
+                ParameterSymbol := Symbol;
+                ParameterSymbol.Insert();
+            until Symbol.Next() = 0;
+        Symbol.SetRange(Scope);
     end;
 }

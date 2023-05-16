@@ -33,4 +33,11 @@ codeunit 69922 "Value Linked List Node FS"
         Node := NextNode;
         exit(true);
     end;
+
+    procedure Next(): Codeunit "Value Linked List Node FS"
+    begin
+        if not HasNextNode then
+            Error('Out of bounds, there is no next node.');
+        exit(NextNode);
+    end;
 }

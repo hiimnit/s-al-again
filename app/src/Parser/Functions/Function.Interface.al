@@ -5,4 +5,6 @@ interface "Function FS"
 
     procedure GetName(): Text[120]
     procedure GetReturnType(): Enum "Type FS"
+    procedure GetArity(): Integer
+    procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
 }
