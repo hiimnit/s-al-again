@@ -60,13 +60,28 @@ codeunit 69011 "Runtime FS"
         exit(Functions[i]);
     end;
 
+    procedure LookupEntryPoint(): Interface "Function FS"
+    begin
+        exit(LookupFunction('OnRun'));
+    end;
+
+    procedure ValidateFunctionsSemantics(Self: Codeunit "Runtime FS")
+    var
+        FunctionIndex: Integer;
+    begin
+        foreach FunctionIndex in FunctionMap.Values() do
+            Functions[FunctionIndex].ValidateSemantics(Self);
+    end;
+
     var
         MemoryStack: array[50] of Codeunit "Memory FS";
         MemoryCounter: Integer;
 
     procedure PushMemory(Memory: Codeunit "Memory FS")
     begin
-        // TODO max stack error - change to a list?
+        if MemoryCounter = ArrayLen(MemoryStack) then
+            Error('Reached maximum allowed number of stack frames %1.', ArrayLen(MemoryStack));
+
         MemoryCounter += 1;
         MemoryStack[MemoryCounter] := Memory;
     end;

@@ -22,12 +22,9 @@ codeunit 69001 "Parser FS"
 
         Runtime.Init(MonacoEditor);
 
-        // TODO nicer error if "main" does not exist
-        Function := Runtime.LookupFunction('OnRun');
+        Runtime.ValidateFunctionsSemantics(Runtime);
 
-        // TODO validate all user defined functions!
-        Function.ValidateSemantics(Runtime);
-
+        Function := Runtime.LookupEntryPoint();
         Function.Evaluate(Runtime, EmptyValueLinkedList);
     end;
 
