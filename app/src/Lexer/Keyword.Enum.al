@@ -2,6 +2,7 @@ enum 69002 "Keyword FS"
 {
     Caption = 'Keyword';
 
+    // TODO case statements?
     value(1; "begin") { }
     value(2; "end") { }
     value(3; "procedure") { } // unimplemented

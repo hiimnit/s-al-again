@@ -1,7 +1,7 @@
-codeunit 69920 "Linked List Node FS"
+codeunit 69920 "Node Linked List Node FS"
 {
     var
-        NextNode: Codeunit "Linked List Node FS";
+        NextNode: Codeunit "Node Linked List Node FS";
         HasNextNode: Boolean;
         InnerValue: Interface "Node FS";
 
@@ -15,7 +15,7 @@ codeunit 69920 "Linked List Node FS"
         exit(InnerValue);
     end;
 
-    procedure SetNext(NewNext: Codeunit "Linked List Node FS")
+    procedure SetNext(NewNext: Codeunit "Node Linked List Node FS")
     begin
         NextNode := NewNext;
         HasNextNode := true;
@@ -26,11 +26,18 @@ codeunit 69920 "Linked List Node FS"
         exit(HasNextNode);
     end;
 
-    procedure Next(var Node: Codeunit "Linked List Node FS"): Boolean
+    procedure Next(var Node: Codeunit "Node Linked List Node FS"): Boolean
     begin
         if not HasNextNode then
             exit(false);
         Node := NextNode;
         exit(true);
+    end;
+
+    procedure Next(): Codeunit "Node Linked List Node FS"
+    begin
+        if not HasNextNode then
+            Error('Out of bounds, there is no next node.');
+        exit(NextNode);
     end;
 }

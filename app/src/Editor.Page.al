@@ -36,7 +36,7 @@ page 69000 "Editor FS"
                     Parser: Codeunit "Parser FS";
                 begin
                     Parser.Init(Input);
-                    Parser.Parse();
+                    Parser.Parse(CurrPage.Editor);
                 end;
             }
         }

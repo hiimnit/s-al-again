@@ -185,4 +185,9 @@ table 69000 "Lexeme FS"
     begin
         exit(Rec.Type = Rec.Type::String);
     end;
+
+    procedure IsEOS(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::EOS);
+    end;
 }

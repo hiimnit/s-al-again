@@ -1,10 +1,10 @@
-codeunit 69919 "Linked List FS"
+codeunit 69919 "Node Linked List FS"
 {
     var
-        FirstNode, LastNode : Codeunit "Linked List Node FS";
+        FirstNode, LastNode : Codeunit "Node Linked List Node FS";
         Count: Integer;
 
-    procedure First(var Node: Codeunit "Linked List Node FS"): Boolean
+    procedure First(var Node: Codeunit "Node Linked List Node FS"): Boolean
     begin
         if Count = 0 then
             exit(false);
@@ -12,9 +12,16 @@ codeunit 69919 "Linked List FS"
         exit(true);
     end;
 
+    procedure First(): Codeunit "Node Linked List Node FS"
+    begin
+        if Count = 0 then
+            Error('Out of bounds, the list is empty.');
+        exit(FirstNode);
+    end;
+
     procedure Insert(Value: Interface "Node FS")
     var
-        NewNode: Codeunit "Linked List Node FS";
+        NewNode: Codeunit "Node Linked List Node FS";
     begin
         NewNode.Value(Value);
 
@@ -28,5 +35,10 @@ codeunit 69919 "Linked List FS"
         LastNode.SetNext(NewNode);
         LastNode := NewNode;
         Count += 1;
+    end;
+
+    procedure GetCount(): Integer
+    begin
+        exit(Count);
     end;
 }

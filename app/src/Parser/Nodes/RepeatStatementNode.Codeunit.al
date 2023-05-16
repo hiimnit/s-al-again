@@ -14,15 +14,15 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
-    procedure Evaluate(Memory: Codeunit "Memory FS"): Interface "Value FS";
+    procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
         Value: Interface "Value FS";
     begin
         while true do begin
-            Statement.Evaluate(Memory);
+            Statement.Evaluate(Runtime);
 
-            Value := Expression.Evaluate(Memory);
+            Value := Expression.Evaluate(Runtime);
             if Value.GetValue() then
                 break;
         end;
@@ -30,13 +30,13 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         exit(VoidValue);
     end;
 
-    procedure ValidateSemantics(SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
+    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
         Symbol: Record "Symbol FS";
     begin
-        Statement.ValidateSemantics(SymbolTable);
+        Statement.ValidateSemantics(Runtime, SymbolTable);
 
-        Symbol := Expression.ValidateSemantics(SymbolTable);
+        Symbol := Expression.ValidateSemantics(Runtime, SymbolTable);
         if Symbol.Type <> Symbol.Type::Boolean then
             Error('Repeat condition must evaluate to a boolean value.');
 
