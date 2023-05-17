@@ -328,8 +328,8 @@ codeunit 69001 "Parser FS"
         Statement := ParseStatement();
 
         WhileStatementNode.Init(
-            Expression,
-            Statement
+            Statement,
+            Expression
         );
 
         exit(WhileStatementNode);
