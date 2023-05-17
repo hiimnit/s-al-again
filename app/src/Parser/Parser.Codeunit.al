@@ -345,8 +345,8 @@ codeunit 69001 "Parser FS"
         Expression := ParseExpression();
 
         RepeatStatementNode.Init(
-            Expression,
-            Statement
+            Statement,
+            Expression
         );
 
         exit(RepeatStatementNode);
