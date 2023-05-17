@@ -48,8 +48,8 @@ codeunit 69025 "User Function FS" implements "Function FS"
         Memory.Init(SymbolTable, ValueLinkedList);
 
         Runtime.PushMemory(Memory);
-
         Value := Statements.Evaluate(Runtime);
+        Runtime.PopMemory();
 
         Memory.DebugMessage();
 

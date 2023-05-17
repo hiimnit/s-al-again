@@ -86,6 +86,15 @@ codeunit 69011 "Runtime FS"
         MemoryStack[MemoryCounter] := Memory;
     end;
 
+    procedure PopMemory(): Codeunit "Memory FS"
+    begin
+        if MemoryCounter = 0 then
+            Error('There is nothing to pop.');
+
+        Clear(MemoryStack[MemoryCounter]);
+        MemoryCounter -= 1;
+    end;
+
     procedure GetMemory(): Codeunit "Memory FS"
     begin
         exit(MemoryStack[MemoryCounter]);
