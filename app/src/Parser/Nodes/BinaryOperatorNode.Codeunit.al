@@ -174,9 +174,12 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
 
         case Operator of
             Operator::"*":
-                // TODO check negative number?
-                for i := 1 to Number do
-                    ResultBuilder.Append(Text);
+                begin
+                    if Number < 1 then
+                        Error('Invalid text multiplication input - cannot multiply by %1.', Number);
+                    for i := 1 to Number do
+                        ResultBuilder.Append(Text);
+                end;
             else
                 Error('Unimplemented binary operator %1.', Operator);
         end;
