@@ -4,4 +4,6 @@ interface "Value FS"
     procedure SetValue(NewValue: Variant);
 
     procedure GetType(): Enum "Type FS"
+
+    procedure Copy(): Interface "Value FS"
 }

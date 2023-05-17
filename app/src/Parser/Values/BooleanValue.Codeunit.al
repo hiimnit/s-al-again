@@ -17,4 +17,12 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
     begin
         exit(Enum::"Type FS"::Boolean);
     end;
+
+    procedure Copy(): Interface "Value FS"
+    var
+        BooleanValue: Codeunit "Boolean Value FS";
+    begin
+        BooleanValue.SetValue(Value);
+        exit(BooleanValue);
+    end;
 }

@@ -41,27 +41,32 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
     (
         Symbol: Record "Symbol FS"
     )
+    begin
+        InitializeSymbol(
+            Symbol,
+            DefaultValueFromType(Symbol.Type)
+        );
+    end;
+
+    procedure DefaultValueFromType(Type: Enum "Type FS"): Interface "Value FS";
     var
         NumericValue: Codeunit "Numeric Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
         Value: Interface "Value FS";
     begin
-        case Symbol.Type of
-            Symbol.Type::Number:
+        case Type of
+            Type::Number:
                 Value := NumericValue;
-            Symbol.Type::Boolean:
+            Type::Boolean:
                 Value := BooleanValue;
-            Symbol.Type::Text:
+            Type::Text:
                 Value := TextValue;
             else
-                Error('Initilization of type %1 is not supported.', Symbol.Type);
+                Error('Initilization of type %1 is not supported.', Type);
         end;
 
-        InitializeSymbol(
-            Symbol,
-            Value
-        );
+        exit(Value);
     end;
 
     local procedure InitializeSymbol
@@ -87,6 +92,7 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
     begin
         // TODO currently it is possible to change the variable data type in runtime
         // >>>> semantic analysis should not let this happen (if implemented properly)
+        // TODO lets instead call setvalue to change the in-memory value instead of replacing it?
         LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
     end;
 

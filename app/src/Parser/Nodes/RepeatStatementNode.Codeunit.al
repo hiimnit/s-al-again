@@ -20,7 +20,12 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         Value: Interface "Value FS";
     begin
         while true do begin
-            Statement.Evaluate(Runtime);
+            Value := Statement.Evaluate(Runtime);
+            if Value.GetType() in [
+                Enum::"Type FS"::"Return Value",
+                Enum::"Type FS"::"Default Return Value"
+            ] then
+                exit(Value);
 
             Value := Expression.Evaluate(Runtime);
             if Value.GetValue() then

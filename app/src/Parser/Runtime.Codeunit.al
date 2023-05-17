@@ -91,7 +91,7 @@ codeunit 69011 "Runtime FS"
         if MemoryCounter = 0 then
             Error('There is nothing to pop.');
 
-        Clear(MemoryStack[MemoryCounter]);
+        Clear(MemoryStack[MemoryCounter]); // FIXME test this - looks like this also clears everything in memory array? -> remove?
         MemoryCounter -= 1;
     end;
 

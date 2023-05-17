@@ -2,29 +2,32 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
 {
     var
         Symbol: Record "Symbol FS";
+        ReturnType: Enum "Type FS";
 
-    procedure DefineLocal
-    (
-        Name: Text[120];
-        Type: Enum "Type FS"
-    )
+    procedure DefineReturnType(NewReturnType: Enum "Type FS")
+    begin
+        ReturnType := NewReturnType;
+    end;
+
+    procedure GetReturnType(): Enum "Type FS"
+    begin
+        exit(ReturnType);
+    end;
+
+    procedure DefineLocal(VariableSymbol: Record "Symbol FS")
     begin
         Define(
-            Name,
-            Type,
+            VariableSymbol.Name,
+            VariableSymbol.Type,
             Enum::"Scope FS"::Local
         );
     end;
 
-    procedure DefineParameter
-    (
-        Name: Text[120];
-        Type: Enum "Type FS"
-    )
+    procedure DefineParameter(ParameterSymbol: Record "Symbol FS")
     begin
         Define(
-            Name,
-            Type,
+            ParameterSymbol.Name,
+            ParameterSymbol.Type,
             Enum::"Scope FS"::Parameter
         );
     end;

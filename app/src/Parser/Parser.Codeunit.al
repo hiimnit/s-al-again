@@ -71,23 +71,25 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
 
+        SymbolTable.DefineReturnType(Enum::"Type FS"::Void);
         Statements := ParseProcedure(SymbolTable);
 
         UserFunction.Init(
             Name,
             SymbolTable,
-            Statements,
-            Enum::"Type FS"::Void
+            Statements
         );
         exit(UserFunction);
     end;
 
     local procedure ParseProcedure(): Interface "Function FS"
     var
-        PeekedLexeme, Lexeme, ParameterNameLexeme, ParameterTypeLexeme : Record "Lexeme FS";
+        PeekedLexeme, Lexeme : Record "Lexeme FS";
+        ParameterSymbol: Record "Symbol FS";
         SymbolTable: Codeunit "Symbol Table FS";
         UserFunction: Codeunit "User Function FS";
         Statements: Interface "Node FS";
+        ReturnType: Enum "Type FS";
         Name: Text[120];
     begin
         AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
@@ -100,15 +102,8 @@ codeunit 69001 "Parser FS"
         PeekedLexeme := PeekNextLexeme();
         if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
             while true do begin
-                ParameterNameLexeme := AssertNextLexeme(Lexeme.Identifier());
-                AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
-
-                ParameterTypeLexeme := AssertNextLexeme(Lexeme.Identifier());
-
-                SymbolTable.DefineParameter(
-                    ParameterNameLexeme."Identifier Name",
-                    ParseType(ParameterTypeLexeme."Identifier Name")
-                );
+                ParameterSymbol := ParseVariableDefinition();
+                SymbolTable.DefineParameter(ParameterSymbol);
 
                 PeekedLexeme := PeekNextLexeme();
                 if PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
@@ -119,15 +114,38 @@ codeunit 69001 "Parser FS"
 
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
 
+        ReturnType := Enum::"Type FS"::Void;
+        PeekedLexeme := PeekNextLexeme();
+        if PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
+            AssertNextLexeme(PeekedLexeme);
+            Lexeme := AssertNextLexeme(Lexeme.Identifier());
+            ReturnType := ParseType(Lexeme."Identifier Name");
+        end;
+        SymbolTable.DefineReturnType(ReturnType); // TODO change to symbol for records?
+
         Statements := ParseProcedure(SymbolTable);
 
         UserFunction.Init(
             Name,
             SymbolTable,
-            Statements,
-            Enum::"Type FS"::Void // TODO next step - return values
+            Statements
         );
         exit(UserFunction);
+    end;
+
+    local procedure ParseVariableDefinition(): Record "Symbol FS"
+    var
+        Symbol: Record "Symbol FS";
+        Lexeme, ParameterNameLexeme, ParameterTypeLexeme : Record "Lexeme FS";
+    begin
+        ParameterNameLexeme := AssertNextLexeme(Lexeme.Identifier());
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
+        ParameterTypeLexeme := AssertNextLexeme(Lexeme.Identifier());
+
+        Symbol.Name := ParameterNameLexeme."Identifier Name";
+        Symbol.Type := ParseType(ParameterTypeLexeme."Identifier Name");
+
+        exit(Symbol);
     end;
 
     local procedure ParseProcedure
@@ -136,9 +154,8 @@ codeunit 69001 "Parser FS"
     ): Interface "Node FS"
     var
         Lexeme, PeekedLexeme : Record "Lexeme FS";
+        VariableSymbol: Record "Symbol FS";
         CompoundStatement: Interface "Node FS";
-        VariableName: Text[120];
-        VariableType: Enum "Type FS";
     begin
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
@@ -149,20 +166,8 @@ codeunit 69001 "Parser FS"
                 if not PeekedLexeme.IsIdentifier() then
                     break;
 
-                Lexeme := NextLexeme();
-                VariableName := Lexeme."Identifier Name";
-
-                AssertNextLexeme(
-                    Lexeme.Operator(Enum::"Operator FS"::":")
-                );
-
-                Lexeme := AssertNextLexeme(Lexeme.Identifier());
-                VariableType := ParseType(Lexeme."Identifier Name");
-
-                SymbolTable.DefineLocal(
-                    VariableName,
-                    VariableType
-                );
+                VariableSymbol := ParseVariableDefinition();
+                SymbolTable.DefineLocal(VariableSymbol);
 
                 AssertNextLexeme(
                     Lexeme.Operator(Enum::"Operator FS"::";")
@@ -352,6 +357,26 @@ codeunit 69001 "Parser FS"
         exit(RepeatStatementNode);
     end;
 
+    local procedure ParseExitStatement(): Interface "Node FS"
+    var
+        Lexeme, PeekedLexeme : Record "Lexeme FS";
+        ExitStatementNode: Codeunit "Exit Statement Node FS";
+    begin
+        Lexeme := AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"exit"));
+
+        PeekedLexeme := PeekNextLexeme();
+        if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"(") then
+            exit(ExitStatementNode);
+
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
+        ExitStatementNode.Init(
+            ParseExpression()
+        );
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
+
+        exit(ExitStatementNode);
+    end;
+
     local procedure ParseStatementList(): Interface "Node FS"
     var
         PeekedLexeme: Record "Lexeme FS";
@@ -387,6 +412,8 @@ codeunit 69001 "Parser FS"
                 exit(ParseWhileStatement());
             Lexeme.IsKeyword(Enum::"Keyword FS"::"repeat"):
                 exit(ParseRepeatStatement());
+            Lexeme.IsKeyword(Enum::"Keyword FS"::"exit"):
+                exit(ParseExitStatement());
             Lexeme.IsIdentifier():
                 exit(ParseAssignmentStatement());
         end;

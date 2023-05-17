@@ -3,21 +3,18 @@ codeunit 69025 "User Function FS" implements "Function FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
         Statements: Interface "Node FS";
-        ReturnType: Enum "Type FS";
         Name: Text[120];
 
     procedure Init
     (
         NewName: Text[120];
         NewSymbolTable: Codeunit "Symbol Table FS";
-        NewStatements: Interface "Node FS";
-        NewReturnType: Enum "Type FS"
+        NewStatements: Interface "Node FS"
     )
     begin
         Name := NewName;
         SymbolTable := NewSymbolTable;
         Statements := NewStatements;
-        ReturnType := NewReturnType;
     end;
 
     procedure GetName(): Text[120];
@@ -27,7 +24,7 @@ codeunit 69025 "User Function FS" implements "Function FS"
 
     procedure GetReturnType(): Enum "Type FS"
     begin
-        exit(ReturnType);
+        exit(SymbolTable.GetReturnType());
     end;
 
     procedure GetArity(): Integer
@@ -43,15 +40,34 @@ codeunit 69025 "User Function FS" implements "Function FS"
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
     var
         Memory: Codeunit "Memory FS";
+        VoidValue: Codeunit "Void Value FS";
         Value: Interface "Value FS";
     begin
         Memory.Init(SymbolTable, ValueLinkedList);
 
         Runtime.PushMemory(Memory);
         Value := Statements.Evaluate(Runtime);
-        Runtime.PopMemory();
+        Message('After eval %1', Value.GetValue());
 
         Memory.DebugMessage();
+
+        case Value.GetType() of
+            Enum::"Type FS"::"Return Value":
+                Value := Value.Copy(); // TODO a bit of a hack
+            Enum::"Type FS"::"Default Return Value":
+                if SymbolTable.GetReturnType() <> Enum::"Type FS"::Void then
+                    Value := Memory.DefaultValueFromType(SymbolTable.GetReturnType())
+                else
+                    Value := VoidValue;
+            Enum::"Type FS"::Void:
+                ;
+            else
+                Error('Unimplemented return type %1.', Value.GetType());
+        end;
+
+        Message('Outside copy %1', Value.GetValue());
+        Runtime.PopMemory();
+        Message('After pop %1', Value.GetValue());
 
         exit(Value);
     end;

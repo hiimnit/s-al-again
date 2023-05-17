@@ -16,4 +16,11 @@ codeunit 69100 "Void Value FS" implements "Value FS"
     begin
         exit(Enum::"Type FS"::Void);
     end;
+
+    procedure Copy(): Interface "Value FS"
+    var
+        VoidValue: Codeunit "Void Value FS";
+    begin
+        exit(VoidValue);
+    end;
 }
