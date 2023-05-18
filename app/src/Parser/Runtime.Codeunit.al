@@ -91,7 +91,8 @@ codeunit 69011 "Runtime FS"
         if MemoryCounter = 0 then
             Error('There is nothing to pop.');
 
-        Clear(MemoryStack[MemoryCounter]);
+        // TODO investigate - clear caused issues here, BC does not count references properly?
+        // Clear(MemoryStack[MemoryCounter]);
         MemoryCounter -= 1;
     end;
 

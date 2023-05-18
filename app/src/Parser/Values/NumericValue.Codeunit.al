@@ -17,4 +17,12 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
     begin
         exit(Enum::"Type FS"::Number);
     end;
+
+    procedure Copy(): Interface "Value FS"
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+    begin
+        NumericValue.SetValue(Value);
+        exit(NumericValue);
+    end;
 }

@@ -17,4 +17,12 @@ codeunit 69103 "Text Value FS" implements "Value FS"
     begin
         exit(Enum::"Type FS"::Text);
     end;
+
+    procedure Copy(): Interface "Value FS"
+    var
+        TextValue: Codeunit "Text Value FS";
+    begin
+        TextValue.SetValue(Value);
+        exit(TextValue);
+    end;
 }

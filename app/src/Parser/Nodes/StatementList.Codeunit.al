@@ -12,10 +12,17 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     var
         VoidValue: Codeunit "Void Value FS";
         LinkedListNode: Codeunit "Node Linked List Node FS";
+        Value: Interface "Value FS";
     begin
+        // TODO add break handling?
         if StatementsList.First(LinkedListNode) then
             repeat
-                LinkedListNode.Value().Evaluate(Runtime);
+                Value := LinkedListNode.Value().Evaluate(Runtime);
+                if Value.GetType() in [
+                    Enum::"Type FS"::"Return Value",
+                    Enum::"Type FS"::"Default Return Value"
+                ] then
+                    exit(Value);
             until not LinkedListNode.Next(LinkedListNode);
         exit(VoidValue);
     end;
