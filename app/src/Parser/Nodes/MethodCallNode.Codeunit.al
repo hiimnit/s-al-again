@@ -1,14 +1,18 @@
-codeunit 69023 "Procedure Call Node FS" implements "Node FS"
+codeunit 69026 "Method Call Node FS" implements "Node FS"
 {
     var
         Arguments: Codeunit "Node Linked List FS";
+        Expression: Interface "Node FS";
+        Method: Interface "Method FS";
         Name: Text[120];
 
     procedure Init
     (
+        NewExpression: Interface "Node FS";
         NewName: Text[120]
     )
     begin
+        Expression := NewExpression;
         Name := NewName;
     end;
 
@@ -21,10 +25,10 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
     var
         ArgumentNode: Codeunit "Node Linked List Node FS";
         ArgumentValues: Codeunit "Value Linked List FS";
-        Function: Interface "Function FS";
+
         Value: Interface "Value FS";
     begin
-        Function := Runtime.LookupFunction(Name);
+        Value := Expression.Evaluate(Runtime);
 
         if Arguments.First(ArgumentNode) then
             repeat
@@ -32,22 +36,26 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
                 ArgumentValues.Insert(Value);
             until not ArgumentNode.Next(ArgumentNode);
 
-        exit(Function.Evaluate(Runtime, ArgumentValues));
+        exit(Method.Evaluate(Runtime, Value, ArgumentValues));
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
-        Function: Interface "Function FS";
+        Symbol: Record "Symbol FS";
     begin
-        Function := Runtime.LookupFunction(Name);
+        Symbol := Expression.ValidateSemantics(Runtime, SymbolTable);
+
+        Method := Runtime.LookupMethod(
+            Symbol.Type,
+            Name
+        );
 
         ValidateProcedureCallArguments(
             Runtime,
-            SymbolTable,
-            Function
+            SymbolTable
         );
 
-        exit(SymbolTable.SymbolFromType(Function.GetReturnType()));
+        exit(SymbolTable.SymbolFromType(Method.GetReturnType()));
     end;
 
     // TODO this will make things difficult for functions with
@@ -55,17 +63,16 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
     local procedure ValidateProcedureCallArguments
     (
         Runtime: Codeunit "Runtime FS";
-        SymbolTable: Codeunit "Symbol Table FS";
-        Function: Interface "Function FS"
+        SymbolTable: Codeunit "Symbol Table FS"
     )
     var
         ParameterSymbol, Symbol : Record "Symbol FS";
         ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
-        if Arguments.GetCount() <> Function.GetArity() then
-            Error('Parameter count missmatch when calling function %1.', Function.GetName());
+        if Arguments.GetCount() <> Method.GetArity() then
+            Error('Parameter count missmatch when calling method %1.', Method.GetName());
 
-        Function.GetParameters(ParameterSymbol);
+        Method.GetParameters(ParameterSymbol);
         ParameterSymbol.SetCurrentKey(Order); // TODO this feels wrong
         if not ParameterSymbol.FindSet() then
             exit;
@@ -76,8 +83,8 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
             Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
             if not TypesMatch(ParameterSymbol.Type, Symbol.Type) then
                 Error(
-                    'Parameter call missmatch when calling function %1.\\Expected %2, got %3.',
-                    Function.GetName(),
+                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+                    Method.GetName(),
                     ParameterSymbol.Type,
                     Symbol.Type
                 );

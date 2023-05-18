@@ -1,5 +1,7 @@
 codeunit 69202 "Message Function FS" implements "Function FS"
 {
+    SingleInstance = true;
+
     procedure GetName(): Text[120];
     begin
         exit('Message');

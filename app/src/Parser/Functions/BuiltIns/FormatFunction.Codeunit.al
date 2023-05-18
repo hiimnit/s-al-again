@@ -1,45 +1,41 @@
-codeunit 69201 "Power Function FS" implements "Function FS"
+codeunit 69205 "Format Function FS" implements "Function FS"
 {
     SingleInstance = true;
 
     procedure GetName(): Text[120];
     begin
-        exit('Power');
+        exit('Format');
     end;
 
     procedure GetReturnType(): Enum "Type FS"
     begin
-        exit(Enum::"Type FS"::Number);
+        exit(Enum::"Type FS"::Text);
     end;
 
     procedure GetArity(): Integer
     begin
-        exit(2);
+        exit(1);
     end;
 
     // TODO this will make things difficult for functions with
     // >>>> variable parity - message, error, setrange...
     procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
     begin
-        ParameterSymbol.InsertNumber('Number', 1);
-        ParameterSymbol.InsertNumber('Power', 2);
+        ParameterSymbol.InsertAny('Any', 1);
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
     var
-        NumericValue: Codeunit "Numeric Value FS";
         Node: Codeunit "Value Linked List Node FS";
-        Number, Power, Result : Decimal;
+        TextValue: Codeunit "Text Value FS";
+        Text: Text;
     begin
         Node := ValueLinkedList.First();
-        Number := Node.Value().GetValue();
-        Node := Node.Next();
-        Power := Node.Value().GetValue();
 
-        Result := Power(Number, Power);
-        NumericValue.SetValue(Result);
+        Text := Format(Node.Value().GetValue());
+        TextValue.SetValue(Text);
 
-        exit(NumericValue);
+        exit(TextValue);
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");

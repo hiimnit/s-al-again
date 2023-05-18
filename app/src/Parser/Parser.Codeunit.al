@@ -431,7 +431,7 @@ codeunit 69001 "Parser FS"
 
         OperatorLexeme := PeekNextLexeme();
         if OperatorLexeme.IsOperator(Enum::"Operator FS"::"(") then
-            exit(ParseCall(Lexeme));
+            exit(ParseCall(Lexeme)); // TODO ParseGetExpression
 
         if not OperatorLexeme.IsOperator() or
             not (OperatorLexeme."Operator Value" in [
@@ -606,6 +606,8 @@ codeunit 69001 "Parser FS"
                     end;
             end;
 
+        // TODO this disables calling methods on literals ->
+        // TODO move this into ParseCall?
         if PeekedLexeme.IsNumber() then begin
             Lexeme := AssertNextLexeme(PeekedLexeme);
 
@@ -629,8 +631,9 @@ codeunit 69001 "Parser FS"
 
             exit(LiteralValueNode);
         end;
+        // TODO this disables calling methods on literals <-
 
-        exit(ParseCall(
+        exit(ParseGetExpression(
             NextLexeme()
         ));
     end;
@@ -681,6 +684,52 @@ codeunit 69001 "Parser FS"
         );
 
         exit(VariableNode);
+    end;
+
+    local procedure ParseGetExpression(Lexeme: Record "Lexeme FS"): Interface "Node FS"
+    var
+        PeekedLexeme: Record "Lexeme FS";
+        MethodCallNode: Codeunit "Method Call Node FS";
+        Call, Argument : Interface "Node FS";
+    begin
+        Call := ParseCall(Lexeme);
+
+        while true do begin
+            PeekedLexeme := PeekNextLexeme();
+            if not PeekedLexeme.IsOperator(Enum::"Operator FS"::".") then
+                break;
+
+            AssertNextLexeme(PeekedLexeme);
+
+            Lexeme := AssertNextLexeme(Lexeme.Identifier());
+
+            Clear(MethodCallNode); // create new instance
+            MethodCallNode.Init(
+                Call,
+                Lexeme."Identifier Name"
+            );
+
+            AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
+
+            PeekedLexeme := PeekNextLexeme();
+            if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
+                repeat
+                    Argument := ParseExpression();
+                    MethodCallNode.AddArgument(Argument);
+
+                    PeekedLexeme := PeekNextLexeme();
+                    if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"comma") then
+                        break;
+
+                    AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"comma"));
+                until false;
+
+            AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::")"));
+
+            Call := MethodCallNode;
+        end;
+
+        exit(Call);
     end;
 
     local procedure NextLexeme(): Record "Lexeme FS"

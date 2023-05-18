@@ -1,5 +1,7 @@
 codeunit 69204 "Write Line Function FS" implements "Function FS"
 {
+    SingleInstance = true;
+
     procedure GetName(): Text[120];
     begin
         exit('WriteLine');

@@ -30,12 +30,14 @@ codeunit 69011 "Runtime FS"
         MessageFunction: Codeunit "Message Function FS";
         ErrorFunction: Codeunit "Error Function FS";
         WriteLineFunction: Codeunit "Write Line Function FS";
+        FormatFunction: Codeunit "Format Function FS";
     begin
         DefineFunction(AbsFunction);
         DefineFunction(PowerFunction);
         DefineFunction(MessageFunction);
         DefineFunction(ErrorFunction);
         DefineFunction(WriteLineFunction);
+        DefineFunction(FormatFunction);
     end;
 
     procedure DefineFunction
@@ -99,5 +101,40 @@ codeunit 69011 "Runtime FS"
     procedure GetMemory(): Codeunit "Memory FS"
     begin
         exit(MemoryStack[MemoryCounter]);
+    end;
+
+    procedure LookupMethod
+    (
+        Type: Enum "Type FS";
+        Name: Text[120]
+    ): Interface "Method FS"
+    begin
+        case Type of
+            Type::Text:
+                exit(LookupTextMethod(Name));
+            else
+                Error('Unknown %1 method %2.', Type, Name);
+        end;
+    end;
+
+    procedure LookupTextMethod
+    (
+        Name: Text[120]
+    ): Interface "Method FS"
+    var
+        TextToUpper: Codeunit "Text ToUpper FS";
+        TextToLower: Codeunit "Text ToLower FS";
+        TextContains: Codeunit "Text Contains FS";
+    begin
+        case Name.ToLower() of
+            TextToUpper.GetName().ToLower():
+                exit(TextToUpper);
+            TextToLower.GetName().ToLower():
+                exit(TextToLower);
+            TextContains.GetName().ToLower():
+                exit(TextContains);
+            else
+                Error('Unknown Text method %1.', Name);
+        end;
     end;
 }

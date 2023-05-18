@@ -69,6 +69,19 @@ table 69001 "Symbol FS"
         );
     end;
 
+    procedure InsertAny
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Any,
+            NewOrder
+        );
+    end;
+
     procedure InsertParameter
     (
         NewName: Text[120];

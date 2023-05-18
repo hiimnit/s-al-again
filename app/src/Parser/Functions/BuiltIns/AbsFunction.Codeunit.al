@@ -1,5 +1,7 @@
 codeunit 69200 "Abs Function FS" implements "Function FS"
 {
+    SingleInstance = true;
+
     procedure GetName(): Text[120];
     begin
         exit('Abs');

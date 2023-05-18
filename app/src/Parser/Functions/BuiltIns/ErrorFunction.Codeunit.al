@@ -1,5 +1,7 @@
 codeunit 69203 "Error Function FS" implements "Function FS"
 {
+    SingleInstance = true;
+
     procedure GetName(): Text[120];
     begin
         exit('Error');
