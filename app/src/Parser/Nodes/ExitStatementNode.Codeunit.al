@@ -16,12 +16,9 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         ReturnValue: Codeunit "Return Value FS";
-        VoidValue: Codeunit "Void Value FS";
     begin
-        if not ExpressionSet then begin
-            ReturnValue.Init(VoidValue);
+        if not ExpressionSet then
             exit(ReturnValue);
-        end;
 
         ReturnValue.Init(
             Expression.Evaluate(Runtime)

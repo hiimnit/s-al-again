@@ -47,7 +47,6 @@ codeunit 69025 "User Function FS" implements "Function FS"
 
         Runtime.PushMemory(Memory);
         Value := Statements.Evaluate(Runtime);
-        Message('After eval %1', Value.GetValue());
 
         Memory.DebugMessage();
 
@@ -65,9 +64,7 @@ codeunit 69025 "User Function FS" implements "Function FS"
                 Error('Unimplemented return type %1.', Value.GetType());
         end;
 
-        Message('Outside copy %1', Value.GetValue());
         Runtime.PopMemory();
-        Message('After pop %1', Value.GetValue());
 
         exit(Value);
     end;
