@@ -186,6 +186,15 @@ table 69000 "Lexeme FS"
         exit(Rec.Type = Rec.Type::String);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(true in [
+            IsNumber(),
+            IsBoolean(),
+            IsString()
+        ]);
+    end;
+
     procedure IsEOS(): Boolean
     begin
         exit(Rec.Type = Rec.Type::EOS);

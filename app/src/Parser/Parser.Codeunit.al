@@ -571,7 +571,6 @@ codeunit 69001 "Parser FS"
     local procedure ParseUnary(): Interface "Node FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
-        LiteralValueNode: Codeunit "Literal Value Node FS";
         UnaryOperatorNode: Codeunit "Unary Operator Node FS";
         ExpressionNode: Interface "Node FS";
     begin
@@ -606,33 +605,6 @@ codeunit 69001 "Parser FS"
                     end;
             end;
 
-        // TODO this disables calling methods on literals ->
-        // TODO move this into ParseCall?
-        if PeekedLexeme.IsNumber() then begin
-            Lexeme := AssertNextLexeme(PeekedLexeme);
-
-            LiteralValueNode.Init(Lexeme."Number Value");
-
-            exit(LiteralValueNode);
-        end;
-
-        if PeekedLexeme.IsBoolean() then begin
-            Lexeme := AssertNextLexeme(PeekedLexeme);
-
-            LiteralValueNode.Init(Lexeme."Boolean Value");
-
-            exit(LiteralValueNode);
-        end;
-
-        if PeekedLexeme.IsString() then begin
-            Lexeme := AssertNextLexeme(PeekedLexeme);
-
-            LiteralValueNode.Init(Lexeme.GetStringValue());
-
-            exit(LiteralValueNode);
-        end;
-        // TODO this disables calling methods on literals <-
-
         exit(ParseGetExpression(
             NextLexeme()
         ));
@@ -640,14 +612,30 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseCall
     (
-        Lexeme: Record "Lexeme FS"
+        Lexeme: Record "Lexeme FS" // TODO this does not make much sense anymore
     ): Interface "Node FS"
     var
         PeekedLexeme: Record "Lexeme FS";
         VariableNode: Codeunit "Variable Node FS";
         ProcedureCallNode: Codeunit "Procedure Call Node FS";
+        LiteralValueNode: Codeunit "Literal Value Node FS";
         Argument: Interface "Node FS";
     begin
+        if Lexeme.IsLiteralValue() then begin
+            case true of
+                Lexeme.IsNumber():
+                    LiteralValueNode.Init(Lexeme."Number Value");
+                Lexeme.IsBoolean():
+                    LiteralValueNode.Init(Lexeme."Boolean Value");
+                Lexeme.IsString():
+                    LiteralValueNode.Init(Lexeme.GetStringValue());
+                else
+                    Error('Literal value parsing is not implemented for %1.', Lexeme.Type);
+            end;
+
+            exit(LiteralValueNode);
+        end;
+
         AssertLexeme(Lexeme, PeekedLexeme.Identifier());
 
         PeekedLexeme := PeekNextLexeme();
