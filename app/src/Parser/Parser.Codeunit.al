@@ -31,7 +31,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
     var
         PeekedLexeme: Record "Lexeme FS";
-        Function: Interface "Function FS";
+        UserFunction: Codeunit "User Function FS";
     begin
         while true do begin
             PeekedLexeme := PeekNextLexeme();
@@ -40,20 +40,20 @@ codeunit 69001 "Parser FS"
 
             case true of
                 PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure"):
-                    Function := ParseProcedure();
+                    UserFunction := ParseProcedure();
                 PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger"):
-                    Function := ParseOnRun();
+                    UserFunction := ParseOnRun();
                 else
                     Error('Expected keyword ''procedure'' or ''trigger''');
             end;
 
             Runtime.DefineFunction(
-                Function
+                UserFunction
             );
         end;
     end;
 
-    local procedure ParseOnRun(): Interface "Function FS"
+    local procedure ParseOnRun(): Codeunit "User Function FS"
     var
         Lexeme: Record "Lexeme FS";
         SymbolTable: Codeunit "Symbol Table FS";
@@ -82,7 +82,7 @@ codeunit 69001 "Parser FS"
         exit(UserFunction);
     end;
 
-    local procedure ParseProcedure(): Interface "Function FS"
+    local procedure ParseProcedure(): Codeunit "User Function FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         ParameterSymbol, ReturnTypeSymbol : Record "Symbol FS";
@@ -613,7 +613,6 @@ codeunit 69001 "Parser FS"
         VariableNode: Codeunit "Variable Node FS";
         ProcedureCallNode: Codeunit "Procedure Call Node FS";
         LiteralValueNode: Codeunit "Literal Value Node FS";
-        Argument: Interface "Node FS";
     begin
         Lexeme := NextLexeme();
 
@@ -638,24 +637,10 @@ codeunit 69001 "Parser FS"
         PeekedLexeme := PeekNextLexeme();
 
         if PeekedLexeme.IsOperator(Enum::"Operator FS"::"(") then begin
-            AssertNextLexeme(PeekedLexeme);
-
-            ProcedureCallNode.Init(Lexeme."Identifier Name");
-
-            PeekedLexeme := PeekNextLexeme();
-            if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
-                repeat
-                    Argument := ParseExpression();
-                    ProcedureCallNode.AddArgument(Argument);
-
-                    PeekedLexeme := PeekNextLexeme();
-                    if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"comma") then
-                        break;
-
-                    AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"comma"));
-                until false;
-
-            AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::")"));
+            ProcedureCallNode.Init(
+                Lexeme."Identifier Name",
+                ParseArguments()
+            );
 
             ParseCallResult.Init(ProcedureCallNode);
             exit(ParseCallResult);
@@ -669,13 +654,12 @@ codeunit 69001 "Parser FS"
         exit(ParseCallResult);
     end;
 
-    // TODO lots of repeated code?
     local procedure ParseGetExpression(): Interface "Node FS"
     var
         Lexeme, PeekedLexeme : Record "Lexeme FS";
         MethodCallNode: Codeunit "Method Call Node FS";
         PropertyAccessNode: Codeunit "Property Access Node FS";
-        Call, Argument : Interface "Node FS";
+        Call: Interface "Node FS";
     begin
         Call := ParseCall().GetNode();
 
@@ -695,25 +679,9 @@ codeunit 69001 "Parser FS"
                         Clear(MethodCallNode); // create new instance
                         MethodCallNode.Init(
                             Call,
-                            Lexeme."Identifier Name"
+                            Lexeme."Identifier Name",
+                            ParseArguments()
                         );
-
-                        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
-
-                        PeekedLexeme := PeekNextLexeme();
-                        if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
-                            repeat
-                                Argument := ParseExpression();
-                                MethodCallNode.AddArgument(Argument);
-
-                                PeekedLexeme := PeekNextLexeme();
-                                if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"comma") then
-                                    break;
-
-                                AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"comma"));
-                            until false;
-
-                        AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::")"));
 
                         Call := MethodCallNode;
                     end;
@@ -737,7 +705,7 @@ codeunit 69001 "Parser FS"
         PropertyAccessNode: Codeunit "Property Access Node FS";
         SetStatementNode: Codeunit "Set Statement Node FS";
         ParseCallResult: Codeunit "Parse Call Result FS";
-        Call, Argument : Interface "Node FS";
+        Call: Interface "Node FS";
     begin
         ParseCallResult := ParseCall();
 
@@ -778,25 +746,9 @@ codeunit 69001 "Parser FS"
                         Clear(MethodCallNode); // create new instance
                         MethodCallNode.Init(
                             Call,
-                            Lexeme."Identifier Name"
+                            Lexeme."Identifier Name",
+                            ParseArguments()
                         );
-
-                        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::"("));
-
-                        PeekedLexeme := PeekNextLexeme();
-                        if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
-                            repeat
-                                Argument := ParseExpression();
-                                MethodCallNode.AddArgument(Argument);
-
-                                PeekedLexeme := PeekNextLexeme();
-                                if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"comma") then
-                                    break;
-
-                                AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"comma"));
-                            until false;
-
-                        AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::")"));
 
                         Call := MethodCallNode;
                     end;
@@ -811,6 +763,30 @@ codeunit 69001 "Parser FS"
         end;
 
         exit(Call);
+    end;
+
+    local procedure ParseArguments(): Codeunit "Node Linked List FS";
+    var
+        PeekedLexeme: Record "Lexeme FS";
+        Arguments: Codeunit "Node Linked List FS";
+    begin
+        AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"("));
+
+        PeekedLexeme := PeekNextLexeme();
+        if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
+            repeat
+                Arguments.Insert(ParseExpression());
+
+                PeekedLexeme := PeekNextLexeme();
+                if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"comma") then
+                    break;
+
+                AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"comma"));
+            until false;
+
+        AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::")"));
+
+        exit(Arguments);
     end;
 
 
@@ -858,16 +834,15 @@ codeunit 69001 "Parser FS"
     )
     begin
         if Lexeme.Type <> ExpectedLexeme.Type then
-            Error('AssertNextLexeme type missmatch %1 vs %2', Lexeme.Type, ExpectedLexeme.Type); // TODO
+            Error('Expected token %1, got %2.', ExpectedLexeme.Type, Lexeme.Type);
 
-        // TODO other checks
         case ExpectedLexeme.Type of
             ExpectedLexeme.Type::Operator:
                 if Lexeme."Operator Value" <> ExpectedLexeme."Operator Value" then
-                    Error('AssertNextLexeme operator missmatch %1 vs %2', Lexeme."Operator Value", ExpectedLexeme."Operator Value"); // TODO
+                    Error('Expected operator %1, got %2.', ExpectedLexeme."Operator Value", Lexeme."Operator Value");
             ExpectedLexeme.Type::Keyword:
                 if Lexeme."Keyword Value" <> ExpectedLexeme."Keyword Value" then
-                    Error('AssertNextLexeme keyword missmatch %1 vs %2', Lexeme."Keyword Value", ExpectedLexeme."Keyword Value"); // TODO
+                    Error('Expected keyword %1, got %2.', ExpectedLexeme."Keyword Value", Lexeme."Keyword Value");
         end;
     end;
 

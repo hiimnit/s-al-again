@@ -6,15 +6,12 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
 
     procedure Init
     (
-        NewName: Text[120]
+        NewName: Text[120];
+        NewArguments: Codeunit "Node Linked List FS"
     )
     begin
         Name := NewName;
-    end;
-
-    procedure AddArgument(Argument: Interface "Node FS")
-    begin
-        Arguments.Insert(Argument);
+        Arguments := NewArguments;
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
