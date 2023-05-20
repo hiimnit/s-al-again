@@ -27,6 +27,14 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         LiteralValue := TextValue;
     end;
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     begin
         exit(LiteralValue);
@@ -35,5 +43,18 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     begin
         exit(SymbolTable.SymbolFromType(LiteralValue.GetType()));
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    begin
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 }

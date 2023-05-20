@@ -1,4 +1,4 @@
-codeunit 69017 "Variable Node FS" implements "Node FS"
+codeunit 69017 "Variable Node FS" implements "Node FS" // TODO rename to identifier?
 {
     var
         Name: Text[120];
@@ -6,6 +6,14 @@ codeunit 69017 "Variable Node FS" implements "Node FS"
     procedure Init(NewName: Text[120])
     begin
         Name := NewName;
+    end;
+
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
     end;
 
     procedure GetName(): Text[120]
@@ -21,5 +29,27 @@ codeunit 69017 "Variable Node FS" implements "Node FS"
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     begin
         exit(SymbolTable.Lookup(Name));
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        // TODO check if name is a prop of ContextSymbol
+        if ContextSymbol.TryLookupProperty(SymbolTable, Name, Symbol) then begin
+            Symbol.Name := Name;
+            Symbol.Property := true;
+            exit(Symbol);
+        end;
+
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 }

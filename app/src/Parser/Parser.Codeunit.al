@@ -762,6 +762,8 @@ codeunit 69001 "Parser FS"
             end;
         end;
 
+        Call.SetTopLevel(true);
+
         exit(Call);
     end;
 

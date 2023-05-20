@@ -123,6 +123,8 @@ codeunit 69011 "Runtime FS"
         case Type of
             Type::Text:
                 exit(LookupTextMethod(Name));
+            Type::Record:
+                exit(LookupRecordMethod(Name));
             else
                 Error('Unknown %1 method %2.', Type, Name);
         end;
@@ -147,5 +149,101 @@ codeunit 69011 "Runtime FS"
             else
                 Error('Unknown Text method %1.', Name);
         end;
+    end;
+
+    local procedure LookupRecordMethod
+    (
+        Name: Text[120]
+    ): Interface "Method FS"
+    var
+        RecordFindFirst: Codeunit "Record FindFirst FS";
+        RecordFindLast: Codeunit "Record FindLast FS";
+        RecordFindSet: Codeunit "Record FindSet FS";
+        RecordNext: Codeunit "Record Next FS";
+        RecordSetRange: Codeunit "Record SetRange FS";
+    begin
+        case Name.ToLower() of
+            RecordFindFirst.GetName().ToLower():
+                exit(RecordFindFirst);
+            RecordFindLast.GetName().ToLower():
+                exit(RecordFindLast);
+            RecordFindSet.GetName().ToLower():
+                exit(RecordFindSet);
+            RecordNext.GetName().ToLower():
+                exit(RecordNext);
+            RecordSetRange.GetName().ToLower():
+                exit(RecordSetRange);
+            else
+                Error('Unknown Record method %1.', Name);
+        end;
+    end;
+
+    procedure ValidateMethodCallArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Name: Text[120];
+        Arguments: Codeunit "Node Linked List FS";
+        var ParameterSymbol: Record "Symbol FS"
+    )
+    var
+        Symbol: Record "Symbol FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS";
+    begin
+        if Arguments.GetCount() <> ParameterSymbol.Count() then
+            Error('Parameter count missmatch when calling method %1.', Name);
+
+        ParameterSymbol.SetCurrentKey(Order); // TODO this feels wrong
+        if not ParameterSymbol.FindSet() then
+            exit;
+
+        ArgumentNode := Arguments.First();
+
+        while true do begin
+            Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+            if not TypesMatch(ParameterSymbol, Symbol) then
+                Error(
+                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+                    Name,
+                    ParameterSymbol.TypeToText(),
+                    Symbol.TypeToText()
+                );
+
+            if ParameterSymbol.Next() = 0 then
+                break;
+            ArgumentNode := ArgumentNode.Next();
+        end;
+    end;
+
+    procedure TypesMatch
+    (
+        ExpectedSymbol: Record "Symbol FS";
+        ActualSymbol: Record "Symbol FS"
+    ): Boolean
+    begin
+        if ExpectedSymbol.Type = ExpectedSymbol.Type::Any then
+            exit(ActualSymbol.Type <> ActualSymbol.Type::Void);
+        exit(ExpectedSymbol.Compare(ActualSymbol));
+    end;
+
+    procedure EvaluateArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        Arguments: Codeunit "Node Linked List FS"
+    ): Codeunit "Value Linked List FS"
+    var
+        ArgumentNode: Codeunit "Node Linked List Node FS";
+        ArgumentValues: Codeunit "Value Linked List FS";
+    begin
+        if not Arguments.First(ArgumentNode) then
+            exit(ArgumentValues);
+
+        repeat
+            ArgumentValues.Insert(
+                ArgumentNode.Value().Evaluate(Runtime)
+            );
+        until not ArgumentNode.Next(ArgumentNode);
+
+        exit(ArgumentValues);
     end;
 }

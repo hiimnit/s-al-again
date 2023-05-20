@@ -14,6 +14,14 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
@@ -46,5 +54,18 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
         Statement.ValidateSemantics(Runtime, SymbolTable);
 
         exit(SymbolTable.VoidSymbol());
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    begin
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 }

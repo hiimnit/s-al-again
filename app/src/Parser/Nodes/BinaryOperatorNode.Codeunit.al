@@ -16,6 +16,14 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         BinaryOperator := NewOperator;
     end;
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         LeftValueVariant, RightValueVariant : Variant;
@@ -300,6 +308,19 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             LeftSymbol,
             RightSymbol,
             BinaryOperator
+        ));
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    begin
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
         ));
     end;
 

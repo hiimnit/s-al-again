@@ -6,14 +6,18 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
     (
         Runtime: Codeunit "Runtime FS";
         Self: Interface "Value FS";
-        ValueLinkedList: Codeunit "Value Linked List FS"
+        Arguments: Codeunit "Node Linked List FS";
+        TopLevel: Boolean
     ): Interface "Value FS"
     var
         BooleanValue: Codeunit "Boolean Value FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
         Node: Codeunit "Value Linked List Node FS";
         Text, Subtext : Text;
     begin
         Text := Self.GetValue();
+
+        ValueLinkedList := Runtime.EvaluateArguments(Runtime, Arguments);
         Node := ValueLinkedList.First();
         Subtext := Node.Value().GetValue();
 
@@ -26,23 +30,29 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
         exit('Contains');
     end;
 
-    procedure GetInputType(): Enum "Type FS";
-    begin
-        exit(Enum::"Type FS"::Text);
-    end;
-
-    procedure GetReturnType(): Enum "Type FS";
+    procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";
     begin
         exit(Enum::"Type FS"::Boolean);
     end;
 
-    procedure GetArity(): Integer;
-    begin
-        exit(1);
-    end;
-
-    procedure GetParameters(var ParameterSymbol: Record "Symbol FS");
+    procedure ValidateCallArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Self: Record "Symbol FS";
+        Arguments: Codeunit "Node Linked List FS"
+    )
+    var
+        ParameterSymbol: Record "Symbol FS";
     begin
         ParameterSymbol.InsertText('Text', 1);
+
+        Runtime.ValidateMethodCallArguments(
+            Runtime,
+            SymbolTable,
+            GetName(),
+            Arguments,
+            ParameterSymbol
+        );
     end;
 }
