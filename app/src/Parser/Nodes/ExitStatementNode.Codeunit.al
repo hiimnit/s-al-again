@@ -33,10 +33,16 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
         if not ExpressionSet then
             exit(SymbolTable.VoidSymbol());
 
+        if SymbolTable.GetReturnType().Type = Enum::"Type FS"::Void then
+            Error('Unexpected return value expression, return value should be void.');
+
         Symbol := Expression.ValidateSemantics(Runtime, SymbolTable);
-        if Symbol.Type <> Symbol.Type::Void then
-            if Symbol.Type <> SymbolTable.GetReturnType() then
-                Error('Return type missmatch, expected %1, got %2.', SymbolTable.GetReturnType(), Symbol.Type);
+        if not Symbol.Compare(SymbolTable.GetReturnType()) then
+            Error(
+                'Return type missmatch, expected %1, got %2.',
+                SymbolTable.GetReturnType().TypeToText(),
+                Symbol.TypeToText()
+            );
 
         exit(SymbolTable.VoidSymbol());
     end;

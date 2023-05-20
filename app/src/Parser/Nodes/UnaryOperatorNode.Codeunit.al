@@ -36,7 +36,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         NumericValue: Codeunit "Numeric Value FS";
         Value, Result : Decimal;
     begin
-        Value := ValueVariant; // TODO runtime type checking?
+        Value := ValueVariant;
 
         case Operator of
             Operator::"+":
@@ -56,7 +56,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         BooleanValue: Codeunit "Boolean Value FS";
         Value, Result : Boolean;
     begin
-        Value := ValueVariant; // TODO runtime type checking?
+        Value := ValueVariant;
 
         case Operator of
             Operator::"not":

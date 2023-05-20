@@ -1,13 +1,17 @@
 codeunit 69202 "Message Function FS" implements "Function FS"
 {
+    SingleInstance = true;
+
     procedure GetName(): Text[120];
     begin
         exit('Message');
     end;
 
-    procedure GetReturnType(): Enum "Type FS"
+    procedure GetReturnType(): Record "Symbol FS"
+    var
+        SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(Enum::"Type FS"::Void);
+        exit(SymbolTable.VoidSymbol());
     end;
 
     procedure GetArity(): Integer
@@ -34,10 +38,5 @@ codeunit 69202 "Message Function FS" implements "Function FS"
         Message(Text);
 
         exit(VoidValue);
-    end;
-
-    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
-    begin
-        // TODO do not call this for built ins?
     end;
 }

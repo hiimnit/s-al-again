@@ -74,7 +74,9 @@ function Console() {
   return (
     <div ref={consoleRef} className="overflow-y-auto font-monaco text-xs">
       {lines.map((e) => (
-        <div key={e.entryNo}>{e.content}</div>
+        <div key={e.entryNo} className="whitespace-pre-wrap break-all">
+          {e.content}
+        </div>
       ))}
     </div>
   );

@@ -1,19 +1,21 @@
-codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
+codeunit 69027 "Set Statement Node FS" implements "Node FS"
 {
     var
-        Expression: Interface "Node FS";
+        AccesorExpression, ValueExpression : Interface "Node FS";
         Name: Text[120];
         Operator: Enum "Operator FS";
 
     procedure Init
     (
+        NewAccesorExpression: Interface "Node FS";
         NewName: Text[120];
-        NewExpression: Interface "Node FS";
+        NewValueExpression: Interface "Node FS";
         NewOperator: Enum "Operator FS"
     )
     begin
+        AccesorExpression := NewAccesorExpression;
         Name := NewName;
-        Expression := NewExpression;
+        ValueExpression := NewValueExpression;
         Operator := NewOperator;
     end;
 
@@ -21,7 +23,7 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
     var
         VoidValue: Codeunit "Void Value FS";
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
-        PreviousValue, NewValue : Interface "Value FS";
+        AccessorValue, PreviousValue, NewValue : Interface "Value FS";
         BinaryOperator: Enum "Operator FS";
     begin
         case Operator of
@@ -39,10 +41,11 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
                 Error('Unimplemented assignment operator %1.', Operator);
         end;
 
-        NewValue := Expression.Evaluate(Runtime);
+        AccessorValue := AccesorExpression.Evaluate(Runtime);
+        NewValue := ValueExpression.Evaluate(Runtime);
 
         if BinaryOperator <> BinaryOperator::" " then begin
-            PreviousValue := Runtime.GetMemory().Get(Name);
+            PreviousValue := AccessorValue.GetProperty(Name);
 
             NewValue := BinaryOperatorNode.Evaluate(
                 PreviousValue.GetValue(),
@@ -51,23 +54,21 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
             );
         end;
 
-        Runtime.GetMemory().Set(
-            Name,
-            NewValue
-        );
+        AccessorValue.SetProperty(Name, NewValue);
 
         exit(VoidValue);
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
-        VariableSymbol, ExpressionSymbol : Record "Symbol FS";
+        VariableSymbol, AccesorExpressionSymbol, ValueExpressionSymbol : Record "Symbol FS";
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
         BinaryOperator: Enum "Operator FS";
     begin
-        VariableSymbol := SymbolTable.Lookup(Name);
+        AccesorExpressionSymbol := AccesorExpression.ValidateSemantics(Runtime, SymbolTable);
+        VariableSymbol := AccesorExpressionSymbol.LookupProperty(SymbolTable, Name);
 
-        ExpressionSymbol := Expression.ValidateSemantics(Runtime, SymbolTable);
+        ValueExpressionSymbol := ValueExpression.ValidateSemantics(Runtime, SymbolTable);
 
         case Operator of
             Operator::"+=":
@@ -85,15 +86,15 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         end;
 
         if BinaryOperator <> BinaryOperator::" " then
-            ExpressionSymbol := BinaryOperatorNode.ValidateSemantics(
+            ValueExpressionSymbol := BinaryOperatorNode.ValidateSemantics(
                 SymbolTable,
                 VariableSymbol,
-                ExpressionSymbol,
+                ValueExpressionSymbol,
                 BinaryOperator
             );
 
-        if ExpressionSymbol.Type <> VariableSymbol.Type then
-            Error('Cannot assign type %1 to variable %2 of type %3.', ExpressionSymbol.Type, Name, VariableSymbol.Type);
+        if ValueExpressionSymbol.Type <> VariableSymbol.Type then
+            Error('Cannot assign type %1 to variable %2 of type %3.', ValueExpressionSymbol.Type, Name, VariableSymbol.Type);
 
         exit(SymbolTable.VoidSymbol());
     end;

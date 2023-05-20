@@ -1,13 +1,17 @@
 codeunit 69200 "Abs Function FS" implements "Function FS"
 {
+    SingleInstance = true;
+
     procedure GetName(): Text[120];
     begin
         exit('Abs');
     end;
 
-    procedure GetReturnType(): Enum "Type FS"
+    procedure GetReturnType(): Record "Symbol FS"
+    var
+        SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(Enum::"Type FS"::Number);
+        exit(SymbolTable.NumericSymbol());
     end;
 
     procedure GetArity(): Integer
@@ -32,10 +36,5 @@ codeunit 69200 "Abs Function FS" implements "Function FS"
         NumericValue.SetValue(Value);
 
         exit(NumericValue);
-    end;
-
-    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
-    begin
-        // TODO do not call this for built ins?
     end;
 }

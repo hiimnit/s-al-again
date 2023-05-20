@@ -13,7 +13,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     begin
         Left := NewLeft;
         Right := NewRight;
-        BinaryOperator := NewOperator; // TODO validate?
+        BinaryOperator := NewOperator;
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
@@ -54,7 +54,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             LeftValueVariant.IsDecimal() and RightValueVariant.IsText():
                 exit(EvaluateTextMultiplication(LeftValueVariant, RightValueVariant, Operator));
             else
-                Error('Unimplemented binary operator input types.'); // TODO
+                Error('Unimplemented binary operator input types.'); // TODO nicer error?
         end;
     end;
 
@@ -404,7 +404,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
         end;
 
-        exit(SymbolTable.NumbericSymbol());
+        exit(SymbolTable.NumericSymbol());
     end;
 
     local procedure ValidateBoolean

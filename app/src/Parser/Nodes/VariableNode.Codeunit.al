@@ -8,6 +8,11 @@ codeunit 69017 "Variable Node FS" implements "Node FS"
         Name := NewName;
     end;
 
+    procedure GetName(): Text[120]
+    begin
+        exit(Name);
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     begin
         exit(Runtime.GetMemory().Get(Name));

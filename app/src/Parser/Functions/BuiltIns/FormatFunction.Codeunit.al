@@ -1,20 +1,20 @@
-codeunit 69203 "Error Function FS" implements "Function FS"
+codeunit 69205 "Format Function FS" implements "Function FS"
 {
     SingleInstance = true;
 
     procedure GetName(): Text[120];
     begin
-        exit('Error');
+        exit('Format');
     end;
 
     procedure GetReturnType(): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(SymbolTable.VoidSymbol());
+        exit(SymbolTable.TextSymbol());
     end;
 
-    procedure GetArity(): Integer
+    procedure GetArity(): Integer // TODO return a record with min and max?
     begin
         exit(1);
     end;
@@ -23,20 +23,23 @@ codeunit 69203 "Error Function FS" implements "Function FS"
     // >>>> variable parity - message, error, setrange...
     procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
     begin
-        ParameterSymbol.InsertText('Text', 1);
+        ParameterSymbol.InsertAny('Any', 1);
+
+        // TODO allow to create multiple sets here?
+        // >>>> call match from here? arity as parameter?
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
     var
-        VoidValue: Codeunit "Void Value FS";
         Node: Codeunit "Value Linked List Node FS";
+        TextValue: Codeunit "Text Value FS";
         Text: Text;
     begin
         Node := ValueLinkedList.First();
-        Text := Node.Value().GetValue();
 
-        Error(Text);
+        Text := Format(Node.Value().GetValue());
+        TextValue.SetValue(Text);
 
-        exit(VoidValue);
+        exit(TextValue);
     end;
 }

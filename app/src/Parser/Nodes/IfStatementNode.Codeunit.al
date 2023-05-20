@@ -25,17 +25,18 @@ codeunit 69019 "If Statement Node FS" implements "Node FS"
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
-        ExpressionValue, Value : Interface "Value FS";
+        VoidValue: Codeunit "Void Value FS";
+        ExpressionValue: Interface "Value FS";
     begin
         ExpressionValue := Expression.Evaluate(Runtime);
 
         if ExpressionValue.GetValue() then
-            Value := IfStatement.Evaluate(Runtime)
-        else
-            if ElseStatementSet then
-                Value := ElseStatement.Evaluate(Runtime);
+            exit(IfStatement.Evaluate(Runtime));
 
-        exit(Value);
+        if ElseStatementSet then
+            exit(ElseStatement.Evaluate(Runtime));
+
+        exit(VoidValue);
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";

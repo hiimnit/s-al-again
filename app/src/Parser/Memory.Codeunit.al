@@ -1,4 +1,4 @@
-codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
+codeunit 69009 "Memory FS"
 {
     var
         LocalVariables: array[50] of Interface "Value FS";
@@ -28,7 +28,7 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
 
                         InitializeSymbol(
                             Symbol,
-                            Node.Value()
+                            Node.Value() // TODO what happens with records here?
                         );
                     end;
                 else
@@ -44,26 +44,33 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
     begin
         InitializeSymbol(
             Symbol,
-            DefaultValueFromType(Symbol.Type)
+            DefaultValueFromType(Symbol)
         );
     end;
 
-    procedure DefaultValueFromType(Type: Enum "Type FS"): Interface "Value FS";
+    // TODO change to a "Validated Symbol"?
+    procedure DefaultValueFromType(Symbol: Record "Symbol FS"): Interface "Value FS";
     var
         NumericValue: Codeunit "Numeric Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
+        RecordValue: Codeunit "Record Value FS";
         Value: Interface "Value FS";
     begin
-        case Type of
-            Type::Number:
+        case Symbol.Type of
+            Symbol.Type::Number:
                 Value := NumericValue;
-            Type::Boolean:
+            Symbol.Type::Boolean:
                 Value := BooleanValue;
-            Type::Text:
+            Symbol.Type::Text:
                 Value := TextValue;
+            Symbol.Type::Record:
+                begin
+                    RecordValue.Init(Symbol.Subtype);
+                    Value := RecordValue;
+                end;
             else
-                Error('Initilization of type %1 is not supported.', Type);
+                Error('Initilization of type %1 is not supported.', Symbol.Type);
         end;
 
         exit(Value);
@@ -93,6 +100,7 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
         // TODO currently it is possible to change the variable data type in runtime
         // >>>> semantic analysis should not let this happen (if implemented properly)
         // TODO lets instead call setvalue to change the in-memory value instead of replacing it?
+        // >>>> resolve as part of reference handling
         LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
     end;
 

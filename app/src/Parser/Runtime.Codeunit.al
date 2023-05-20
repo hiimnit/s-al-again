@@ -9,8 +9,6 @@ codeunit 69011 "Runtime FS"
     )
     begin
         MonacoEditor := NewMonacoEditor;
-
-        InitBuiltInFunctions();
     end;
 
     procedure WriteLine(Text: Text)
@@ -19,45 +17,60 @@ codeunit 69011 "Runtime FS"
     end;
 
     var
-        Functions: array[50] of Interface "Function FS";
+        Functions: array[50] of Codeunit "User Function FS";
         FunctionMap: Dictionary of [Text[120], Integer];
         FunctionCount: Integer;
 
-    local procedure InitBuiltInFunctions()
-    var
-        AbsFunction: Codeunit "Abs Function FS";
-        PowerFunction: Codeunit "Power Function FS";
-        MessageFunction: Codeunit "Message Function FS";
-        ErrorFunction: Codeunit "Error Function FS";
-        WriteLineFunction: Codeunit "Write Line Function FS";
-    begin
-        DefineFunction(AbsFunction);
-        DefineFunction(PowerFunction);
-        DefineFunction(MessageFunction);
-        DefineFunction(ErrorFunction);
-        DefineFunction(WriteLineFunction);
-    end;
-
     procedure DefineFunction
     (
-        Function: Interface "Function FS"
+        UserFunction: Codeunit "User Function FS"
     )
     begin
-        // TODO check length and name uniqueness?
+        if FunctionCount = ArrayLen(Functions) then
+            Error('Reached maximum allowed number of local functions %1.', ArrayLen(Functions));
+
         FunctionCount += 1;
-        FunctionMap.Add(Function.GetName().ToLower(), FunctionCount);
-        Functions[FunctionCount] := Function;
+        FunctionMap.Add(UserFunction.GetName().ToLower(), FunctionCount);
+        Functions[FunctionCount] := UserFunction;
     end;
 
     procedure LookupFunction(Name: Text[120]): Interface "Function FS"
     var
         i: Integer;
     begin
-        if not FunctionMap.ContainsKey(Name.ToLower()) then
-            Error('Function %1 does not exist.', Name);
+        if FunctionMap.ContainsKey(Name.ToLower()) then begin
+            i := FunctionMap.Get(Name.ToLower());
+            exit(Functions[i]);
+        end;
 
-        i := FunctionMap.Get(Name.ToLower());
-        exit(Functions[i]);
+        exit(LookupBuiltInFunction(Name));
+    end;
+
+    local procedure LookupBuiltInFunction(Name: Text[120]): Interface "Function FS"
+    var
+        AbsFunction: Codeunit "Abs Function FS";
+        PowerFunction: Codeunit "Power Function FS";
+        MessageFunction: Codeunit "Message Function FS";
+        ErrorFunction: Codeunit "Error Function FS";
+        WriteLineFunction: Codeunit "Write Line Function FS";
+        FormatFunction: Codeunit "Format Function FS";
+    begin
+        case Name.ToLower() of
+            AbsFunction.GetName().ToLower():
+                exit(AbsFunction);
+            PowerFunction.GetName().ToLower():
+                exit(PowerFunction);
+            MessageFunction.GetName().ToLower():
+                exit(MessageFunction);
+            ErrorFunction.GetName().ToLower():
+                exit(ErrorFunction);
+            WriteLineFunction.GetName().ToLower():
+                exit(WriteLineFunction);
+            FormatFunction.GetName().ToLower():
+                exit(FormatFunction);
+            else
+                Error('Function %1 does not exist.', Name);
+        end;
     end;
 
     procedure LookupEntryPoint(): Interface "Function FS"
@@ -99,5 +112,40 @@ codeunit 69011 "Runtime FS"
     procedure GetMemory(): Codeunit "Memory FS"
     begin
         exit(MemoryStack[MemoryCounter]);
+    end;
+
+    procedure LookupMethod
+    (
+        Type: Enum "Type FS";
+        Name: Text[120]
+    ): Interface "Method FS"
+    begin
+        case Type of
+            Type::Text:
+                exit(LookupTextMethod(Name));
+            else
+                Error('Unknown %1 method %2.', Type, Name);
+        end;
+    end;
+
+    procedure LookupTextMethod
+    (
+        Name: Text[120]
+    ): Interface "Method FS"
+    var
+        TextToUpper: Codeunit "Text ToUpper FS";
+        TextToLower: Codeunit "Text ToLower FS";
+        TextContains: Codeunit "Text Contains FS";
+    begin
+        case Name.ToLower() of
+            TextToUpper.GetName().ToLower():
+                exit(TextToUpper);
+            TextToLower.GetName().ToLower():
+                exit(TextToLower);
+            TextContains.GetName().ToLower():
+                exit(TextContains);
+            else
+                Error('Unknown Text method %1.', Name);
+        end;
     end;
 }
