@@ -41,8 +41,8 @@ codeunit 69027 "Set Statement Node FS" implements "Node FS"
                 Error('Unimplemented assignment operator %1.', Operator);
         end;
 
+        AccessorValue := AccesorExpression.Evaluate(Runtime);
         NewValue := ValueExpression.Evaluate(Runtime);
-        AccessorValue := AccesorExpression.Evaluate(Runtime); // TODO what is the order here? accesor or value expression first?
 
         if BinaryOperator <> BinaryOperator::" " then begin
             PreviousValue := AccessorValue.GetProperty(Name);
@@ -65,10 +65,10 @@ codeunit 69027 "Set Statement Node FS" implements "Node FS"
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
         BinaryOperator: Enum "Operator FS";
     begin
-        ValueExpressionSymbol := ValueExpression.ValidateSemantics(Runtime, SymbolTable);
-
         AccesorExpressionSymbol := AccesorExpression.ValidateSemantics(Runtime, SymbolTable);
         VariableSymbol := AccesorExpressionSymbol.LookupProperty(SymbolTable, Name);
+
+        ValueExpressionSymbol := ValueExpression.ValidateSemantics(Runtime, SymbolTable);
 
         case Operator of
             Operator::"+=":
