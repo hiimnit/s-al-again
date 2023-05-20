@@ -54,6 +54,12 @@ Right now only a handful of basic types is supported:
     - `ToUpper(): Text`
     - `Contains(Text: Text): Boolean`
 - `record`
+  - methods
+    - `FindFirst()[: Boolean]`
+    - `FindLast()[: Boolean]`
+    - `FindSet()[: Boolean]`
+    - `Next([Steps: Number]): Number`
+    - `SetRange(Field: Identifier, [FromValue: FieldType, [ToValue: FieldType]])`
 
 #### Statements
 
@@ -87,7 +93,7 @@ Right now only a handful of basic types is supported:
 
 ### Planned
 
-1. n-arity functions and methods
+1. n-arity functions
 1. more built-in functions and methods
 1. correct value vs. reference handling
 1. `date`/`time`/`datetime`/`guid`
