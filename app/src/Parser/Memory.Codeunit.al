@@ -1,4 +1,4 @@
-codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
+codeunit 69009 "Memory FS"
 {
     var
         LocalVariables: array[50] of Interface "Value FS";
@@ -100,6 +100,7 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
         // TODO currently it is possible to change the variable data type in runtime
         // >>>> semantic analysis should not let this happen (if implemented properly)
         // TODO lets instead call setvalue to change the in-memory value instead of replacing it?
+        // >>>> resolve as part of reference handling
         LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
     end;
 
@@ -112,35 +113,5 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
         foreach k in LocalVariableMap.Keys() do
             TextBuilder.Append(StrSubstNo('%1: %2\', k, LocalVariables[LocalVariableMap.Get(k)].GetValue()));
         Message(TextBuilder.ToText());
-    end;
-
-    // TODO helper method, probably should not be here at all
-    procedure ValueFromVariant(Value: Variant): Interface "Value FS";
-    var
-        NumericValue: Codeunit "Numeric Value FS";
-        BooleanValue: Codeunit "Boolean Value FS";
-        TextValue: Codeunit "Text Value FS";
-    begin
-        case true of
-            Value.IsInteger(),
-            Value.IsDecimal():
-                begin
-                    NumericValue.SetValue(Value);
-                    exit(NumericValue);
-                end;
-            Value.IsBoolean():
-                begin
-                    BooleanValue.SetValue(Value);
-                    exit(BooleanValue);
-                end;
-            Value.IsCode(),
-            Value.IsText():
-                begin
-                    TextValue.SetValue(Value);
-                    exit(TextValue);
-                end;
-            else
-                Error('Initilization of type from value %1 is not supported.', Value);
-        end;
     end;
 }
