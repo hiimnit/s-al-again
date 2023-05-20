@@ -25,4 +25,14 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
         BooleanValue.SetValue(Value);
         exit(BooleanValue);
     end;
+
+    procedure GetProperty(Name: Text[120]): Interface "Value FS";
+    begin
+        Error('Boolean values do not support property access');
+    end;
+
+    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
+    begin
+        Error('Boolean values do not support property access');
+    end;
 }

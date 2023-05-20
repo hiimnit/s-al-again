@@ -47,7 +47,7 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
             Function
         );
 
-        exit(SymbolTable.SymbolFromType(Function.GetReturnType()));
+        exit(Function.GetReturnType());
     end;
 
     // TODO this will make things difficult for functions with
@@ -74,12 +74,12 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
 
         while true do begin
             Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-            if not TypesMatch(ParameterSymbol.Type, Symbol.Type) then
+            if not TypesMatch(ParameterSymbol, Symbol) then
                 Error(
                     'Parameter call missmatch when calling function %1.\\Expected %2, got %3.',
                     Function.GetName(),
-                    ParameterSymbol.Type,
-                    Symbol.Type
+                    ParameterSymbol.TypeToText(),
+                    Symbol.TypeToText()
                 );
 
             if ParameterSymbol.Next() = 0 then
@@ -90,12 +90,12 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
 
     local procedure TypesMatch
     (
-        ExpectedType: Enum "Type FS";
-        ActualType: Enum "Type FS"
+        ExpectedSymbol: Record "Symbol FS";
+        ActualSymbol: Record "Symbol FS"
     ): Boolean
     begin
-        if ExpectedType = ExpectedType::Any then
-            exit(ActualType <> ActualType::Void);
-        exit(ExpectedType = ActualType);
+        if ExpectedSymbol.Type = ExpectedSymbol.Type::Any then
+            exit(ActualSymbol.Type <> ActualSymbol.Type::Void);
+        exit(ExpectedSymbol.Compare(ActualSymbol));
     end;
 }

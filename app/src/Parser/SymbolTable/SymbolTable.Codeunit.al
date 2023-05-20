@@ -2,16 +2,16 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
 {
     var
         Symbol: Record "Symbol FS";
-        ReturnType: Enum "Type FS";
+        ReturnTypeSymbol: Record "Symbol FS";
 
-    procedure DefineReturnType(NewReturnType: Enum "Type FS")
+    procedure DefineReturnType(NewReturnTypeSymbol: Record "Symbol FS")
     begin
-        ReturnType := NewReturnType;
+        ReturnTypeSymbol := NewReturnTypeSymbol;
     end;
 
-    procedure GetReturnType(): Enum "Type FS"
+    procedure GetReturnType(): Record "Symbol FS"
     begin
-        exit(ReturnType);
+        exit(ReturnTypeSymbol);
     end;
 
     procedure DefineLocal(VariableSymbol: Record "Symbol FS")
@@ -19,6 +19,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Define(
             VariableSymbol.Name,
             VariableSymbol.Type,
+            VariableSymbol.Subtype,
             Enum::"Scope FS"::Local
         );
     end;
@@ -28,6 +29,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Define(
             ParameterSymbol.Name,
             ParameterSymbol.Type,
+            ParameterSymbol.Subtype,
             Enum::"Scope FS"::Parameter
         );
     end;
@@ -36,6 +38,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
     (
         Name: Text[120];
         Type: Enum "Type FS";
+        Subtype: Text[120];
         Scope: Enum "Scope FS"
     )
     begin
@@ -45,6 +48,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Symbol.Init();
         Symbol.Name := Name;
         Symbol.Type := Type;
+        Symbol.Subtype := Subtype; // TODO upgrade to validated symbol during analysis, interpreter then uses validated symbols?
         Symbol.Scope := Scope;
         Symbol.Order := GetNextOrder();
         Symbol.Insert();
@@ -84,12 +88,12 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         exit(Boolean);
     end;
 
-    procedure NumbericSymbol(): Record "Symbol FS"
+    procedure NumericSymbol(): Record "Symbol FS"
     var
-        Numberic: Record "Symbol FS";
+        Numeric: Record "Symbol FS";
     begin
-        Numberic.Type := Numberic.Type::Number;
-        exit(Numberic);
+        Numeric.Type := Numeric.Type::Number;
+        exit(Numeric);
     end;
 
     procedure TextSymbol(): Record "Symbol FS"
@@ -106,7 +110,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
             Type::Boolean:
                 exit(BooleanSymbol());
             Type::Number:
-                exit(NumbericSymbol());
+                exit(NumericSymbol());
             Type::Text:
                 exit(TextSymbol());
             Type::Void:
@@ -155,5 +159,15 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
                 ParameterSymbol.Insert();
             until Symbol.Next() = 0;
         Symbol.SetRange(Scope);
+    end;
+
+    procedure Validate()
+    begin
+        ReturnTypeSymbol.ValidateType();
+
+        if Symbol.FindSet() then
+            repeat
+                Symbol.ValidateType();
+            until Symbol.Next() = 0;
     end;
 }

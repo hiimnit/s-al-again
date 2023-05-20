@@ -7,9 +7,11 @@ codeunit 69203 "Error Function FS" implements "Function FS"
         exit('Error');
     end;
 
-    procedure GetReturnType(): Enum "Type FS"
+    procedure GetReturnType(): Record "Symbol FS"
+    var
+        SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(Enum::"Type FS"::Void);
+        exit(SymbolTable.VoidSymbol());
     end;
 
     procedure GetArity(): Integer

@@ -23,4 +23,14 @@ codeunit 69100 "Void Value FS" implements "Value FS"
     begin
         exit(VoidValue);
     end;
+
+    procedure GetProperty(Name: Text[120]): Interface "Value FS";
+    begin
+        Error('Void values do not support property access');
+    end;
+
+    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
+    begin
+        Error('Void values do not support property access');
+    end;
 }

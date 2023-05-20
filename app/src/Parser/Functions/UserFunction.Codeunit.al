@@ -22,7 +22,7 @@ codeunit 69025 "User Function FS" implements "Function FS"
         exit(Name);
     end;
 
-    procedure GetReturnType(): Enum "Type FS"
+    procedure GetReturnType(): Record "Symbol FS"
     begin
         exit(SymbolTable.GetReturnType());
     end;
@@ -54,7 +54,7 @@ codeunit 69025 "User Function FS" implements "Function FS"
             Enum::"Type FS"::"Return Value":
                 Value := Value.Copy(); // TODO a bit of a hack
             Enum::"Type FS"::"Default Return Value":
-                if SymbolTable.GetReturnType() <> Enum::"Type FS"::Void then
+                if SymbolTable.GetReturnType().Type <> Enum::"Type FS"::Void then
                     Value := Memory.DefaultValueFromType(SymbolTable.GetReturnType())
                 else
                     Value := VoidValue;
@@ -71,6 +71,7 @@ codeunit 69025 "User Function FS" implements "Function FS"
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS")
     begin
+        SymbolTable.Validate();
         Statements.ValidateSemantics(Runtime, SymbolTable);
     end;
 }

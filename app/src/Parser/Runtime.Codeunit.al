@@ -32,6 +32,7 @@ codeunit 69011 "Runtime FS"
         WriteLineFunction: Codeunit "Write Line Function FS";
         FormatFunction: Codeunit "Format Function FS";
     begin
+        // TODO handle built ins using a lookup function same as methods?
         DefineFunction(AbsFunction);
         DefineFunction(PowerFunction);
         DefineFunction(MessageFunction);

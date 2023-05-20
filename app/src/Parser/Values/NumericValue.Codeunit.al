@@ -25,4 +25,14 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
         NumericValue.SetValue(Value);
         exit(NumericValue);
     end;
+
+    procedure GetProperty(Name: Text[120]): Interface "Value FS";
+    begin
+        Error('Numeric values do not support property access');
+    end;
+
+    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
+    begin
+        Error('Numeric values do not support property access');
+    end;
 }

@@ -7,9 +7,11 @@ codeunit 69201 "Power Function FS" implements "Function FS"
         exit('Power');
     end;
 
-    procedure GetReturnType(): Enum "Type FS"
+    procedure GetReturnType(): Record "Symbol FS"
+    var
+        SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(Enum::"Type FS"::Number);
+        exit(SymbolTable.NumericSymbol());
     end;
 
     procedure GetArity(): Integer

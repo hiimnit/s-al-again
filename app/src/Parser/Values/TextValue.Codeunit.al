@@ -25,4 +25,14 @@ codeunit 69103 "Text Value FS" implements "Value FS"
         TextValue.SetValue(Value);
         exit(TextValue);
     end;
+
+    procedure GetProperty(Name: Text[120]): Interface "Value FS";
+    begin
+        Error('Text values do not support property access');
+    end;
+
+    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
+    begin
+        Error('Text values do not support property access');
+    end;
 }

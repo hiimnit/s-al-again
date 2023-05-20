@@ -35,4 +35,14 @@ codeunit 69104 "Return Value FS" implements "Value FS"
     begin
         exit(Value.Copy());
     end;
+
+    procedure GetProperty(Name: Text[120]): Interface "Value FS";
+    begin
+        Error('Return values do not support property access');
+    end;
+
+    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
+    begin
+        Error('Return values do not support property access');
+    end;
 }

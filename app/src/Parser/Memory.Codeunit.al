@@ -28,7 +28,7 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
 
                         InitializeSymbol(
                             Symbol,
-                            Node.Value()
+                            Node.Value() // TODO what happens with records here?
                         );
                     end;
                 else
@@ -44,26 +44,33 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
     begin
         InitializeSymbol(
             Symbol,
-            DefaultValueFromType(Symbol.Type)
+            DefaultValueFromType(Symbol)
         );
     end;
 
-    procedure DefaultValueFromType(Type: Enum "Type FS"): Interface "Value FS";
+    // TODO change to a "Validated Symbol"?
+    procedure DefaultValueFromType(Symbol: Record "Symbol FS"): Interface "Value FS";
     var
         NumericValue: Codeunit "Numeric Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
+        RecordValue: Codeunit "Record Value FS";
         Value: Interface "Value FS";
     begin
-        case Type of
-            Type::Number:
+        case Symbol.Type of
+            Symbol.Type::Number:
                 Value := NumericValue;
-            Type::Boolean:
+            Symbol.Type::Boolean:
                 Value := BooleanValue;
-            Type::Text:
+            Symbol.Type::Text:
                 Value := TextValue;
+            Symbol.Type::Record:
+                begin
+                    RecordValue.Init(Symbol.Subtype);
+                    Value := RecordValue;
+                end;
             else
-                Error('Initilization of type %1 is not supported.', Type);
+                Error('Initilization of type %1 is not supported.', Symbol.Type);
         end;
 
         exit(Value);
@@ -105,5 +112,35 @@ codeunit 69009 "Memory FS" // TODO or Stack/Runtime? multiple "scopes"?
         foreach k in LocalVariableMap.Keys() do
             TextBuilder.Append(StrSubstNo('%1: %2\', k, LocalVariables[LocalVariableMap.Get(k)].GetValue()));
         Message(TextBuilder.ToText());
+    end;
+
+    // TODO helper method, probably should not be here at all
+    procedure ValueFromVariant(Value: Variant): Interface "Value FS";
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+        BooleanValue: Codeunit "Boolean Value FS";
+        TextValue: Codeunit "Text Value FS";
+    begin
+        case true of
+            Value.IsInteger(),
+            Value.IsDecimal():
+                begin
+                    NumericValue.SetValue(Value);
+                    exit(NumericValue);
+                end;
+            Value.IsBoolean():
+                begin
+                    BooleanValue.SetValue(Value);
+                    exit(BooleanValue);
+                end;
+            Value.IsCode(),
+            Value.IsText():
+                begin
+                    TextValue.SetValue(Value);
+                    exit(TextValue);
+                end;
+            else
+                Error('Initilization of type from value %1 is not supported.', Value);
+        end;
     end;
 }

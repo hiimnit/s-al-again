@@ -7,12 +7,14 @@ codeunit 69205 "Format Function FS" implements "Function FS"
         exit('Format');
     end;
 
-    procedure GetReturnType(): Enum "Type FS"
+    procedure GetReturnType(): Record "Symbol FS"
+    var
+        SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(Enum::"Type FS"::Text);
+        exit(SymbolTable.TextSymbol());
     end;
 
-    procedure GetArity(): Integer
+    procedure GetArity(): Integer // TODO return a record with min and max?
     begin
         exit(1);
     end;
@@ -22,6 +24,9 @@ codeunit 69205 "Format Function FS" implements "Function FS"
     procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
     begin
         ParameterSymbol.InsertAny('Any', 1);
+
+        // TODO allow to create multiple sets here?
+        // >>>> call match from here? arity as parameter?
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"

@@ -404,7 +404,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
         end;
 
-        exit(SymbolTable.NumbericSymbol());
+        exit(SymbolTable.NumericSymbol());
     end;
 
     local procedure ValidateBoolean

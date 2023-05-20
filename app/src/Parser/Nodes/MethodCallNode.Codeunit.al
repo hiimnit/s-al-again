@@ -26,9 +26,9 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
         ArgumentNode: Codeunit "Node Linked List Node FS";
         ArgumentValues: Codeunit "Value Linked List FS";
 
-        Value: Interface "Value FS";
+        Self, Value : Interface "Value FS";
     begin
-        Value := Expression.Evaluate(Runtime);
+        Self := Expression.Evaluate(Runtime);
 
         if Arguments.First(ArgumentNode) then
             repeat
@@ -36,7 +36,7 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
                 ArgumentValues.Insert(Value);
             until not ArgumentNode.Next(ArgumentNode);
 
-        exit(Method.Evaluate(Runtime, Value, ArgumentValues));
+        exit(Method.Evaluate(Runtime, Self, ArgumentValues));
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
@@ -45,6 +45,7 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
     begin
         Symbol := Expression.ValidateSemantics(Runtime, SymbolTable);
 
+        // TODO use Symbol.LookupProperty/LookupMethod instead of runtime here?
         Method := Runtime.LookupMethod(
             Symbol.Type,
             Name
@@ -81,12 +82,12 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
 
         while true do begin
             Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-            if not TypesMatch(ParameterSymbol.Type, Symbol.Type) then
+            if not TypesMatch(ParameterSymbol, Symbol) then
                 Error(
                     'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
                     Method.GetName(),
-                    ParameterSymbol.Type,
-                    Symbol.Type
+                    ParameterSymbol.TypeToText(),
+                    Symbol.TypeToText()
                 );
 
             if ParameterSymbol.Next() = 0 then
@@ -97,12 +98,12 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
 
     local procedure TypesMatch
     (
-        ExpectedType: Enum "Type FS";
-        ActualType: Enum "Type FS"
+        ExpectedSymbol: Record "Symbol FS";
+        ActualSymbol: Record "Symbol FS"
     ): Boolean
     begin
-        if ExpectedType = ExpectedType::Any then
-            exit(ActualType <> ActualType::Void);
-        exit(ExpectedType = ActualType);
+        if ExpectedSymbol.Type = ExpectedSymbol.Type::Any then
+            exit(ActualSymbol.Type <> ActualSymbol.Type::Void);
+        exit(ExpectedSymbol.Compare(ActualSymbol));
     end;
 }
