@@ -14,7 +14,7 @@ Currently? Not much. Code is parsed, semantically analyzed and executed. Message
 
 ### Sample code
 
-The entry point is a parameterless `trigger` called `OnRun`. You can define additional procedures (for now without reference parameters or return values).
+The entry point is a parameterless `trigger` called `OnRun`. You can define additional procedures (for now without reference parameters).
 Global variables are not supported (yet?).
 
 ```sal
@@ -49,6 +49,11 @@ Right now only a handful of basic types is supported:
 - `number` (for both integers and decimals)
 - `boolean`
 - `text`
+  - methods
+    - `ToLower(): Text`
+    - `ToUpper(): Text`
+    - `Contains(Text: Text): Boolean`
+- `record`
 
 #### Statements
 
@@ -57,6 +62,10 @@ Right now only a handful of basic types is supported:
 - `for` loop (both `to` and `downto`)
 - `repeat-until` loop
 - `if` and `if-else` statement
+- `exit` statement - both variants, with and without an expression
+
+#### Operators
+
 - unary operators
   - numeric (`+`, `-`)
   - boolean (`not`)
@@ -65,6 +74,7 @@ Right now only a handful of basic types is supported:
   - numeric (`+`, `-`, `*`, `/`, `mod`, `div`)
   - boolean (`and`, `or`, `xor`)
   - text (`+`, `*`)
+    - !TODO explain `*` operator
 
 #### Built-in functions
 
@@ -73,12 +83,14 @@ Right now only a handful of basic types is supported:
 - `WriteLine(Text: Text)`
 - `Abs(Number: Number): Number`
 - `Power(Number: Number, Power: Number): Number`
+- `Format(Input: Any): Text`
 
 ### Planned
 
-1. function returns
-1. records and methods
-1. `date`/`time`/`datetime`
+1. n-arity functions and methods
+1. more built-in functions and methods
+1. correct value vs. reference handling
+1. `date`/`time`/`datetime`/`guid`
 
 ## editor
 
