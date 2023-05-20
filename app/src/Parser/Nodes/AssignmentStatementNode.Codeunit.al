@@ -14,7 +14,7 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
     begin
         Name := NewName;
         Expression := NewExpression;
-        Operator := NewOperator; // TODO check on assignment?
+        Operator := NewOperator;
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
@@ -44,9 +44,6 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         if BinaryOperator <> BinaryOperator::" " then begin
             PreviousValue := Runtime.GetMemory().Get(Name);
 
-            // TODO multiplying strings is going to cause issues
-            // >>>> currently it changes the datatype of the variable
-            // >>>> should only be allowed one way
             NewValue := BinaryOperatorNode.Evaluate(
                 PreviousValue.GetValue(),
                 NewValue.GetValue(),

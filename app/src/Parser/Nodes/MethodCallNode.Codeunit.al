@@ -45,7 +45,6 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
     begin
         Symbol := Expression.ValidateSemantics(Runtime, SymbolTable);
 
-        // TODO use Symbol.LookupProperty/LookupMethod instead of runtime here?
         Method := Runtime.LookupMethod(
             Symbol.Type,
             Name
