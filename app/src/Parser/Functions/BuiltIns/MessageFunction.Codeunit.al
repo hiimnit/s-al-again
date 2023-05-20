@@ -39,9 +39,4 @@ codeunit 69202 "Message Function FS" implements "Function FS"
 
         exit(VoidValue);
     end;
-
-    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
-    begin
-        // TODO do not call this for built ins?
-    end;
 }

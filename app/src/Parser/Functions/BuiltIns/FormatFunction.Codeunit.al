@@ -42,9 +42,4 @@ codeunit 69205 "Format Function FS" implements "Function FS"
 
         exit(TextValue);
     end;
-
-    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
-    begin
-        // TODO do not call this for built ins?
-    end;
 }

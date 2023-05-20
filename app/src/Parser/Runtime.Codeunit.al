@@ -9,8 +9,6 @@ codeunit 69011 "Runtime FS"
     )
     begin
         MonacoEditor := NewMonacoEditor;
-
-        InitBuiltInFunctions();
     end;
 
     procedure WriteLine(Text: Text)
@@ -19,11 +17,36 @@ codeunit 69011 "Runtime FS"
     end;
 
     var
-        Functions: array[50] of Interface "Function FS";
+        Functions: array[50] of Codeunit "User Function FS";
         FunctionMap: Dictionary of [Text[120], Integer];
         FunctionCount: Integer;
 
-    local procedure InitBuiltInFunctions()
+    procedure DefineFunction
+    (
+        UserFunction: Codeunit "User Function FS"
+    )
+    begin
+        if FunctionCount = ArrayLen(Functions) then
+            Error('Reached maximum allowed number of local functions %1.', ArrayLen(Functions));
+
+        FunctionCount += 1;
+        FunctionMap.Add(UserFunction.GetName().ToLower(), FunctionCount);
+        Functions[FunctionCount] := UserFunction;
+    end;
+
+    procedure LookupFunction(Name: Text[120]): Interface "Function FS"
+    var
+        i: Integer;
+    begin
+        if FunctionMap.ContainsKey(Name.ToLower()) then begin
+            i := FunctionMap.Get(Name.ToLower());
+            exit(Functions[i]);
+        end;
+
+        exit(LookupBuiltInFunction(Name));
+    end;
+
+    local procedure LookupBuiltInFunction(Name: Text[120]): Interface "Function FS"
     var
         AbsFunction: Codeunit "Abs Function FS";
         PowerFunction: Codeunit "Power Function FS";
@@ -32,35 +55,22 @@ codeunit 69011 "Runtime FS"
         WriteLineFunction: Codeunit "Write Line Function FS";
         FormatFunction: Codeunit "Format Function FS";
     begin
-        // TODO handle built ins using a lookup function same as methods?
-        DefineFunction(AbsFunction);
-        DefineFunction(PowerFunction);
-        DefineFunction(MessageFunction);
-        DefineFunction(ErrorFunction);
-        DefineFunction(WriteLineFunction);
-        DefineFunction(FormatFunction);
-    end;
-
-    procedure DefineFunction
-    (
-        Function: Interface "Function FS"
-    )
-    begin
-        // TODO check length and name uniqueness?
-        FunctionCount += 1;
-        FunctionMap.Add(Function.GetName().ToLower(), FunctionCount);
-        Functions[FunctionCount] := Function;
-    end;
-
-    procedure LookupFunction(Name: Text[120]): Interface "Function FS"
-    var
-        i: Integer;
-    begin
-        if not FunctionMap.ContainsKey(Name.ToLower()) then
-            Error('Function %1 does not exist.', Name);
-
-        i := FunctionMap.Get(Name.ToLower());
-        exit(Functions[i]);
+        case Name.ToLower() of
+            AbsFunction.GetName().ToLower():
+                exit(AbsFunction);
+            PowerFunction.GetName().ToLower():
+                exit(PowerFunction);
+            MessageFunction.GetName().ToLower():
+                exit(MessageFunction);
+            ErrorFunction.GetName().ToLower():
+                exit(ErrorFunction);
+            WriteLineFunction.GetName().ToLower():
+                exit(WriteLineFunction);
+            FormatFunction.GetName().ToLower():
+                exit(FormatFunction);
+            else
+                Error('Function %1 does not exist.', Name);
+        end;
     end;
 
     procedure LookupEntryPoint(): Interface "Function FS"

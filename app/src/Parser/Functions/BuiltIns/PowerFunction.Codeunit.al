@@ -43,9 +43,4 @@ codeunit 69201 "Power Function FS" implements "Function FS"
 
         exit(NumericValue);
     end;
-
-    procedure ValidateSemantics(Runtime: Codeunit "Runtime FS");
-    begin
-        // TODO do not call this for built ins?
-    end;
 }
