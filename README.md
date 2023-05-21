@@ -60,6 +60,22 @@ Right now only a handful of basic types is supported:
     - `FindSet()[: Boolean]`
     - `Next([Steps: Number]): Number`
     - `SetRange(Field: Identifier, [FromValue: FieldType, [ToValue: FieldType]])`
+    - `SetFilter(Field: Identifier, Filter: Text)`
+    - `Insert([RunTrigger: Boolean])[: Boolean]`
+    - `Modify([RunTrigger: Boolean])[: Boolean]`
+    - `Delete([RunTrigger: Boolean])[: Boolean]`
+    - `Init()`
+    - `Reset()`
+    - `IsEmpty(): Boolean`
+    - `TableName(): Text`
+    - `TableCaption(): Text`
+    - `SetRecFilter()`
+    - `GetFilters(): Text`
+    - `Count(): Number`
+    - `GetView([UseNames: Boolean]): Text`
+    - `SetView(View: Text)`
+    - `FieldNo(Field: Identifier): Number`
+    - `Validate(Field: Identifier, [FromValue: FieldType])`
 
 #### Statements
 
