@@ -161,6 +161,22 @@ codeunit 69011 "Runtime FS"
         RecordFindSet: Codeunit "Record FindSet FS";
         RecordNext: Codeunit "Record Next FS";
         RecordSetRange: Codeunit "Record SetRange FS";
+        RecordInsert: Codeunit "Record Insert FS";
+        RecordModify: Codeunit "Record Modify FS";
+        RecordDelete: Codeunit "Record Delete FS";
+        RecordInit: Codeunit "Record Init FS";
+        RecordReset: Codeunit "Record Reset FS";
+        RecordIsEmpty: Codeunit "Record IsEmpty FS";
+        RecordTableName: Codeunit "Record TableName FS";
+        RecordTableCaption: Codeunit "Record TableCaption FS";
+        RecordSetRecFilter: Codeunit "Record SetRecFilter FS";
+        RecordGetFilters: Codeunit "Record GetFilters FS";
+        RecordCount: Codeunit "Record Count FS";
+        RecordGetView: Codeunit "Record GetView FS";
+        RecordSetView: Codeunit "Record SetView FS";
+        RecordFieldNo: Codeunit "Record FieldNo FS";
+        RecordValidate: Codeunit "Record Validate FS";
+        RecordSetFilter: Codeunit "Record SetFilter FS";
     begin
         case Name.ToLower() of
             RecordFindFirst.GetName().ToLower():
@@ -173,6 +189,38 @@ codeunit 69011 "Runtime FS"
                 exit(RecordNext);
             RecordSetRange.GetName().ToLower():
                 exit(RecordSetRange);
+            RecordSetFilter.GetName().ToLower():
+                exit(RecordSetFilter);
+            RecordValidate.GetName().ToLower():
+                exit(RecordValidate);
+            RecordInsert.GetName().ToLower():
+                exit(RecordInsert);
+            RecordModify.GetName().ToLower():
+                exit(RecordModify);
+            RecordDelete.GetName().ToLower():
+                exit(RecordDelete);
+            RecordInit.GetName().ToLower():
+                exit(RecordInit);
+            RecordReset.GetName().ToLower():
+                exit(RecordReset);
+            RecordIsEmpty.GetName().ToLower():
+                exit(RecordIsEmpty);
+            RecordTableName.GetName().ToLower():
+                exit(RecordTableName);
+            RecordTableCaption.GetName().ToLower():
+                exit(RecordTableCaption);
+            RecordSetRecFilter.GetName().ToLower():
+                exit(RecordSetRecFilter);
+            RecordGetFilters.GetName().ToLower():
+                exit(RecordGetFilters);
+            RecordCount.GetName().ToLower():
+                exit(RecordCount);
+            RecordGetView.GetName().ToLower():
+                exit(RecordGetView);
+            RecordSetView.GetName().ToLower():
+                exit(RecordSetView);
+            RecordFieldNo.GetName().ToLower():
+                exit(RecordFieldNo);
             else
                 Error('Unknown Record method %1.', Name);
         end;
