@@ -1,10 +1,21 @@
 import { editor } from "monaco-editor";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import Editor from "@monaco-editor/react";
 
+import ConsoleManager, { ConsoleLine } from "./ConsoleManager";
+import EditorManager from "./EditorManager";
+
 function App() {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+
+  const setValue = useCallback((value: string) => {
+    editorRef.current?.setValue(value);
+  }, []);
+
+  useEffect(() => {
+    return EditorManager.instance.subscribe(setValue);
+  }, [setValue]);
 
   const tokenize = () => {
     if (window.Microsoft === undefined || editorRef.current === null) {
@@ -26,20 +37,31 @@ function App() {
     ]);
   };
 
+  const clearConsole = () => {
+    ConsoleManager.instance.clear();
+  };
+
   return (
     <div className="flex h-screen max-h-screen w-full flex-col">
       <div className="mb-1 flex flex-row border-b">
         <button
-          className="px-6 py-2 text-sm transition-colors hover:bg-cyan-100"
+          className="my-0.5 px-6 py-2 font-bc text-bc-small font-normal transition-colors hover:bg-bc-100"
           onClick={tokenize}
         >
           Tokenize
         </button>
         <button
-          className="px-6 py-2 text-sm transition-colors hover:bg-cyan-100"
+          className="my-0.5 px-6 py-2 font-bc text-bc-small font-normal transition-colors hover:bg-bc-100"
           onClick={parse}
         >
           Parse
+        </button>
+        <div className="flex-grow" />
+        <button
+          className="my-0.5 px-6 py-2 font-bc text-bc-small font-normal transition-colors hover:bg-bc-100"
+          onClick={clearConsole}
+        >
+          Clear
         </button>
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -48,6 +70,13 @@ function App() {
             language="al"
             onMount={(editor) => {
               editorRef.current = editor;
+
+              if (window.Microsoft !== undefined) {
+                window.Microsoft.Dynamics.NAV.InvokeExtensibilityMethod(
+                  "EditorReady",
+                  []
+                );
+              }
             }}
           />
           <Console />
@@ -80,51 +109,6 @@ function Console() {
       ))}
     </div>
   );
-}
-
-type ConsoleSubscriptionCallback = (lines: ConsoleLine[]) => void;
-type UnsubscribeFunction = () => void;
-type ConsoleLine = {
-  entryNo: number;
-  content: string;
-};
-
-export class ConsoleManager {
-  lines: ConsoleLine[];
-  subscriptions: ConsoleSubscriptionCallback[];
-  counter: number;
-
-  constructor() {
-    this.lines = [];
-    this.subscriptions = [];
-    this.counter = 0;
-  }
-
-  static instance = new ConsoleManager();
-
-  subscribe(callback: ConsoleSubscriptionCallback): UnsubscribeFunction {
-    this.subscriptions.push(callback);
-
-    return () => {
-      this.subscriptions = this.subscriptions.filter((e) => e !== callback);
-    };
-  }
-
-  writeLine(line: string) {
-    this.lines.push({ entryNo: this.counter++, content: line });
-    this.notify();
-  }
-
-  clear() {
-    this.lines = [];
-    this.notify();
-  }
-
-  notify() {
-    for (const subscriber of this.subscriptions) {
-      subscriber(this.lines.slice());
-    }
-  }
 }
 
 export default App;
