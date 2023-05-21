@@ -14,6 +14,14 @@ codeunit 69028 "Property Access Node FS" implements "Node FS"
         Name := NewName;
     end;
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         Accessor: Interface "Value FS";
@@ -28,5 +36,18 @@ codeunit 69028 "Property Access Node FS" implements "Node FS"
     begin
         Symbol := AccessorExpression.ValidateSemantics(Runtime, SymbolTable);
         exit(Symbol.LookupProperty(SymbolTable, Name));
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    begin
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 }

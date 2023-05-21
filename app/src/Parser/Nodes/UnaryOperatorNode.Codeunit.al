@@ -14,6 +14,14 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         Operator := NewOperator;
     end;
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         ValueVariant: Variant;
@@ -88,5 +96,18 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         end;
 
         exit(Symbol);
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    begin
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 }

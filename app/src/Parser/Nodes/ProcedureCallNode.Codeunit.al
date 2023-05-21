@@ -14,6 +14,14 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
         Arguments := NewArguments;
     end;
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         ArgumentNode: Codeunit "Node Linked List Node FS";
@@ -45,6 +53,19 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
         );
 
         exit(Function.GetReturnType());
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    begin
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 
     // TODO this will make things difficult for functions with

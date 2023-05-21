@@ -3,6 +3,14 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     var
         StatementsList: Codeunit "Node Linked List FS";
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Add(Statement: Interface "Node FS")
     begin
         StatementsList.Insert(Statement);
@@ -37,5 +45,18 @@ codeunit 69016 "Statement List FS" implements "Node FS"
             until not LinkedListNode.Next(LinkedListNode);
 
         exit(SymbolTable.VoidSymbol());
+    end;
+
+    procedure ValidateSemanticsWithContext
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
+    begin
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 }

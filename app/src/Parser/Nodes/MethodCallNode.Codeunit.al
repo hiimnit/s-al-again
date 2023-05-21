@@ -3,7 +3,7 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
     var
         Arguments: Codeunit "Node Linked List FS";
         Expression: Interface "Node FS";
-        Method: Interface "Method FS";
+        Method: Interface "Method FS"; // TODO keep/remove this?
         Name: Text[120];
 
     procedure Init
@@ -18,22 +18,21 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
         Arguments := NewArguments;
     end;
 
+    var
+        TopLevel: Boolean;
+
+    procedure SetTopLevel(NewTopLevel: Boolean)
+    begin
+        TopLevel := NewTopLevel;
+    end;
+
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
-        ArgumentNode: Codeunit "Node Linked List Node FS";
-        ArgumentValues: Codeunit "Value Linked List FS";
-
         Self, Value : Interface "Value FS";
     begin
         Self := Expression.Evaluate(Runtime);
 
-        if Arguments.First(ArgumentNode) then
-            repeat
-                Value := ArgumentNode.Value().Evaluate(Runtime);
-                ArgumentValues.Insert(Value);
-            until not ArgumentNode.Next(ArgumentNode);
-
-        exit(Method.Evaluate(Runtime, Self, ArgumentValues));
+        exit(Method.Evaluate(Runtime, Self, Arguments, TopLevel));
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
@@ -47,59 +46,26 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
             Name
         );
 
-        ValidateProcedureCallArguments(
+        Method.ValidateCallArguments(
             Runtime,
-            SymbolTable
+            SymbolTable,
+            Symbol,
+            Arguments
         );
 
-        exit(SymbolTable.SymbolFromType(Method.GetReturnType()));
+        exit(SymbolTable.SymbolFromType(Method.GetReturnType(TopLevel)));
     end;
 
-    // TODO this will make things difficult for functions with
-    // >>>> variable parity - message, error, setrange...
-    local procedure ValidateProcedureCallArguments
+    procedure ValidateSemanticsWithContext
     (
         Runtime: Codeunit "Runtime FS";
-        SymbolTable: Codeunit "Symbol Table FS"
-    )
-    var
-        ParameterSymbol, Symbol : Record "Symbol FS";
-        ArgumentNode: Codeunit "Node Linked List Node FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ContextSymbol: Record "Symbol FS"
+    ): Record "Symbol FS";
     begin
-        if Arguments.GetCount() <> Method.GetArity() then
-            Error('Parameter count missmatch when calling method %1.', Method.GetName());
-
-        Method.GetParameters(ParameterSymbol);
-        ParameterSymbol.SetCurrentKey(Order); // TODO this feels wrong
-        if not ParameterSymbol.FindSet() then
-            exit;
-
-        ArgumentNode := Arguments.First();
-
-        while true do begin
-            Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-            if not TypesMatch(ParameterSymbol, Symbol) then
-                Error(
-                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
-                    Method.GetName(),
-                    ParameterSymbol.TypeToText(),
-                    Symbol.TypeToText()
-                );
-
-            if ParameterSymbol.Next() = 0 then
-                break;
-            ArgumentNode := ArgumentNode.Next();
-        end;
-    end;
-
-    local procedure TypesMatch
-    (
-        ExpectedSymbol: Record "Symbol FS";
-        ActualSymbol: Record "Symbol FS"
-    ): Boolean
-    begin
-        if ExpectedSymbol.Type = ExpectedSymbol.Type::Any then
-            exit(ActualSymbol.Type <> ActualSymbol.Type::Void);
-        exit(ExpectedSymbol.Compare(ActualSymbol));
+        exit(ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
     end;
 }

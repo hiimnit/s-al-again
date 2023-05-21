@@ -26,6 +26,10 @@ table 69001 "Symbol FS"
         {
             Caption = 'Order';
         }
+        field(20; Property; Boolean)
+        {
+            Caption = 'Property';
+        }
     }
 
     keys
@@ -174,6 +178,49 @@ table 69001 "Symbol FS"
             else
                 Error('Accessing property "%1" of type %2 is not supported.', PropertyName, Field.Type);
         end;
+    end;
+
+    procedure TryLookupProperty
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        PropertyName: Text[120];
+        var Symbol: Record "Symbol FS"
+    ): Boolean
+    var
+        AllObj: Record AllObj;
+        Field: Record Field;
+    begin
+        if Rec.Type <> Rec.Type::Record then
+            exit(false);
+
+        AllObj.SetRange("Object Type", AllObj."Object Type"::Table);
+        AllObj.SetRange("Object Name", Rec.Subtype);
+        if not AllObj.FindFirst() then
+            exit(false);
+
+        Field.SetRange(TableNo, AllObj."Object ID");
+        Field.SetRange(FieldName, PropertyName);
+        if not Field.FindFirst() then
+            exit(false);
+        if not Field.Enabled then
+            exit(false);
+        if Field.ObsoleteState = Field.ObsoleteState::Removed then
+            exit(false);
+
+        case Field.Type of
+            Field.Type::Integer,
+            Field.Type::Decimal:
+                Symbol := SymbolTable.NumericSymbol();
+            Field.Type::Boolean:
+                Symbol := SymbolTable.BooleanSymbol();
+            Field.Type::Code,
+            Field.Type::Text:
+                Symbol := SymbolTable.TextSymbol();
+            else
+                exit(false);
+        end;
+
+        exit(true);
     end;
 }
 
