@@ -10,16 +10,16 @@ codeunit 69320 "Record SetView FS" implements "Method FS"
     var
         ValueLinkedList: Codeunit "Value Linked List FS";
         Node: Codeunit "Value Linked List Node FS";
-        TextValue: Codeunit "Text Value FS";
+        VoidValue: Codeunit "Void Value FS";
         RecordRef: RecordRef;
     begin
         RecordRef := Self.GetValue();
 
         ValueLinkedList := Runtime.EvaluateArguments(Runtime, Arguments);
         Node := ValueLinkedList.First();
+        RecordRef.SetView(Node.Value().GetValue());
 
-        TextValue.SetValue(RecordRef.GetView(Node.Value().GetValue()));
-        exit(TextValue);
+        exit(VoidValue);
     end;
 
     procedure GetName(): Text[120];
