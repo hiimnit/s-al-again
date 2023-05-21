@@ -9,6 +9,8 @@ controladdin "Monaco Editor FS"
     event Tokenize(Input: Text)
     event Parse(Input: Text)
     event Ready()
+    event EditorReady()
 
     procedure WriteLine(Line: Text)
+    procedure SetEditorValue(Value: Text)
 }

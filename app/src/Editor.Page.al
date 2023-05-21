@@ -38,6 +38,19 @@ page 69000 "Editor FS"
                     Parser.Init(Input);
                     Parser.Parse(CurrPage.Editor);
                 end;
+
+                trigger EditorReady()
+                var
+                    LF: Text[1];
+                begin
+                    LF[1] := 13;
+
+                    CurrPage.Editor.SetEditorValue(
+                        'trigger OnRun()' + LF
+                        + 'begin' + LF
+                        + 'end;'
+                    );
+                end;
             }
         }
     }
