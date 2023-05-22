@@ -14,14 +14,24 @@ codeunit 69200 "Abs Function FS" implements "Function FS"
         exit(SymbolTable.NumericSymbol());
     end;
 
-    procedure GetArity(): Integer
-    begin
-        exit(1);
-    end;
-
-    procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
+    procedure ValidateCallArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Arguments: Codeunit "Node Linked List FS"
+    )
+    var
+        ParameterSymbol: Record "Symbol FS";
     begin
         ParameterSymbol.InsertNumber('Number', 1);
+
+        Runtime.ValidateMethodCallArguments(
+            Runtime,
+            SymbolTable,
+            GetName(),
+            Arguments,
+            ParameterSymbol
+        );
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
