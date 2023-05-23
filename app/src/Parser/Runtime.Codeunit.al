@@ -294,4 +294,48 @@ codeunit 69011 "Runtime FS"
 
         exit(ArgumentValues);
     end;
+
+    // limited (but simple) solution, 10 substitutions should be more than enough in most situations
+    // can be improved by parsing the template string and handling substitutions? // TODO
+    procedure SubstituteText(Template: Text; Node: Codeunit "Value Linked List Node FS"; Length: Integer): Text
+    begin
+        if Length = 0 then
+            exit(Template);
+
+        case Length of
+            1:
+                exit(StrSubstNo(Template, NextNodeValue(Node)));
+            2:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node)));
+            3:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            4:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            5:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            6:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            7:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            8:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            9:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            10:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            else
+                Error('Unimplemented: Too many arguments for text substitution.');
+        end;
+    end;
+
+    procedure MaxAllowedSubstitutions(): Integer
+    begin
+        exit(10);
+    end;
+
+    local procedure NextNodeValue(var Node: Codeunit "Value Linked List Node FS"): Variant
+    begin
+        Node := Node.Next();
+        exit(Node.Value().GetValue());
+    end;
 }
