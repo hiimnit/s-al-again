@@ -235,7 +235,6 @@ codeunit 69011 "Runtime FS"
         var ParameterSymbol: Record "Symbol FS"
     )
     var
-        Symbol: Record "Symbol FS";
         ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
         if Arguments.GetCount() <> ParameterSymbol.Count() then
@@ -246,21 +245,42 @@ codeunit 69011 "Runtime FS"
             exit;
 
         ArgumentNode := Arguments.First();
-
         while true do begin
-            Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-            if not TypesMatch(ParameterSymbol, Symbol) then
-                Error(
-                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
-                    Name,
-                    ParameterSymbol.TypeToText(),
-                    Symbol.TypeToText()
-                );
+            TestParameterVsArgument(
+                Runtime,
+                SymbolTable,
+                Name,
+                ParameterSymbol,
+                ArgumentNode
+            );
 
             if ParameterSymbol.Next() = 0 then
                 break;
             ArgumentNode := ArgumentNode.Next();
         end;
+    end;
+
+    procedure TestParameterVsArgument
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Name: Text[120];
+        ExpectedSymbol: Record "Symbol FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS"
+    )
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+        if TypesMatch(ExpectedSymbol, Symbol) then
+            exit;
+
+        Error(
+            'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+            Name,
+            ExpectedSymbol.TypeToText(),
+            Symbol.TypeToText()
+        );
     end;
 
     procedure TypesMatch
