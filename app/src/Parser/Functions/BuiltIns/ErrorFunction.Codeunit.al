@@ -21,17 +21,35 @@ codeunit 69203 "Error Function FS" implements "Function FS"
         Arguments: Codeunit "Node Linked List FS"
     )
     var
-        ParameterSymbol: Record "Symbol FS";
+        ParameterSymbol, Symbol : Record "Symbol FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
-        ParameterSymbol.InsertText('Text', 1);
+        if not (Arguments.GetCount() in [1 .. Runtime.MaxAllowedSubstitutions() + 1]) then
+            Error('Parameter count missmatch when calling method %1.', GetName());
 
-        Runtime.ValidateMethodCallArguments(
-            Runtime,
-            SymbolTable,
-            GetName(),
-            Arguments,
-            ParameterSymbol
-        );
+        // first argument must be the text template
+        ArgumentNode := Arguments.First();
+        Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+        if Symbol.Type <> Symbol.Type::Text then
+            Error(
+                'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+                GetName(),
+                ParameterSymbol.TypeToText(),
+                Symbol.TypeToText()
+            );
+
+        // all other arguments can be anything
+        ParameterSymbol.InsertAny('Any', 1);
+        while ArgumentNode.Next(ArgumentNode) do begin
+            Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+            if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
+                Error(
+                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+                    GetName(),
+                    ParameterSymbol.TypeToText(),
+                    Symbol.TypeToText()
+                );
+        end;
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
@@ -43,7 +61,7 @@ codeunit 69203 "Error Function FS" implements "Function FS"
         Node := ValueLinkedList.First();
         Text := Node.Value().GetValue();
 
-        Error(Text);
+        Error(Runtime.SubstituteText(Text, Node, ValueLinkedList.GetCount() - 1));
 
         exit(VoidValue);
     end;

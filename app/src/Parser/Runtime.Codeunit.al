@@ -286,6 +286,17 @@ codeunit 69011 "Runtime FS"
         if not Arguments.First(ArgumentNode) then
             exit(ArgumentValues);
 
+        exit(EvaluateArguments(Runtime, ArgumentNode));
+    end;
+
+    procedure EvaluateArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS"
+    ): Codeunit "Value Linked List FS"
+    var
+        ArgumentValues: Codeunit "Value Linked List FS";
+    begin
         repeat
             ArgumentValues.Insert(
                 ArgumentNode.Value().Evaluate(Runtime)

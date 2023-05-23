@@ -12,20 +12,29 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
     ): Interface "Value FS";
     var
         ArgumentNode: Codeunit "Node Linked List Node FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        ValueNode: Codeunit "Value Linked List Node FS";
         VoidValue: Codeunit "Void Value FS";
         RecordRef: RecordRef;
         FieldRef: FieldRef;
-        Value: Interface "Value FS";
         FieldId: Integer;
     begin
         RecordRef := Self.GetValue();
         FieldId := FindFieldId(RecordRef.Number(), FilterFieldName);
         FieldRef := RecordRef.Field(FieldId);
 
-        ArgumentNode := Arguments.First(); // skip first parameter
-        ArgumentNode := ArgumentNode.Next();
-        Value := ArgumentNode.Value().Evaluate(Runtime);
-        FieldRef.SetFilter(Value.GetValue());
+        ArgumentNode := Arguments.First().Next(); // skip first parameter
+        ValueLinkedList := Runtime.EvaluateArguments(Runtime, ArgumentNode);
+        ValueNode := ValueLinkedList.First();
+        // TODO does not work the same way as AL SetFilter
+        // in AL, if the template string contains * or ? then replacement does not happen?
+        // > Currency.SetFilter(Code, '%1|%2*|%3', 'EUR', 'D', 'XXX');
+        // > EUR and XXX are replaced, but D is not?
+        FieldRef.SetFilter(Runtime.SubstituteText(
+            ValueNode.Value().GetValue(),
+            ValueNode,
+            ValueLinkedList.GetCount() - 1
+        ));
 
         exit(VoidValue);
     end;
@@ -66,7 +75,7 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         Symbol, ParameterSymbol : Record "Symbol FS";
         ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
-        if Arguments.GetCount() <> 2 then
+        if not (Arguments.GetCount() in [2 .. Runtime.MaxAllowedSubstitutions() + 2]) then
             Error('Parameter count missmatch when calling method %1.', GetName());
 
         ArgumentNode := Arguments.First();
@@ -77,7 +86,6 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         FilterFieldName := ParameterSymbol.Name; // TODO bit of a hack
 
         ParameterSymbol.InsertText('Filter', 1);
-
         ArgumentNode := ArgumentNode.Next();
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
         if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
@@ -87,5 +95,18 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
                 ParameterSymbol.TypeToText(),
                 Symbol.TypeToText()
             );
+
+        // all other arguments can be anything
+        ParameterSymbol.InsertAny('Any', 1);
+        while ArgumentNode.Next(ArgumentNode) do begin
+            Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+            if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
+                Error(
+                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+                    GetName(),
+                    ParameterSymbol.TypeToText(),
+                    Symbol.TypeToText()
+                );
+        end;
     end;
 }
