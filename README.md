@@ -46,7 +46,7 @@ end;
 
 Right now only a handful of basic types is supported:
 
-- `number` (for both integers and decimals)
+- `number` (for both integers and decimals - this may cause problems when formatting numbers)
 - `boolean`
 - `text`
   - methods

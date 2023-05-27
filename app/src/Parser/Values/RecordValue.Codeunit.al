@@ -90,4 +90,24 @@ codeunit 69105 "Record Value FS" implements "Value FS"
 
         Value.Field(Field."No.").Value(NewValue.GetValue())
     end;
+
+    procedure Format(): Text;
+    begin
+        exit(System.Format(Value));
+    end;
+
+    procedure Format(Length: Integer): Text;
+    begin
+        exit(System.Format(Value, Length));
+    end;
+
+    procedure Format(Length: Integer; FormatNumber: Integer): Text;
+    begin
+        exit(System.Format(Value, Length, FormatNumber));
+    end;
+
+    procedure Format(Length: Integer; FormatString: Text): Text;
+    begin
+        exit(System.Format(Value, Length, FormatString));
+    end;
 }

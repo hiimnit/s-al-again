@@ -65,9 +65,7 @@ codeunit 69205 "Format Function FS" implements "Function FS"
             );
     end;
 
-    // TODO format has two issues
-    // >>>> 1. unexpected results when formatting "integers"
-    // >>>> 2. there might be a problem passing everything in as a variant? (Standard format number 4 does not exist for the type 'Variant')
+    // TODO formatting numbers has issues - unexpected results when formatting "integers"
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
     var
         Node: Codeunit "Value Linked List Node FS";
@@ -81,7 +79,7 @@ codeunit 69205 "Format Function FS" implements "Function FS"
 
         Input := Node.Value();
         if not Node.HasNext() then begin
-            Text := Format(Input.GetValue());
+            Text := Input.Format();
             TextValue.SetValue(Text);
             exit(TextValue);
         end;
@@ -89,7 +87,7 @@ codeunit 69205 "Format Function FS" implements "Function FS"
         Node := Node.Next();
         Length := Node.Value();
         if not Node.HasNext() then begin
-            Text := Format(Input.GetValue(), Length.GetValue());
+            Text := Input.Format(Length.GetValue());
             TextValue.SetValue(Text);
             exit(TextValue);
         end;
@@ -100,16 +98,16 @@ codeunit 69205 "Format Function FS" implements "Function FS"
             FormatVariant.IsText():
                 begin
                     FormatString := FormatVariant;
-                    Text := Format(Input.GetValue(), Length.GetValue(), FormatString);
+                    Text := Input.Format(Length.GetValue(), FormatString);
                 end;
             FormatVariant.IsInteger(),
             FormatVariant.IsDecimal():
                 begin
                     FormatNumber := FormatVariant;
-                    Text := Format(Input.GetValue(), Length.GetValue(), FormatNumber);
+                    Text := Input.Format(Length.GetValue(), FormatNumber);
                 end;
             else
-                Error('Unimplementd: Unexpcted format.');
+                Error('Unimplemented: Unexpected format.');
         end;
 
         TextValue.SetValue(Text);

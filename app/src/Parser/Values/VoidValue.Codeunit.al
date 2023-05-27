@@ -33,4 +33,24 @@ codeunit 69100 "Void Value FS" implements "Value FS"
     begin
         Error('Void values do not support property access');
     end;
+
+    procedure Format(): Text;
+    begin
+        Error('Void values can not be formatted.');
+    end;
+
+    procedure Format(Length: Integer): Text;
+    begin
+        Error('Void values can not be formatted.');
+    end;
+
+    procedure Format(Length: Integer; FormatNumber: Integer): Text;
+    begin
+        Error('Void values can not be formatted.');
+    end;
+
+    procedure Format(Length: Integer; FormatString: Text): Text;
+    begin
+        Error('Void values can not be formatted.');
+    end;
 }

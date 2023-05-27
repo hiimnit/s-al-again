@@ -45,4 +45,24 @@ codeunit 69104 "Return Value FS" implements "Value FS"
     begin
         Error('Return values do not support property access');
     end;
+
+    procedure Format(): Text;
+    begin
+        Error('Return values can not be formatted.');
+    end;
+
+    procedure Format(Length: Integer): Text;
+    begin
+        Error('Return values can not be formatted.');
+    end;
+
+    procedure Format(Length: Integer; FormatNumber: Integer): Text;
+    begin
+        Error('Return values can not be formatted.');
+    end;
+
+    procedure Format(Length: Integer; FormatString: Text): Text;
+    begin
+        Error('Return values can not be formatted.');
+    end;
 }
