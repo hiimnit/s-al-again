@@ -14,17 +14,25 @@ codeunit 69201 "Power Function FS" implements "Function FS"
         exit(SymbolTable.NumericSymbol());
     end;
 
-    procedure GetArity(): Integer
-    begin
-        exit(2);
-    end;
-
-    // TODO this will make things difficult for functions with
-    // >>>> variable parity - message, error, setrange...
-    procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
+    procedure ValidateCallArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Arguments: Codeunit "Node Linked List FS"
+    )
+    var
+        ParameterSymbol: Record "Symbol FS";
     begin
         ParameterSymbol.InsertNumber('Number', 1);
         ParameterSymbol.InsertNumber('Power', 2);
+
+        Runtime.ValidateMethodCallArguments(
+            Runtime,
+            SymbolTable,
+            GetName(),
+            Arguments,
+            ParameterSymbol
+        );
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"

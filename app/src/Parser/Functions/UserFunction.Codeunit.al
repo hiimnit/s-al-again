@@ -27,14 +27,24 @@ codeunit 69025 "User Function FS" implements "Function FS"
         exit(SymbolTable.GetReturnType());
     end;
 
-    procedure GetArity(): Integer
-    begin
-        exit(SymbolTable.GetParameterCount());
-    end;
-
-    procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
+    procedure ValidateCallArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        ContextSymbolTable: Codeunit "Symbol Table FS";
+        Arguments: Codeunit "Node Linked List FS"
+    )
+    var
+        ParameterSymbol: Record "Symbol FS";
     begin
         SymbolTable.GetParameters(ParameterSymbol);
+
+        Runtime.ValidateMethodCallArguments(
+            Runtime,
+            ContextSymbolTable,
+            GetName(),
+            Arguments,
+            ParameterSymbol
+        );
     end;
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"

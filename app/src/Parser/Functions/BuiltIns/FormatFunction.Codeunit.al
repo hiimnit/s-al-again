@@ -14,32 +14,103 @@ codeunit 69205 "Format Function FS" implements "Function FS"
         exit(SymbolTable.TextSymbol());
     end;
 
-    procedure GetArity(): Integer // TODO return a record with min and max?
+    procedure ValidateCallArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Arguments: Codeunit "Node Linked List FS"
+    )
+    var
+        ParameterSymbol, Symbol : Record "Symbol FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
-        exit(1);
-    end;
+        if not (Arguments.GetCount() in [1 .. 3]) then
+            Error('Parameter count missmatch when calling method %1.', GetName());
 
-    // TODO this will make things difficult for functions with
-    // >>>> variable parity - message, error, setrange...
-    procedure GetParameters(var ParameterSymbol: Record "Symbol FS")
-    begin
+        ArgumentNode := Arguments.First();
         ParameterSymbol.InsertAny('Any', 1);
+        Runtime.TestParameterVsArgument(
+            Runtime,
+            SymbolTable,
+            GetName(),
+            ParameterSymbol,
+            ArgumentNode
+        );
 
-        // TODO allow to create multiple sets here?
-        // >>>> call match from here? arity as parameter?
+        if not ArgumentNode.HasNext() then
+            exit;
+
+        ArgumentNode := ArgumentNode.Next();
+        ParameterSymbol.InsertNumber('Length', 2);
+        Runtime.TestParameterVsArgument(
+            Runtime,
+            SymbolTable,
+            GetName(),
+            ParameterSymbol,
+            ArgumentNode
+        );
+
+        if not ArgumentNode.HasNext() then
+            exit;
+
+        ArgumentNode := ArgumentNode.Next();
+        Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+        if not (Symbol.Type in [Symbol.Type::Text, Symbol.Type::Number]) then
+            Error(
+                'Parameter call missmatch when calling method %1.\\Expected %2 or %3, got %4.',
+                GetName(),
+                Symbol.Type::Text,
+                Symbol.Type::Number,
+                Symbol.TypeToText()
+            );
     end;
 
+    // TODO formatting numbers has issues - unexpected results when formatting "integers"
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
     var
         Node: Codeunit "Value Linked List Node FS";
         TextValue: Codeunit "Text Value FS";
-        Text: Text;
+        Input, Length : Interface "Value FS";
+        FormatVariant: Variant;
+        Text, FormatString : Text;
+        FormatNumber: Integer;
     begin
         Node := ValueLinkedList.First();
 
-        Text := Format(Node.Value().GetValue());
-        TextValue.SetValue(Text);
+        Input := Node.Value();
+        if not Node.HasNext() then begin
+            Text := Input.Format();
+            TextValue.SetValue(Text);
+            exit(TextValue);
+        end;
 
+        Node := Node.Next();
+        Length := Node.Value();
+        if not Node.HasNext() then begin
+            Text := Input.Format(Length.GetValue());
+            TextValue.SetValue(Text);
+            exit(TextValue);
+        end;
+
+        Node := Node.Next();
+        FormatVariant := Node.Value().GetValue();
+        case true of
+            FormatVariant.IsText():
+                begin
+                    FormatString := FormatVariant;
+                    Text := Input.Format(Length.GetValue(), FormatString);
+                end;
+            FormatVariant.IsInteger(),
+            FormatVariant.IsDecimal():
+                begin
+                    FormatNumber := FormatVariant;
+                    Text := Input.Format(Length.GetValue(), FormatNumber);
+                end;
+            else
+                Error('Unimplemented: Unexpected format.');
+        end;
+
+        TextValue.SetValue(Text);
         exit(TextValue);
     end;
 }

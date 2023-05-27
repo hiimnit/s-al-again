@@ -235,7 +235,6 @@ codeunit 69011 "Runtime FS"
         var ParameterSymbol: Record "Symbol FS"
     )
     var
-        Symbol: Record "Symbol FS";
         ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
         if Arguments.GetCount() <> ParameterSymbol.Count() then
@@ -246,21 +245,42 @@ codeunit 69011 "Runtime FS"
             exit;
 
         ArgumentNode := Arguments.First();
-
         while true do begin
-            Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-            if not TypesMatch(ParameterSymbol, Symbol) then
-                Error(
-                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
-                    Name,
-                    ParameterSymbol.TypeToText(),
-                    Symbol.TypeToText()
-                );
+            TestParameterVsArgument(
+                Runtime,
+                SymbolTable,
+                Name,
+                ParameterSymbol,
+                ArgumentNode
+            );
 
             if ParameterSymbol.Next() = 0 then
                 break;
             ArgumentNode := ArgumentNode.Next();
         end;
+    end;
+
+    procedure TestParameterVsArgument
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Name: Text[120];
+        ExpectedSymbol: Record "Symbol FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS"
+    )
+    var
+        Symbol: Record "Symbol FS";
+    begin
+        Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+        if TypesMatch(ExpectedSymbol, Symbol) then
+            exit;
+
+        Error(
+            'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+            Name,
+            ExpectedSymbol.TypeToText(),
+            Symbol.TypeToText()
+        );
     end;
 
     procedure TypesMatch
@@ -286,6 +306,17 @@ codeunit 69011 "Runtime FS"
         if not Arguments.First(ArgumentNode) then
             exit(ArgumentValues);
 
+        exit(EvaluateArguments(Runtime, ArgumentNode));
+    end;
+
+    procedure EvaluateArguments
+    (
+        Runtime: Codeunit "Runtime FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS"
+    ): Codeunit "Value Linked List FS"
+    var
+        ArgumentValues: Codeunit "Value Linked List FS";
+    begin
         repeat
             ArgumentValues.Insert(
                 ArgumentNode.Value().Evaluate(Runtime)
@@ -293,5 +324,49 @@ codeunit 69011 "Runtime FS"
         until not ArgumentNode.Next(ArgumentNode);
 
         exit(ArgumentValues);
+    end;
+
+    // limited (but simple) solution, 10 substitutions should be more than enough in most situations
+    // can be improved by parsing the template string and handling substitutions? // TODO
+    procedure SubstituteText(Template: Text; Node: Codeunit "Value Linked List Node FS"; Length: Integer): Text
+    begin
+        if Length = 0 then
+            exit(Template);
+
+        case Length of
+            1:
+                exit(StrSubstNo(Template, NextNodeValue(Node)));
+            2:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node)));
+            3:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            4:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            5:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            6:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            7:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            8:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            9:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            10:
+                exit(StrSubstNo(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node)));
+            else
+                Error('Unimplemented: Too many arguments for text substitution.');
+        end;
+    end;
+
+    procedure MaxAllowedSubstitutions(): Integer
+    begin
+        exit(10);
+    end;
+
+    local procedure NextNodeValue(var Node: Codeunit "Value Linked List Node FS"): Variant
+    begin
+        Node := Node.Next();
+        exit(Node.Value().GetValue());
     end;
 }

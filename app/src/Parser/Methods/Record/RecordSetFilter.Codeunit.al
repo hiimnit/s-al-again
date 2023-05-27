@@ -12,20 +12,26 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
     ): Interface "Value FS";
     var
         ArgumentNode: Codeunit "Node Linked List Node FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        ValueNode: Codeunit "Value Linked List Node FS";
         VoidValue: Codeunit "Void Value FS";
         RecordRef: RecordRef;
         FieldRef: FieldRef;
-        Value: Interface "Value FS";
         FieldId: Integer;
     begin
         RecordRef := Self.GetValue();
         FieldId := FindFieldId(RecordRef.Number(), FilterFieldName);
         FieldRef := RecordRef.Field(FieldId);
 
-        ArgumentNode := Arguments.First(); // skip first parameter
-        ArgumentNode := ArgumentNode.Next();
-        Value := ArgumentNode.Value().Evaluate(Runtime);
-        FieldRef.SetFilter(Value.GetValue());
+        ArgumentNode := Arguments.First().Next(); // skip first parameter
+        ValueLinkedList := Runtime.EvaluateArguments(Runtime, ArgumentNode);
+        ValueNode := ValueLinkedList.First();
+        SetFilter(
+            FieldRef,
+            ValueNode.Value().GetValue(),
+            ValueNode,
+            ValueLinkedList.GetCount() - 1
+        );
 
         exit(VoidValue);
     end;
@@ -42,6 +48,54 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         Field.SetRange(FieldName, Name);
         Field.FindFirst();
         exit(Field."No.");
+    end;
+
+    // SetFilter behaves differently from StrSubstNo
+    local procedure SetFilter
+    (
+        FieldRef: FieldRef;
+        Template: Text;
+        Node: Codeunit "Value Linked List Node FS";
+        Length: Integer
+    )
+    begin
+        case Length of
+            0:
+                FieldRef.SetFilter(Template);
+            1:
+                FieldRef.SetFilter(Template, NextNodeValue(Node));
+            2:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node));
+            3:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            4:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            5:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            6:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            7:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            8:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            9:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            10:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            else
+                Error('Unimplemented: Too many arguments for text substitution.');
+        end;
+    end;
+
+    local procedure NextNodeValue(var Node: Codeunit "Value Linked List Node FS"): Variant
+    begin
+        Node := Node.Next();
+        exit(Node.Value().GetValue());
+    end;
+
+    local procedure MaxAllowedSubstitutions(): Integer
+    begin
+        exit(10);
     end;
 
     procedure GetName(): Text[120];
@@ -66,7 +120,7 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         Symbol, ParameterSymbol : Record "Symbol FS";
         ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
-        if Arguments.GetCount() <> 2 then
+        if not (Arguments.GetCount() in [2 .. MaxAllowedSubstitutions() + 2]) then
             Error('Parameter count missmatch when calling method %1.', GetName());
 
         ArgumentNode := Arguments.First();
@@ -77,7 +131,6 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         FilterFieldName := ParameterSymbol.Name; // TODO bit of a hack
 
         ParameterSymbol.InsertText('Filter', 1);
-
         ArgumentNode := ArgumentNode.Next();
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
         if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
@@ -87,5 +140,18 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
                 ParameterSymbol.TypeToText(),
                 Symbol.TypeToText()
             );
+
+        // all other arguments can be anything
+        ParameterSymbol.InsertAny('Any', 1);
+        while ArgumentNode.Next(ArgumentNode) do begin
+            Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+            if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
+                Error(
+                    'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
+                    GetName(),
+                    ParameterSymbol.TypeToText(),
+                    Symbol.TypeToText()
+                );
+        end;
     end;
 }

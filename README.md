@@ -46,7 +46,7 @@ end;
 
 Right now only a handful of basic types is supported:
 
-- `number` (for both integers and decimals)
+- `number` (for both integers and decimals - this may cause problems when formatting numbers)
 - `boolean`
 - `text`
   - methods
@@ -60,7 +60,7 @@ Right now only a handful of basic types is supported:
     - `FindSet()[: Boolean]`
     - `Next([Steps: Number]): Number`
     - `SetRange(Field: Identifier, [FromValue: FieldType, [ToValue: FieldType]])`
-    - `SetFilter(Field: Identifier, Filter: Text)`
+    - `SetFilter(Field: Identifier, Filter: Tex, [Substitution: Any, ...])` (up to 10 substitutions)
     - `Insert([RunTrigger: Boolean])[: Boolean]`
     - `Modify([RunTrigger: Boolean])[: Boolean]`
     - `Delete([RunTrigger: Boolean])[: Boolean]`
@@ -100,12 +100,13 @@ Right now only a handful of basic types is supported:
 
 #### Built-in functions
 
-- `Message(Text: Text)`
-- `Error(Text: Text)`
-- `WriteLine(Text: Text)`
+- `Message(Text: Text, [Substitution: Any, ...])` (up to 10 substitutions)
+- `Error(Text: Text, [Substitution: Any, ...])` (up to 10 substitutions)
+- `WriteLine(Text: Text, [Substitution: Any, ...])` (up to 10 substitutions)
 - `Abs(Number: Number): Number`
 - `Power(Number: Number, Power: Number): Number`
-- `Format(Input: Any): Text`
+- `Format(Input: Any, [Length: Number, [FormatNumber: Number]]): Text`
+- `Format(Input: Any, [Length: Number, [FormatString: Text]]): Text`
 
 ### Planned
 

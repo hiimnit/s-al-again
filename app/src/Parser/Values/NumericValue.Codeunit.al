@@ -35,4 +35,24 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
     begin
         Error('Numeric values do not support property access');
     end;
+
+    procedure Format(): Text;
+    begin
+        exit(System.Format(Value));
+    end;
+
+    procedure Format(Length: Integer): Text;
+    begin
+        exit(System.Format(Value, Length));
+    end;
+
+    procedure Format(Length: Integer; FormatNumber: Integer): Text;
+    begin
+        exit(System.Format(Value, Length, FormatNumber));
+    end;
+
+    procedure Format(Length: Integer; FormatString: Text): Text;
+    begin
+        exit(System.Format(Value, Length, FormatString));
+    end;
 }
