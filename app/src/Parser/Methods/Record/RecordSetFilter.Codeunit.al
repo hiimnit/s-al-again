@@ -26,15 +26,12 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         ArgumentNode := Arguments.First().Next(); // skip first parameter
         ValueLinkedList := Runtime.EvaluateArguments(Runtime, ArgumentNode);
         ValueNode := ValueLinkedList.First();
-        // TODO does not work the same way as AL SetFilter
-        // in AL, if the template string contains * or ? then replacement does not happen?
-        // > Currency.SetFilter(Code, '%1|%2*|%3', 'EUR', 'D', 'XXX');
-        // > EUR and XXX are replaced, but D is not?
-        FieldRef.SetFilter(Runtime.SubstituteText(
+        SetFilter(
+            FieldRef,
             ValueNode.Value().GetValue(),
             ValueNode,
             ValueLinkedList.GetCount() - 1
-        ));
+        );
 
         exit(VoidValue);
     end;
@@ -51,6 +48,49 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         Field.SetRange(FieldName, Name);
         Field.FindFirst();
         exit(Field."No.");
+    end;
+
+    // SetFilter behaves differently from StrSubstNo
+    local procedure SetFilter
+    (
+        FieldRef: FieldRef;
+        Template: Text;
+        Node: Codeunit "Value Linked List Node FS";
+        Length: Integer
+    )
+    begin
+        case Length of
+            0:
+                FieldRef.SetFilter(Template);
+            1:
+                FieldRef.SetFilter(Template, NextNodeValue(Node));
+            2:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node));
+            3:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            4:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            5:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            6:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            7:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            8:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            9:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            10:
+                FieldRef.SetFilter(Template, NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node), NextNodeValue(Node));
+            else
+                Error('Unimplemented: Too many arguments for text substitution.');
+        end;
+    end;
+
+    local procedure NextNodeValue(var Node: Codeunit "Value Linked List Node FS"): Variant
+    begin
+        Node := Node.Next();
+        exit(Node.Value().GetValue());
     end;
 
     procedure GetName(): Text[120];
