@@ -77,6 +77,45 @@ table 69001 "Symbol FS"
         );
     end;
 
+    procedure InsertDate
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Date,
+            NewOrder
+        );
+    end;
+
+    procedure InsertTime
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Time,
+            NewOrder
+        );
+    end;
+
+    procedure InsertDateTime
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Boolean,
+            NewOrder
+        );
+    end;
+
     procedure InsertAny
     (
         NewName: Text[120];
