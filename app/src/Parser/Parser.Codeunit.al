@@ -624,6 +624,12 @@ codeunit 69001 "Parser FS"
                     LiteralValueNode.Init(Lexeme."Boolean Value");
                 Lexeme.IsString():
                     LiteralValueNode.Init(Lexeme.GetStringValue());
+                Lexeme.IsDate():
+                    LiteralValueNode.Init(Lexeme."Date Value");
+                Lexeme.IsTime():
+                    LiteralValueNode.Init(Lexeme."Time Value");
+                Lexeme.IsDateTime():
+                    LiteralValueNode.Init(Lexeme."DateTime Value");
                 else
                     Error('Literal value parsing is not implemented for %1.', Lexeme.Type);
             end;
@@ -861,6 +867,12 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::Boolean);
             'record':
                 exit(Enum::"Type FS"::Record);
+            'date':
+                exit(Enum::"Type FS"::Date);
+            'time':
+                exit(Enum::"Type FS"::Time);
+            'datetime':
+                exit(Enum::"Type FS"::DateTime);
             else
                 Error('Unknown type %1.', Identifier);
         end;

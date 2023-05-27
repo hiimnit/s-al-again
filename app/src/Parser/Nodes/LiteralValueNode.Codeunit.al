@@ -27,6 +27,30 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         LiteralValue := TextValue;
     end;
 
+    procedure Init(Value: Date)
+    var
+        DateValue: Codeunit "Date Value FS";
+    begin
+        DateValue.SetValue(Value);
+        LiteralValue := DateValue;
+    end;
+
+    procedure Init(Value: Time)
+    var
+        TimeValue: Codeunit "Time Value FS";
+    begin
+        TimeValue.SetValue(Value);
+        LiteralValue := TimeValue;
+    end;
+
+    procedure Init(Value: DateTime)
+    var
+        DateTimeValue: Codeunit "DateTime Value FS";
+    begin
+        DateTimeValue.SetValue(Value);
+        LiteralValue := DateTimeValue;
+    end;
+
     var
         TopLevel: Boolean;
 

@@ -175,6 +175,12 @@ table 69001 "Symbol FS"
             Field.Type::Code,
             Field.Type::Text:
                 exit(SymbolTable.TextSymbol());
+            Field.Type::Date:
+                exit(SymbolTable.DateSymbol());
+            Field.Type::Time:
+                exit(SymbolTable.TimeSymbol());
+            Field.Type::DateTime:
+                exit(SymbolTable.DateTimeSymbol());
             else
                 Error('Accessing property "%1" of type %2 is not supported.', PropertyName, Field.Type);
         end;
@@ -216,6 +222,12 @@ table 69001 "Symbol FS"
             Field.Type::Code,
             Field.Type::Text:
                 Symbol := SymbolTable.TextSymbol();
+            Field.Type::Date:
+                Symbol := SymbolTable.DateSymbol();
+            Field.Type::Time:
+                Symbol := SymbolTable.TimeSymbol();
+            Field.Type::DateTime:
+                Symbol := SymbolTable.DateTimeSymbol();
             else
                 exit(false);
         end;

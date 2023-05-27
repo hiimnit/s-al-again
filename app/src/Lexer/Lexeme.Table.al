@@ -23,6 +23,10 @@ table 69000 "Lexeme FS"
 
         field(7000; "String Value"; Text[250]) { }
         field(7001; "String Value Blob"; Blob) { }
+
+        field(10000; "Date Value"; Date) { }
+        field(11000; "Time Value"; Time) { }
+        field(12000; "DateTime Value"; DateTime) { }
     }
 
     keys
@@ -50,6 +54,30 @@ table 69000 "Lexeme FS"
         Rec.Init();
         Rec.Type := Rec.Type::Bool;
         Rec."Boolean Value" := Value;
+        exit(Rec);
+    end;
+
+    procedure Date(Value: Date): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Date;
+        Rec."Date Value" := Value;
+        exit(Rec);
+    end;
+
+    procedure Time(Value: Time): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Time;
+        Rec."Time Value" := Value;
+        exit(Rec);
+    end;
+
+    procedure DateTime(DateValue: Date; TimeValue: Time): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::DateTime;
+        Rec."DateTime Value" := CreateDateTime(DateValue, TimeValue);
         exit(Rec);
     end;
 
@@ -186,12 +214,30 @@ table 69000 "Lexeme FS"
         exit(Rec.Type = Rec.Type::String);
     end;
 
+    procedure IsDate(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::Date);
+    end;
+
+    procedure IsTime(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::Time);
+    end;
+
+    procedure IsDateTime(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::DateTime);
+    end;
+
     procedure IsLiteralValue(): Boolean
     begin
         exit(true in [
             IsNumber(),
             IsBoolean(),
-            IsString()
+            IsString(),
+            IsDate(),
+            IsTime(),
+            IsDateTime()
         ]);
     end;
 

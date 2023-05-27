@@ -54,6 +54,9 @@ codeunit 69009 "Memory FS"
         NumericValue: Codeunit "Numeric Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
+        DateValue: Codeunit "Date Value FS";
+        TimeValue: Codeunit "Time Value FS";
+        DateTimeValue: Codeunit "DateTime Value FS";
         RecordValue: Codeunit "Record Value FS";
         Value: Interface "Value FS";
     begin
@@ -64,6 +67,12 @@ codeunit 69009 "Memory FS"
                 Value := BooleanValue;
             Symbol.Type::Text:
                 Value := TextValue;
+            Symbol.Type::Date:
+                Value := DateValue;
+            Symbol.Type::Time:
+                Value := TimeValue;
+            Symbol.Type::DateTime:
+                Value := DateTimeValue;
             Symbol.Type::Record:
                 begin
                     RecordValue.Init(Symbol.Subtype);
