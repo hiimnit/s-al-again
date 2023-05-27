@@ -93,6 +93,11 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         exit(Node.Value().GetValue());
     end;
 
+    local procedure MaxAllowedSubstitutions(): Integer
+    begin
+        exit(10);
+    end;
+
     procedure GetName(): Text[120];
     begin
         exit('SetFilter');
@@ -115,7 +120,7 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         Symbol, ParameterSymbol : Record "Symbol FS";
         ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
-        if not (Arguments.GetCount() in [2 .. Runtime.MaxAllowedSubstitutions() + 2]) then
+        if not (Arguments.GetCount() in [2 .. MaxAllowedSubstitutions() + 2]) then
             Error('Parameter count missmatch when calling method %1.', GetName());
 
         ArgumentNode := Arguments.First();
