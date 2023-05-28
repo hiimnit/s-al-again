@@ -89,6 +89,7 @@ codeunit 69001 "Parser FS"
         SymbolTable: Codeunit "Symbol Table FS";
         UserFunction: Codeunit "User Function FS";
         Statements: Interface "Node FS";
+        Pointer: Boolean;
         Name: Text[120];
     begin
         AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
@@ -101,8 +102,15 @@ codeunit 69001 "Parser FS"
         PeekedLexeme := PeekNextLexeme();
         if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
             while true do begin
+                Pointer := false;
+                PeekedLexeme := PeekNextLexeme();
+                if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
+                    NextLexeme();
+                    Pointer := true;
+                end;
+
                 ParameterSymbol := ParseVariableDefinition();
-                SymbolTable.DefineParameter(ParameterSymbol);
+                SymbolTable.DefineParameter(ParameterSymbol, Pointer);
 
                 PeekedLexeme := PeekNextLexeme();
                 if PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then

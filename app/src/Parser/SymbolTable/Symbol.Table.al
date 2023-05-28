@@ -30,6 +30,10 @@ table 69001 "Symbol FS"
         {
             Caption = 'Property';
         }
+        field(30; "Pointer Parameter"; Boolean)
+        {
+            Caption = 'Pointer Parameter';
+        }
     }
 
     keys

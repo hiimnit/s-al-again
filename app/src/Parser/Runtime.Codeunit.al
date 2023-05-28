@@ -156,6 +156,24 @@ codeunit 69011 "Runtime FS"
         exit(MemoryStack[MemoryCounter]);
     end;
 
+    var
+        Exited: Boolean;
+
+    procedure SetExited()
+    begin
+        Exited := true;
+    end;
+
+    procedure IsExited(): Boolean
+    begin
+        exit(Exited);
+    end;
+
+    procedure ResetExited()
+    begin
+        Exited := false;
+    end;
+
     procedure LookupMethod
     (
         Type: Enum "Type FS";

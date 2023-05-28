@@ -33,10 +33,7 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
                 break;
 
             Value := Statement.Evaluate(Runtime);
-            if Value.GetType() in [
-                Enum::"Type FS"::"Return Value",
-                Enum::"Type FS"::"Default Return Value"
-            ] then
+            if Runtime.IsExited() then
                 exit(Value);
         end;
 

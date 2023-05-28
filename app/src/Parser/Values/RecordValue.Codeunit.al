@@ -34,8 +34,38 @@ codeunit 69105 "Record Value FS" implements "Value FS"
     end;
 
     procedure Copy(): Interface "Value FS"
+    var
+        RecordValue: Codeunit "Record Value FS";
     begin
-        Error('Unimplemented error.');
+        RecordValue.SetValue(CopyFieldValuesToNewRecordRef());
+        exit(RecordValue);
+    end;
+
+    procedure Mutate(NewValue: Interface "Value FS");
+    var
+        FromRecordRef: RecordRef;
+    begin
+        FromRecordRef := NewValue.GetValue();
+        CopyFieldValuesFromRecordRefToRecordRef(FromRecordRef, Value);
+    end;
+
+    local procedure CopyFieldValuesToNewRecordRef(): RecordRef
+    var
+        ToRecordRef: RecordRef;
+    begin
+        CopyFieldValuesFromRecordRefToRecordRef(Value, ToRecordRef);
+        exit(ToRecordRef);
+    end;
+
+    local procedure CopyFieldValuesFromRecordRefToRecordRef(FromRecordRef: RecordRef; ToRecordRef: RecordRef)
+    var
+        i: Integer;
+    begin
+        if ToRecordRef.Number() = 0 then
+            ToRecordRef.Open(FromRecordRef.Number());
+
+        for i := 1 to FromRecordRef.FieldCount() do
+            ToRecordRef.FieldIndex(i).Value := FromRecordRef.FieldIndex(i).Value();
     end;
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS"

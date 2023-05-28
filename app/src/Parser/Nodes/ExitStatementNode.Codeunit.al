@@ -23,15 +23,18 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
-        ReturnValue: Codeunit "Return Value FS";
+        VoidValue: Codeunit "Void Value FS";
+        Value: Interface "Value FS";
     begin
         if not ExpressionSet then
-            exit(ReturnValue);
+            exit(VoidValue);
 
-        ReturnValue.Init(
-            Expression.Evaluate(Runtime)
-        );
-        exit(ReturnValue);
+        Value := Expression.Evaluate(Runtime);
+        // TODO exit statement actually "asigns" the value to the exit variable
+        // >>>> so for records it does a ":=" copy
+
+        Runtime.SetExited();
+        exit(Value);
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS"

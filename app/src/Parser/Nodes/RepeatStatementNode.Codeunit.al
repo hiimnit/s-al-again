@@ -29,10 +29,7 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
     begin
         while true do begin
             Value := Statement.Evaluate(Runtime);
-            if Value.GetType() in [
-                Enum::"Type FS"::"Return Value",
-                Enum::"Type FS"::"Default Return Value"
-            ] then
+            if Runtime.IsExited() then
                 exit(Value);
 
             Value := Expression.Evaluate(Runtime);

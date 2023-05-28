@@ -26,10 +26,7 @@ codeunit 69016 "Statement List FS" implements "Node FS"
         if StatementsList.First(LinkedListNode) then
             repeat
                 Value := LinkedListNode.Value().Evaluate(Runtime);
-                if Value.GetType() in [
-                    Enum::"Type FS"::"Return Value",
-                    Enum::"Type FS"::"Default Return Value"
-                ] then
+                if Runtime.IsExited() then
                     exit(Value);
             until not LinkedListNode.Next(LinkedListNode);
         exit(VoidValue);

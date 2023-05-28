@@ -46,10 +46,7 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         if not CheckCondition(Value, FinalValue) then
             while true do begin
                 ReturnValue := Statement.Evaluate(Runtime);
-                if ReturnValue.GetType() in [
-                    Enum::"Type FS"::"Return Value",
-                    Enum::"Type FS"::"Default Return Value"
-                ] then
+                if Runtime.IsExited() then
                     exit(ReturnValue);
 
                 // TODO this is not correct, investigate further

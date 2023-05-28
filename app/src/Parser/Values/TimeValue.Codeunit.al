@@ -26,6 +26,11 @@ codeunit 69107 "Time Value FS" implements "Value FS"
         exit(TimeValue);
     end;
 
+    procedure Mutate(NewValue: Interface "Value FS");
+    begin
+        Value := NewValue.GetValue();
+    end;
+
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
     begin
         Error('Time values do not support property access');

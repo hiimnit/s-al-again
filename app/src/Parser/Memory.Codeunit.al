@@ -1,7 +1,7 @@
 codeunit 69009 "Memory FS"
 {
     var
-        LocalVariables: array[50] of Interface "Value FS";
+        LocalVariables: array[50] of Interface "Value FS"; // TODO wrap value?
         LocalVariableCount: Integer;
         LocalVariableMap: Dictionary of [Text, Integer];
 
@@ -9,6 +9,7 @@ codeunit 69009 "Memory FS"
     var
         Symbol: Record "Symbol FS";
         Node: Codeunit "Value Linked List Node FS";
+        Value: Interface "Value FS";
         FirstParameterGot: Boolean;
     begin
         if not SymbolTable.FindSet(Symbol) then
@@ -26,9 +27,13 @@ codeunit 69009 "Memory FS"
                         end else
                             Node := Node.Next();
 
+                        Value := Node.Value();
+                        if not Symbol."Pointer Parameter" then
+                            Value := Value.Copy();
+
                         InitializeSymbol(
                             Symbol,
-                            Node.Value() // TODO what happens with records here?
+                            Value
                         );
                     end;
                 else
@@ -110,7 +115,7 @@ codeunit 69009 "Memory FS"
         // >>>> semantic analysis should not let this happen (if implemented properly)
         // TODO lets instead call setvalue to change the in-memory value instead of replacing it?
         // >>>> resolve as part of reference handling
-        LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
+        LocalVariables[LocalVariableMap.Get(Name.ToLower())].Mutate(Value);
     end;
 
     procedure DebugMessage()
