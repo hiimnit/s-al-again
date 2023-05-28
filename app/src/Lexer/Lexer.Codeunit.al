@@ -253,13 +253,13 @@ codeunit 69000 "Lexer FS"
         repeat
             Evaluate(Digit, Char);
             if not DecimalSeparatorFound then begin
+                Digits += 1;
                 Number *= 10;
                 Number += Digit;
             end else begin
                 DecimalPlaces += 1;
                 Number += Power(10, -DecimalPlaces) * Digit;
             end;
-            Digits += 1;
 
             PeekedChar := PeekNextChar();
             case true of
@@ -307,10 +307,10 @@ codeunit 69000 "Lexer FS"
                                 exit(Lexeme.Date(ParseDate(Number, Digits)));
                         end;
                     end;
-                (PeekedChar = 'T') and not DecimalSeparatorFound:
+                PeekedChar = 'T':
                     begin
                         NextChar();
-                        exit(Lexeme.Time(ParseTime(Number, Digits)));
+                        exit(Lexeme.Time(ParseTime(Number, Digits, DecimalPlaces)));
                     end;
                 else
                     exit(Lexeme.Number(Number));
@@ -343,17 +343,14 @@ codeunit 69000 "Lexer FS"
         exit(Date);
     end;
 
-    local procedure ParseTime(Number: Decimal; Digits: Integer): Time
+    local procedure ParseTime(Number: Decimal; Digits: Integer; DecimalPlaces: Integer): Time
     var
-        Hours, Minutes, Seconds : Integer;
+        Hours, Minutes, Seconds, Milliseconds : Integer;
         OriginalNumber: Decimal;
         Time: Time;
     begin
-        if (Digits <> 6) and ((Digits <> 1) or (Number <> 0)) then
-            Error('Invalid time: Number %1 format must be hhmmssT or 0T.', Number);
-
-        if Number <> Round(Number, 1) then
-            Error('Invalid time: Number %1 must be an integer.', Number);
+        if not IsValidTimeLiteralFormat(Number, Digits, DecimalPlaces) then
+            Error('Invalid time: Number %1 format must be one of hhmmssT/hhmmss.mT/hhmmss.mmT/hhmmss.mmmT/0T.', Number);
 
         if Digits = 1 then
             exit(0T);
@@ -364,20 +361,35 @@ codeunit 69000 "Lexer FS"
         Number := Number mod 10000;
         Minutes := Number div 100;
         Number := Number mod 100;
-        Seconds := Number;
+        Seconds := Number div 1;
+        Number := Number mod 1;
+        Milliseconds := Number * 1000;
 
         if not (Hours in [0 .. 23])
             or not (Minutes in [0 .. 59])
             or not (Seconds in [0 .. 59])
+            or not (Milliseconds in [0 .. 999])
         then
             Error('Invalid time: Number %1 is not a valid time.', OriginalNumber);
 
         Time := 000000T
             + Hours * 60 * 60 * 1000
             + Minutes * 60 * 1000
-            + Seconds * 1000;
+            + Seconds * 1000
+            + Milliseconds;
 
         exit(Time);
+    end;
+
+    local procedure IsValidTimeLiteralFormat(Number: Decimal; Digits: Integer; DecimalPlaces: Integer): Boolean
+    begin
+        if not ((Digits = 6) or ((Digits = 1) and (Number = 0))) then
+            exit(false);
+
+        if DecimalPlaces > 3 then
+            exit(false);
+
+        exit(true);
     end;
 
     local procedure ParseOperator(Char: Char): Record "Lexeme FS"
