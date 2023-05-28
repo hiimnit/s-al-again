@@ -104,6 +104,30 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         exit(Text);
     end;
 
+    procedure DateSymbol(): Record "Symbol FS"
+    var
+        Date: Record "Symbol FS";
+    begin
+        Date.Type := Date.Type::Date;
+        exit(Date);
+    end;
+
+    procedure TimeSymbol(): Record "Symbol FS"
+    var
+        Time: Record "Symbol FS";
+    begin
+        Time.Type := Time.Type::Time;
+        exit(Time);
+    end;
+
+    procedure DateTimeSymbol(): Record "Symbol FS"
+    var
+        DateTime: Record "Symbol FS";
+    begin
+        DateTime.Type := DateTime.Type::DateTime;
+        exit(DateTime);
+    end;
+
     procedure SymbolFromType(Type: Enum "Type FS"): Record "Symbol FS"
     begin
         case Type of
@@ -113,6 +137,12 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
                 exit(NumericSymbol());
             Type::Text:
                 exit(TextSymbol());
+            Type::Date:
+                exit(DateSymbol());
+            Type::Time:
+                exit(TimeSymbol());
+            Type::DateTime:
+                exit(DateTimeSymbol());
             Type::Void:
                 exit(VoidSymbol());
             else

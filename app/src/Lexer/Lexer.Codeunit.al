@@ -224,7 +224,6 @@ codeunit 69000 "Lexer FS"
         if Char = Enum::"ASCII FS"::NUL.AsInteger() then
             exit(false);
 
-        // TODO double check
         case Char of
             Enum::"ASCII FS"::TAB.AsInteger(),
             Enum::"ASCII FS"::LF.AsInteger(),
@@ -240,8 +239,8 @@ codeunit 69000 "Lexer FS"
 
     local procedure ParseNumber(Char: Char): Record "Lexeme FS"
     var
-        Lexeme: Record "Lexeme FS";
-        Digit: Integer;
+        Lexeme, NextLexeme : Record "Lexeme FS";
+        Digit, Digits : Integer;
         Number: Decimal;
         PeekedChar: Char;
         DecimalSeparatorFound: Boolean;
@@ -249,10 +248,12 @@ codeunit 69000 "Lexer FS"
     begin
         Number := 0;
         DecimalPlaces := 0;
+        Digits := 0;
 
         repeat
             Evaluate(Digit, Char);
             if not DecimalSeparatorFound then begin
+                Digits += 1;
                 Number *= 10;
                 Number += Digit;
             end else begin
@@ -272,10 +273,123 @@ codeunit 69000 "Lexer FS"
                         if not IsDigit(Char) then
                             Error('Unexpected character, expected a digit at line %1, character %2.', CurrentLine, CurrentChar);
                     end;
+                (PeekedChar = 'D') and not DecimalSeparatorFound:
+                    begin
+                        NextChar();
+                        PeekedChar := PeekNextChar();
+
+                        case true of
+                            PeekedChar = 'T':
+                                begin
+                                    NextChar();
+                                    exit(Lexeme.DateTime(
+                                        ParseDate(Number, Digits),
+                                        0T
+                                    ));
+                                end;
+                            IsDigit(PeekedChar):
+                                begin
+                                    NextLexeme := ParseNumber(NextChar());
+                                    if NextLexeme.Type <> NextLexeme.Type::Time then
+                                        Error(
+                                            'Expected time at line %1, characted %2, instead found %3.',
+                                            CurrentLine,
+                                            CurrentChar,
+                                            NextLexeme.Type
+                                        );
+
+                                    exit(Lexeme.DateTime(
+                                        ParseDate(Number, Digits),
+                                        NextLexeme."Time Value"
+                                    ));
+                                end;
+                            else
+                                exit(Lexeme.Date(ParseDate(Number, Digits)));
+                        end;
+                    end;
+                PeekedChar = 'T':
+                    begin
+                        NextChar();
+                        exit(Lexeme.Time(ParseTime(Number, Digits, DecimalPlaces)));
+                    end;
                 else
                     exit(Lexeme.Number(Number));
             end;
         until false;
+    end;
+
+    local procedure ParseDate(Number: Decimal; Digits: Integer): Date
+    var
+        Years, Months, Days : Integer;
+        Date: Date;
+    begin
+        if (Digits <> 8) and ((Digits <> 1) or (Number <> 0)) then
+            Error('Invalid date: Number %1 format must be yyyymmddD or 0D.', Number);
+
+        if Number <> Round(Number, 1) then
+            Error('Invalid date: Number %1 must be an integer.', Number);
+
+        if Digits = 1 then
+            exit(0D);
+
+        Years := Number div 10000;
+        Number := Number mod 10000;
+        Months := Number div 100;
+        Number := Number mod 100;
+        Days := Number;
+
+        Date := DMY2Date(Days, Months, Years);
+
+        exit(Date);
+    end;
+
+    local procedure ParseTime(Number: Decimal; Digits: Integer; DecimalPlaces: Integer): Time
+    var
+        Hours, Minutes, Seconds, Milliseconds : Integer;
+        OriginalNumber: Decimal;
+        Time: Time;
+    begin
+        if not IsValidTimeLiteralFormat(Number, Digits, DecimalPlaces) then
+            Error('Invalid time: Number %1 format must be one of hhmmssT/hhmmss.mT/hhmmss.mmT/hhmmss.mmmT/0T.', Number);
+
+        if Digits = 1 then
+            exit(0T);
+
+        OriginalNumber := Number;
+
+        Hours := Number div 10000;
+        Number := Number mod 10000;
+        Minutes := Number div 100;
+        Number := Number mod 100;
+        Seconds := Number div 1;
+        Number := Number mod 1;
+        Milliseconds := Number * 1000;
+
+        if not (Hours in [0 .. 23])
+            or not (Minutes in [0 .. 59])
+            or not (Seconds in [0 .. 59])
+            or not (Milliseconds in [0 .. 999])
+        then
+            Error('Invalid time: Number %1 is not a valid time.', OriginalNumber);
+
+        Time := 000000T
+            + Hours * 60 * 60 * 1000
+            + Minutes * 60 * 1000
+            + Seconds * 1000
+            + Milliseconds;
+
+        exit(Time);
+    end;
+
+    local procedure IsValidTimeLiteralFormat(Number: Decimal; Digits: Integer; DecimalPlaces: Integer): Boolean
+    begin
+        if not ((Digits = 6) or ((Digits = 1) and (Number = 0))) then
+            exit(false);
+
+        if DecimalPlaces > 3 then
+            exit(false);
+
+        exit(true);
     end;
 
     local procedure ParseOperator(Char: Char): Record "Lexeme FS"

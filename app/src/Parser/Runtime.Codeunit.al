@@ -54,6 +54,20 @@ codeunit 69011 "Runtime FS"
         ErrorFunction: Codeunit "Error Function FS";
         WriteLineFunction: Codeunit "Write Line Function FS";
         FormatFunction: Codeunit "Format Function FS";
+        CalcDateFunction: Codeunit "CalcDate Function FS";
+        ClosingDateFunction: Codeunit "ClosingDate Function FS";
+        CreateDateTimeFunction: Codeunit "CreateDateTime Function FS";
+        CurrentDateTimeFunction: Codeunit "CurrentDateTime Function FS";
+        NormalDateFunction: Codeunit "NormalDate Function FS";
+        TimeFunction: Codeunit "Time Function FS";
+        TodayFunction: Codeunit "Today Function FS";
+        WorkDateFunction: Codeunit "WorkDate Function FS";
+        Date2DMYFunction: Codeunit "Date2DMY Function FS";
+        Date2DWYFunction: Codeunit "Date2DWY Function FS";
+        DMY2DateFunction: Codeunit "DMY2Date Function FS";
+        DWY2DateFunction: Codeunit "DWY2Date Function FS";
+        DT2DateFunction: Codeunit "DT2Date Function FS";
+        DT2TimeFunction: Codeunit "DT2Time Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -68,6 +82,34 @@ codeunit 69011 "Runtime FS"
                 exit(WriteLineFunction);
             FormatFunction.GetName().ToLower():
                 exit(FormatFunction);
+            CalcDateFunction.GetName().ToLower():
+                exit(CalcDateFunction);
+            ClosingDateFunction.GetName().ToLower():
+                exit(ClosingDateFunction);
+            CreateDateTimeFunction.GetName().ToLower():
+                exit(CreateDateTimeFunction);
+            CurrentDateTimeFunction.GetName().ToLower():
+                exit(CurrentDateTimeFunction);
+            NormalDateFunction.GetName().ToLower():
+                exit(NormalDateFunction);
+            TimeFunction.GetName().ToLower():
+                exit(TimeFunction);
+            TodayFunction.GetName().ToLower():
+                exit(TodayFunction);
+            WorkDateFunction.GetName().ToLower():
+                exit(WorkDateFunction);
+            Date2DMYFunction.GetName().ToLower():
+                exit(Date2DMYFunction);
+            Date2DWYFunction.GetName().ToLower():
+                exit(Date2DWYFunction);
+            DMY2DateFunction.GetName().ToLower():
+                exit(DMY2DateFunction);
+            DWY2DateFunction.GetName().ToLower():
+                exit(DWY2DateFunction);
+            DT2DateFunction.GetName().ToLower():
+                exit(DT2DateFunction);
+            DT2TimeFunction.GetName().ToLower():
+                exit(DT2TimeFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;

@@ -11,5 +11,7 @@ enum 69001 "Lexeme Type FS"
     value(6; Bool) { }
     value(7; String) { }
 
-    // TODO date literal!
+    value(10; Date) { }
+    value(11; Time) { }
+    value(12; DateTime) { }
 }

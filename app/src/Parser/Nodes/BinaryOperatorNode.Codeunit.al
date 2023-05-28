@@ -61,6 +61,21 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             LeftValueVariant.IsText() and RightValueVariant.IsDecimal(),
             LeftValueVariant.IsDecimal() and RightValueVariant.IsText():
                 exit(EvaluateTextMultiplication(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsDate() and RightValueVariant.IsDate():
+                exit(EvaluateDate(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsTime() and RightValueVariant.IsTime():
+                exit(EvaluateTime(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsDateTime() and RightValueVariant.IsDateTime():
+                exit(EvaluateDateTime(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsDate() and RightValueVariant.IsDecimal(),
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDate():
+                exit(EvaluateDateNumber(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsTime() and RightValueVariant.IsDecimal(),
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsTime():
+                exit(EvaluateTimeNumber(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsDateTime() and RightValueVariant.IsDecimal(),
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDateTime():
+                exit(EvaluateDateTimeNumber(LeftValueVariant, RightValueVariant, Operator));
             else
                 Error('Unimplemented binary operator input types.'); // TODO nicer error?
         end;
@@ -196,6 +211,198 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         exit(TextValue);
     end;
 
+    local procedure EvaluateDate
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+        LeftValue, RightValue : Date;
+        Result: Decimal;
+    begin
+        LeftValue := LeftValueVariant;
+        RightValue := RightValueVariant;
+
+        case Operator of
+            Operator::"-":
+                Result := LeftValue - RightValue;
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        NumericValue.SetValue(Result);
+        exit(NumericValue);
+    end;
+
+    local procedure EvaluateTime
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+        LeftValue, RightValue : Time;
+        Result: Decimal;
+    begin
+        LeftValue := LeftValueVariant;
+        RightValue := RightValueVariant;
+
+        case Operator of
+            Operator::"-":
+                Result := LeftValue - RightValue;
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        NumericValue.SetValue(Result);
+        exit(NumericValue);
+    end;
+
+    local procedure EvaluateDateTime
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    var
+        NumericValue: Codeunit "Numeric Value FS";
+        LeftValue, RightValue : DateTime;
+        Result: Decimal;
+    begin
+        LeftValue := LeftValueVariant;
+        RightValue := RightValueVariant;
+
+        case Operator of
+            Operator::"-":
+                Result := LeftValue - RightValue;
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        NumericValue.SetValue(Result);
+        exit(NumericValue);
+    end;
+
+    local procedure EvaluateDateNumber
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    var
+        DateValue: Codeunit "Date Value FS";
+        Date, Result : Date;
+        Number: Decimal;
+    begin
+        case true of
+            LeftValueVariant.IsDate() and RightValueVariant.IsDecimal():
+                begin
+                    Date := LeftValueVariant;
+                    Number := RightValueVariant;
+                end;
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDate():
+                begin
+                    Number := LeftValueVariant;
+                    Date := RightValueVariant;
+                end;
+            else
+                Error('Invalid argument types.');
+        end;
+
+        case Operator of
+            Operator::"+":
+                Result := Date + Number;
+            Operator::"-":
+                Result := Date - Number;
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        DateValue.SetValue(Result);
+        exit(DateValue);
+    end;
+
+    local procedure EvaluateTimeNumber
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    var
+        TimeValue: Codeunit "Time Value FS";
+        Time, Result : Time;
+        Number: Decimal;
+    begin
+        case true of
+            LeftValueVariant.IsTime() and RightValueVariant.IsDecimal():
+                begin
+                    Time := LeftValueVariant;
+                    Number := RightValueVariant;
+                end;
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsTime():
+                begin
+                    Number := LeftValueVariant;
+                    Time := RightValueVariant;
+                end;
+            else
+                Error('Invalid argument types.');
+        end;
+
+        case Operator of
+            Operator::"+":
+                Result := Time + Number;
+            Operator::"-":
+                Result := Time - Number;
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        TimeValue.SetValue(Result);
+        exit(TimeValue);
+    end;
+
+    local procedure EvaluateDateTimeNumber
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS"
+    ): Interface "Value FS";
+    var
+        DateTimeValue: Codeunit "DateTime Value FS";
+        DateTime, Result : DateTime;
+        Number: Decimal;
+    begin
+        case true of
+            LeftValueVariant.IsDateTime() and RightValueVariant.IsDecimal():
+                begin
+                    DateTime := LeftValueVariant;
+                    Number := RightValueVariant;
+                end;
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDateTime():
+                begin
+                    Number := LeftValueVariant;
+                    DateTime := RightValueVariant;
+                end;
+            else
+                Error('Invalid argument types.');
+        end;
+
+        case Operator of
+            Operator::"+":
+                Result := DateTime + Number;
+            Operator::"-":
+                Result := DateTime - Number;
+            else
+                Error('Unimplemented binary operator %1.', Operator);
+        end;
+
+        DateTimeValue.SetValue(Result);
+        exit(DateTimeValue);
+    end;
+
     local procedure EvaluateComparison
     (
         LeftValueVariant: Variant;
@@ -213,6 +420,12 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 Result := CompareNumber(LeftValueVariant, RightValueVariant, Operator);
             LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
                 Result := CompareBoolean(LeftValueVariant, RightValueVariant, Operator);
+            LeftValueVariant.IsDate() and RightValueVariant.IsDate():
+                Result := CompareDate(LeftValueVariant, RightValueVariant, Operator);
+            LeftValueVariant.IsTime() and RightValueVariant.IsTime():
+                Result := CompareTime(LeftValueVariant, RightValueVariant, Operator);
+            LeftValueVariant.IsDateTime() and RightValueVariant.IsDateTime():
+                Result := CompareDateTime(LeftValueVariant, RightValueVariant, Operator);
             else
                 Error('Comparison between types is not implemented'); // TODO nicer error?
         end;
@@ -275,6 +488,81 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     (
         LeftValue: Boolean;
         RightValue: Boolean;
+        Operator: Enum "Operator FS"
+    ): Boolean
+    begin
+        case Operator of
+            Operator::"<":
+                exit(LeftValue < RightValue);
+            Operator::"<=":
+                exit(LeftValue <= RightValue);
+            Operator::"<>":
+                exit(LeftValue <> RightValue);
+            Operator::">=":
+                exit(LeftValue >= RightValue);
+            Operator::">":
+                exit(LeftValue > RightValue);
+            Operator::"=":
+                exit(LeftValue = RightValue);
+            else
+                Error('Unexpected comparison operator %1.', Operator);
+        end;
+    end;
+
+    local procedure CompareDate
+    (
+        LeftValue: Date;
+        RightValue: Date;
+        Operator: Enum "Operator FS"
+    ): Boolean
+    begin
+        case Operator of
+            Operator::"<":
+                exit(LeftValue < RightValue);
+            Operator::"<=":
+                exit(LeftValue <= RightValue);
+            Operator::"<>":
+                exit(LeftValue <> RightValue);
+            Operator::">=":
+                exit(LeftValue >= RightValue);
+            Operator::">":
+                exit(LeftValue > RightValue);
+            Operator::"=":
+                exit(LeftValue = RightValue);
+            else
+                Error('Unexpected comparison operator %1.', Operator);
+        end;
+    end;
+
+    local procedure CompareTime
+    (
+        LeftValue: Time;
+        RightValue: Time;
+        Operator: Enum "Operator FS"
+    ): Boolean
+    begin
+        case Operator of
+            Operator::"<":
+                exit(LeftValue < RightValue);
+            Operator::"<=":
+                exit(LeftValue <= RightValue);
+            Operator::"<>":
+                exit(LeftValue <> RightValue);
+            Operator::">=":
+                exit(LeftValue >= RightValue);
+            Operator::">":
+                exit(LeftValue > RightValue);
+            Operator::"=":
+                exit(LeftValue = RightValue);
+            else
+                Error('Unexpected comparison operator %1.', Operator);
+        end;
+    end;
+
+    local procedure CompareDateTime
+    (
+        LeftValue: DateTime;
+        RightValue: DateTime;
         Operator: Enum "Operator FS"
     ): Boolean
     begin
@@ -378,6 +666,39 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     RightSymbol,
                     Operator
                 );
+            (LeftSymbol.Type = LeftSymbol.Type::Date) and (RightSymbol.Type = RightSymbol.Type::Date),
+            (LeftSymbol.Type = LeftSymbol.Type::Time) and (RightSymbol.Type = RightSymbol.Type::Time),
+            (LeftSymbol.Type = LeftSymbol.Type::DateTime) and (RightSymbol.Type = RightSymbol.Type::DateTime):
+                ResultSymbol := ValidateDateTime(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Date),
+            (LeftSymbol.Type = LeftSymbol.Type::Date) and (RightSymbol.Type = RightSymbol.Type::Number):
+                ResultSymbol := ValidateDateNumber(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Time),
+            (LeftSymbol.Type = LeftSymbol.Type::Time) and (RightSymbol.Type = RightSymbol.Type::Number):
+                ResultSymbol := ValidateTimeNumber(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::DateTime),
+            (LeftSymbol.Type = LeftSymbol.Type::DateTime) and (RightSymbol.Type = RightSymbol.Type::Number):
+                ResultSymbol := ValidateDateTimeNumber(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator
+                );
             else
                 Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
         end;
@@ -396,7 +717,10 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         case true of
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Text),
             (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Number),
-            (LeftSymbol.Type = LeftSymbol.Type::Boolean) and (RightSymbol.Type = RightSymbol.Type::Boolean):
+            (LeftSymbol.Type = LeftSymbol.Type::Boolean) and (RightSymbol.Type = RightSymbol.Type::Boolean),
+            (LeftSymbol.Type = LeftSymbol.Type::Date) and (RightSymbol.Type = RightSymbol.Type::Date),
+            (LeftSymbol.Type = LeftSymbol.Type::Time) and (RightSymbol.Type = RightSymbol.Type::Time),
+            (LeftSymbol.Type = LeftSymbol.Type::DateTime) and (RightSymbol.Type = RightSymbol.Type::DateTime):
                 ;
             else
                 Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
@@ -482,5 +806,84 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         end;
 
         exit(SymbolTable.TextSymbol());
+    end;
+
+    local procedure ValidateDateTime
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        // TODO validate parameter types
+        case Operator of
+            Operator::"-":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.NumericSymbol());
+    end;
+
+    local procedure ValidateDateNumber
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        // TODO validate parameter types
+        case Operator of
+            Operator::"+",
+            Operator::"-":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.DateSymbol());
+    end;
+
+    local procedure ValidateTimeNumber
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        // TODO validate parameter types
+        case Operator of
+            Operator::"+",
+            Operator::"-":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.TimeSymbol());
+    end;
+
+    local procedure ValidateDateTimeNumber
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS"
+    ): Record "Symbol FS"
+    begin
+        // TODO validate parameter types
+        case Operator of
+            Operator::"+",
+            Operator::"-":
+                ;
+            else
+                Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+        end;
+
+        exit(SymbolTable.DateTimeSymbol());
     end;
 }

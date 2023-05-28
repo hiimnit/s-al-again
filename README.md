@@ -53,6 +53,9 @@ Right now only a handful of basic types is supported:
     - `ToLower(): Text`
     - `ToUpper(): Text`
     - `Contains(Text: Text): Boolean`
+- `date`
+- `time`
+- `datetime`
 - `record`
   - methods
     - `FindFirst()[: Boolean]`
@@ -97,6 +100,9 @@ Right now only a handful of basic types is supported:
   - boolean (`and`, `or`, `xor`)
   - text (`+`, `*`)
     - !TODO explain `*` operator
+  - date (`+`, `-`)
+  - time (`+`, `-`)
+  - datetime (`+`, `-`)
 
 #### Built-in functions
 
@@ -107,13 +113,27 @@ Right now only a handful of basic types is supported:
 - `Power(Number: Number, Power: Number): Number`
 - `Format(Input: Any, [Length: Number, [FormatNumber: Number]]): Text`
 - `Format(Input: Any, [Length: Number, [FormatString: Text]]): Text`
+- `CalcDate(Formula: Text, [Date: Date]): Date`
+- `ClosingDate(Date: Date): Date`
+- `CreateDateTime(Date: Date, Time: Time): DateTime`
+- `CurrentDateTime(): DateTime`
+- `NormalDate(Date: Date): Date`
+- `Time(): Time`
+- `Today(): Date`
+- `WorkDate([WorkDate: Date]): Date`
+- `Date2DMY(Date: Date, Part: Number): Number`
+- `Date2DWY(Date: Date, Part: Number): Number`
+- `DMY2Date(Day: Number, [Month: Number, [Year: Number]]): Date`
+- `DWY2Date(WeekDay: Number, [Week: Number, [Year: Number]]): Date`
+- `DT2Date(DateTime: DateTime): Date`
+- `DT2Time(DateTime: DateTime): Time`
 
 ### Planned
 
-1. n-arity functions
 1. more built-in functions and methods
 1. correct value vs. reference handling
-1. `date`/`time`/`datetime`/`guid`
+1. `guid`, `dateformula`, `option`, `enum`
+1. replace `number` with `integer` and `decimal
 
 ## editor
 
