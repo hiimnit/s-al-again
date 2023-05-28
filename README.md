@@ -120,7 +120,7 @@ Right now only a handful of basic types is supported:
 - `NormalDate(Date: Date): Date`
 - `Time(): Time`
 - `Today(): Date`
-- `WorkDate(): Date`
+- `WorkDate([WorkDate: Date]): Date`
 - `Date2DMY(Date: Date, Part: Number): Number`
 - `Date2DWY(Date: Date, Part: Number): Number`
 - `DMY2Date(Day: Number, [Month: Number, [Year: Number]]): Date`
