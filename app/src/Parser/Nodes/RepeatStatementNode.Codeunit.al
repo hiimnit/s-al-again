@@ -33,9 +33,9 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         Value: Interface "Value FS";
     begin
         while true do begin
-            Value := Statement.Evaluate(Runtime);
+            Statement.Evaluate(Runtime);
             if Runtime.IsExited() then
-                exit(Value);
+                exit(VoidValue);
 
             Value := Expression.Evaluate(Runtime);
             if Value.GetValue() then

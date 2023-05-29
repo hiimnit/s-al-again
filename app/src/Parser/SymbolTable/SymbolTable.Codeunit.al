@@ -7,6 +7,15 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
     procedure DefineReturnType(NewReturnTypeSymbol: Record "Symbol FS")
     begin
         ReturnTypeSymbol := NewReturnTypeSymbol;
+
+        if NewReturnTypeSymbol.Name <> '' then
+            Define(
+                NewReturnTypeSymbol.Name,
+                NewReturnTypeSymbol.Type,
+                NewReturnTypeSymbol.Subtype,
+                Enum::"Scope FS"::Local,
+                false
+            );
     end;
 
     procedure GetReturnType(): Record "Symbol FS"

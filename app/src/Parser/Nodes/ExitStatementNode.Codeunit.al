@@ -35,11 +35,9 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
             exit(VoidValue);
 
         Value := Expression.Evaluate(Runtime);
-        // TODO exit statement actually "asigns" the value to the exit variable
-        // >>>> so for records it does a ":=" copy
-        // >>>> do the same? introduce return value in memory and assign? also allow it to be named?
+        Runtime.GetMemory().SetReturnValue(Value);
 
-        Runtime.SetExited();
+        Runtime.SetExited(); // TODO move this to current memory?
         exit(Value);
     end;
 

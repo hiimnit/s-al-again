@@ -39,7 +39,7 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
     var
         VoidValue: Codeunit "Void Value FS";
         NumericValue: Codeunit "Numeric Value FS";
-        InitialValue, ReturnValue : Interface "Value FS";
+        InitialValue: Interface "Value FS";
         Value, FinalValue : Decimal;
     begin
         InitialValue := InitialValueExpression.Evaluate(Runtime);
@@ -50,9 +50,9 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         Value := Runtime.GetMemory().Get(IdentifierName).GetValue();
         if not CheckCondition(Value, FinalValue) then
             while true do begin
-                ReturnValue := Statement.Evaluate(Runtime);
+                Statement.Evaluate(Runtime);
                 if Runtime.IsExited() then
-                    exit(ReturnValue);
+                    exit(VoidValue);
 
                 // TODO this is not correct, investigate further
                 // >>>> when using decimals, end value can different from the final value

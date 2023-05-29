@@ -123,8 +123,13 @@ codeunit 69001 "Parser FS"
 
         ReturnTypeSymbol := SymbolTable.VoidSymbol();
         PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
-            AssertNextLexeme(PeekedLexeme);
+        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
+            Lexeme := AssertNextLexeme(PeekedLexeme);
+            if Lexeme.IsIdentifier() then begin
+                ReturnTypeSymbol.Name := Lexeme."Identifier Name";
+                AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::":"));
+            end;
+
             Lexeme := AssertNextLexeme(Lexeme.Identifier());
             ReturnTypeSymbol.Type := ParseType(Lexeme."Identifier Name");
 

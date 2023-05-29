@@ -55,14 +55,9 @@ codeunit 69025 "User Function FS" implements "Function FS"
         Memory.Init(SymbolTable, ValueLinkedList);
 
         Runtime.PushMemory(Memory);
-        Value := Statements.Evaluate(Runtime);
 
-        Memory.DebugMessage();
-
-        if (Value.GetType() = Enum::"Type FS"::Void)
-            and (SymbolTable.GetReturnType().Type <> Enum::"Type FS"::Void)
-        then
-            Value := Memory.DefaultValueFromType(SymbolTable.GetReturnType());
+        Statements.Evaluate(Runtime);
+        Value := Runtime.GetMemory().GetReturnValue();
 
         Runtime.PopMemory();
         Runtime.ResetExited();

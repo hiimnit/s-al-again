@@ -37,9 +37,9 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
             if not Value.GetValue() then
                 break;
 
-            Value := Statement.Evaluate(Runtime);
+            Statement.Evaluate(Runtime);
             if Runtime.IsExited() then
-                exit(Value);
+                exit(VoidValue);
         end;
 
         exit(VoidValue);
