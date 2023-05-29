@@ -15,6 +15,11 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
         Arguments := NewArguments;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Procedure Call");
+    end;
+
     var
         TopLevel: Boolean;
 

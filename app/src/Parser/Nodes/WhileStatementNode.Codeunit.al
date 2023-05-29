@@ -14,6 +14,11 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"While Statement");
+    end;
+
     var
         TopLevel: Boolean;
 

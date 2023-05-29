@@ -22,6 +22,11 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         DownToLoop := NewDownToLoop;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"For Statement");
+    end;
+
     var
         TopLevel: Boolean;
 

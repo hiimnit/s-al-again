@@ -18,6 +18,11 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
         Arguments := NewArguments;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Method Call");
+    end;
+
     var
         TopLevel: Boolean;
 
@@ -28,7 +33,7 @@ codeunit 69026 "Method Call Node FS" implements "Node FS"
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
-        Self, Value : Interface "Value FS";
+        Self: Interface "Value FS";
     begin
         Self := Expression.Evaluate(Runtime);
 

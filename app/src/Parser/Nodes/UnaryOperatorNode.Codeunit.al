@@ -14,6 +14,11 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         Operator := NewOperator;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Unary Operator");
+    end;
+
     var
         TopLevel: Boolean;
 

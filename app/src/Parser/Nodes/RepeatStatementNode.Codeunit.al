@@ -14,6 +14,11 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Repeat Statement");
+    end;
+
     var
         TopLevel: Boolean;
 

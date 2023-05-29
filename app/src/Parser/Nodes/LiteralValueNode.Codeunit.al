@@ -51,6 +51,11 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         LiteralValue := DateTimeValue;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Literal Value");
+    end;
+
     var
         TopLevel: Boolean;
 

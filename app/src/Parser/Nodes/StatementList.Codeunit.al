@@ -3,6 +3,11 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     var
         StatementsList: Codeunit "Node Linked List FS";
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Statement List");
+    end;
+
     var
         TopLevel: Boolean;
 

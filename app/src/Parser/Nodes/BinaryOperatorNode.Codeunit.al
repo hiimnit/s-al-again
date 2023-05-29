@@ -16,6 +16,11 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         BinaryOperator := NewOperator;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Binary Operator");
+    end;
+
     var
         TopLevel: Boolean;
 

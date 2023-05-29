@@ -6,8 +6,7 @@ interface "Value FS"
     procedure GetType(): Enum "Type FS"
 
     procedure Copy(): Interface "Value FS" // TODO also add clone?
-    procedure Mutate(NewValue: Interface "Value FS") // TODO should this be here? on in a "variable" codeunit?
-
+    procedure Mutate(NewValue: Interface "Value FS")
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS"
     procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS")
