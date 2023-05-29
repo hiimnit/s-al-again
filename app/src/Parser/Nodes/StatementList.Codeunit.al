@@ -3,6 +3,11 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     var
         StatementsList: Codeunit "Node Linked List FS";
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Statement List");
+    end;
+
     var
         TopLevel: Boolean;
 
@@ -20,17 +25,13 @@ codeunit 69016 "Statement List FS" implements "Node FS"
     var
         VoidValue: Codeunit "Void Value FS";
         LinkedListNode: Codeunit "Node Linked List Node FS";
-        Value: Interface "Value FS";
     begin
         // TODO add break handling?
         if StatementsList.First(LinkedListNode) then
             repeat
-                Value := LinkedListNode.Value().Evaluate(Runtime);
-                if Value.GetType() in [
-                    Enum::"Type FS"::"Return Value",
-                    Enum::"Type FS"::"Default Return Value"
-                ] then
-                    exit(Value);
+                LinkedListNode.Value().Evaluate(Runtime);
+                if Runtime.IsExited() then
+                    exit(VoidValue);
             until not LinkedListNode.Next(LinkedListNode);
         exit(VoidValue);
     end;

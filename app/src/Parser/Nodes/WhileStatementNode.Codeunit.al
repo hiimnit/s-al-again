@@ -14,6 +14,11 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"While Statement");
+    end;
+
     var
         TopLevel: Boolean;
 
@@ -32,12 +37,9 @@ codeunit 69021 "While Statement Node FS" implements "Node FS"
             if not Value.GetValue() then
                 break;
 
-            Value := Statement.Evaluate(Runtime);
-            if Value.GetType() in [
-                Enum::"Type FS"::"Return Value",
-                Enum::"Type FS"::"Default Return Value"
-            ] then
-                exit(Value);
+            Statement.Evaluate(Runtime);
+            if Runtime.IsExited() then
+                exit(VoidValue);
         end;
 
         exit(VoidValue);

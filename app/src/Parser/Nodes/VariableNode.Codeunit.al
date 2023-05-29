@@ -8,6 +8,11 @@ codeunit 69017 "Variable Node FS" implements "Node FS" // TODO rename to identif
         Name := NewName;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Variable");
+    end;
+
     var
         TopLevel: Boolean;
 

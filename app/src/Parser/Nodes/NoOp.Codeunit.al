@@ -1,5 +1,9 @@
 codeunit 69015 "NoOp FS" implements "Node FS"
 {
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"NoOp");
+    end;
 
     var
         TopLevel: Boolean;

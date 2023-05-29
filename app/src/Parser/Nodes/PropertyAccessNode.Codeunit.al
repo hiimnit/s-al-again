@@ -14,6 +14,11 @@ codeunit 69028 "Property Access Node FS" implements "Node FS"
         Name := NewName;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Property Access");
+    end;
+
     var
         TopLevel: Boolean;
 

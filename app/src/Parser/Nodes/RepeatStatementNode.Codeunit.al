@@ -14,6 +14,11 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         Expression := NewExpression;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Repeat Statement");
+    end;
+
     var
         TopLevel: Boolean;
 
@@ -28,12 +33,9 @@ codeunit 69022 "Repeat Statement Node FS" implements "Node FS"
         Value: Interface "Value FS";
     begin
         while true do begin
-            Value := Statement.Evaluate(Runtime);
-            if Value.GetType() in [
-                Enum::"Type FS"::"Return Value",
-                Enum::"Type FS"::"Default Return Value"
-            ] then
-                exit(Value);
+            Statement.Evaluate(Runtime);
+            if Runtime.IsExited() then
+                exit(VoidValue);
 
             Value := Expression.Evaluate(Runtime);
             if Value.GetValue() then

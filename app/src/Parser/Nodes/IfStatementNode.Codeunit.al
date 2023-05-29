@@ -23,6 +23,11 @@ codeunit 69019 "If Statement Node FS" implements "Node FS"
         ElseStatementSet := true;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"If Statement");
+    end;
+
     var
         TopLevel: Boolean;
 

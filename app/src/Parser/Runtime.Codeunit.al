@@ -156,6 +156,24 @@ codeunit 69011 "Runtime FS"
         exit(MemoryStack[MemoryCounter]);
     end;
 
+    var
+        Exited: Boolean;
+
+    procedure SetExited()
+    begin
+        Exited := true;
+    end;
+
+    procedure IsExited(): Boolean
+    begin
+        exit(Exited);
+    end;
+
+    procedure ResetExited()
+    begin
+        Exited := false;
+    end;
+
     procedure LookupMethod
     (
         Type: Enum "Type FS";
@@ -313,6 +331,10 @@ codeunit 69011 "Runtime FS"
     var
         Symbol: Record "Symbol FS";
     begin
+        if ExpectedSymbol."Pointer Parameter" then
+            if ArgumentNode.Value().GetType() <> Enum::"Node Type FS"::Variable then
+                Error('Var parameter %1 must be a variable.', ExpectedSymbol.Name);
+
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
         if TypesMatch(ExpectedSymbol, Symbol) then
             exit;

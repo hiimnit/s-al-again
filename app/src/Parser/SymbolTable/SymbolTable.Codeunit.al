@@ -7,6 +7,15 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
     procedure DefineReturnType(NewReturnTypeSymbol: Record "Symbol FS")
     begin
         ReturnTypeSymbol := NewReturnTypeSymbol;
+
+        if NewReturnTypeSymbol.Name <> '' then
+            Define(
+                NewReturnTypeSymbol.Name,
+                NewReturnTypeSymbol.Type,
+                NewReturnTypeSymbol.Subtype,
+                Enum::"Scope FS"::Local,
+                false
+            );
     end;
 
     procedure GetReturnType(): Record "Symbol FS"
@@ -20,17 +29,19 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
             VariableSymbol.Name,
             VariableSymbol.Type,
             VariableSymbol.Subtype,
-            Enum::"Scope FS"::Local
+            Enum::"Scope FS"::Local,
+            false
         );
     end;
 
-    procedure DefineParameter(ParameterSymbol: Record "Symbol FS")
+    procedure DefineParameter(ParameterSymbol: Record "Symbol FS"; Pointer: Boolean)
     begin
         Define(
             ParameterSymbol.Name,
             ParameterSymbol.Type,
             ParameterSymbol.Subtype,
-            Enum::"Scope FS"::Parameter
+            Enum::"Scope FS"::Parameter,
+            Pointer
         );
     end;
 
@@ -39,7 +50,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Name: Text[120];
         Type: Enum "Type FS";
         Subtype: Text[120];
-        Scope: Enum "Scope FS"
+        Scope: Enum "Scope FS";
+        Pointer: Boolean
     )
     begin
         if Symbol.Get(Name) then
@@ -51,6 +63,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Symbol.Subtype := Subtype; // TODO upgrade to validated symbol during analysis, interpreter then uses validated symbols?
         Symbol.Scope := Scope;
         Symbol.Order := GetNextOrder();
+        Symbol."Pointer Parameter" := Pointer;
         Symbol.Insert();
     end;
 

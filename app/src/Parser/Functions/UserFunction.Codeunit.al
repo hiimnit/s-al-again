@@ -50,31 +50,17 @@ codeunit 69025 "User Function FS" implements "Function FS"
     procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
     var
         Memory: Codeunit "Memory FS";
-        VoidValue: Codeunit "Void Value FS";
         Value: Interface "Value FS";
     begin
         Memory.Init(SymbolTable, ValueLinkedList);
 
         Runtime.PushMemory(Memory);
-        Value := Statements.Evaluate(Runtime);
 
-        Memory.DebugMessage();
-
-        case Value.GetType() of
-            Enum::"Type FS"::"Return Value":
-                Value := Value.Copy(); // TODO a bit of a hack
-            Enum::"Type FS"::"Default Return Value":
-                if SymbolTable.GetReturnType().Type <> Enum::"Type FS"::Void then
-                    Value := Memory.DefaultValueFromType(SymbolTable.GetReturnType())
-                else
-                    Value := VoidValue;
-            Enum::"Type FS"::Void:
-                ;
-            else
-                Error('Unimplemented return type %1.', Value.GetType());
-        end;
+        Statements.Evaluate(Runtime);
+        Value := Runtime.GetMemory().GetReturnValue();
 
         Runtime.PopMemory();
+        Runtime.ResetExited();
 
         exit(Value);
     end;

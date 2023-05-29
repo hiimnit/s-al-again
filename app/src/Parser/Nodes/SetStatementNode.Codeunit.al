@@ -19,6 +19,11 @@ codeunit 69027 "Set Statement Node FS" implements "Node FS"
         Operator := NewOperator;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Set Statement");
+    end;
+
     var
         TopLevel: Boolean;
 

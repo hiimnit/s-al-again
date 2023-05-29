@@ -17,4 +17,6 @@ interface "Node FS"
     // used to mark top level leaf expressions - this should mean the return value is not used
     // XXX instead make a wrapper for interface node and put this there?
     procedure SetTopLevel(TopLevel: Boolean)
+
+    procedure GetType(): Enum "Node Type FS"
 }

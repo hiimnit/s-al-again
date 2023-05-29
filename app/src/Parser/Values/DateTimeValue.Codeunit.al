@@ -26,6 +26,11 @@ codeunit 69108 "DateTime Value FS" implements "Value FS"
         exit(DateTimeValue);
     end;
 
+    procedure Mutate(NewValue: Interface "Value FS");
+    begin
+        Value := NewValue.GetValue();
+    end;
+
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
     begin
         Error('DateTime values do not support property access');

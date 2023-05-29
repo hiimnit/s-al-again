@@ -1,7 +1,7 @@
 codeunit 69009 "Memory FS"
 {
     var
-        LocalVariables: array[50] of Interface "Value FS";
+        LocalVariables: array[50] of Interface "Value FS"; // TODO wrap value?
         LocalVariableCount: Integer;
         LocalVariableMap: Dictionary of [Text, Integer];
 
@@ -9,8 +9,11 @@ codeunit 69009 "Memory FS"
     var
         Symbol: Record "Symbol FS";
         Node: Codeunit "Value Linked List Node FS";
+        Value: Interface "Value FS";
         FirstParameterGot: Boolean;
     begin
+        InitializeReturnValue(SymbolTable);
+
         if not SymbolTable.FindSet(Symbol) then
             exit;
 
@@ -26,15 +29,43 @@ codeunit 69009 "Memory FS"
                         end else
                             Node := Node.Next();
 
+                        Value := Node.Value();
+                        if not Symbol."Pointer Parameter" then
+                            Value := Value.Copy();
+
                         InitializeSymbol(
                             Symbol,
-                            Node.Value() // TODO what happens with records here?
+                            Value
                         );
                     end;
                 else
                     Error('Initialization is not implemented for scope %1.', Symbol.Scope);
             end;
         until not SymbolTable.Next(Symbol);
+    end;
+
+    var
+        UnnamedReturnValue: Interface "Value FS";
+        ReturnValueName: Text[120];
+
+    local procedure InitializeReturnValue(SymbolTable: Codeunit "Symbol Table FS")
+    var
+        ReturnTypeSymbol: Record "Symbol FS";
+        VoidValue: Codeunit "Void Value FS";
+    begin
+        ReturnTypeSymbol := SymbolTable.GetReturnType();
+
+        if ReturnTypeSymbol.Type = ReturnTypeSymbol.Type::Void then begin
+            UnnamedReturnValue := VoidValue;
+            exit;
+        end;
+
+        ReturnValueName := ReturnTypeSymbol.Name;
+        // named return values are initialized a local variable
+        if ReturnValueName <> '' then
+            exit;
+
+        UnnamedReturnValue := DefaultValueFromType(ReturnTypeSymbol);
     end;
 
     local procedure InitializeLocalVariable
@@ -106,11 +137,24 @@ codeunit 69009 "Memory FS"
 
     procedure Set(Name: Text; Value: Interface "Value FS")
     begin
-        // TODO currently it is possible to change the variable data type in runtime
-        // >>>> semantic analysis should not let this happen (if implemented properly)
-        // TODO lets instead call setvalue to change the in-memory value instead of replacing it?
-        // >>>> resolve as part of reference handling
-        LocalVariables[LocalVariableMap.Get(Name.ToLower())] := Value;
+        LocalVariables[LocalVariableMap.Get(Name.ToLower())].Mutate(Value);
+    end;
+
+    procedure GetReturnValue(): Interface "Value FS"
+    begin
+        if ReturnValueName = '' then
+            exit(UnnamedReturnValue);
+        exit(Get(ReturnValueName));
+    end;
+
+    procedure SetReturnValue(Value: Interface "Value FS")
+    begin
+        if ReturnValueName = '' then begin
+            UnnamedReturnValue.Mutate(Value);
+            exit;
+        end;
+
+        Set(ReturnValueName, Value);
     end;
 
     procedure DebugMessage()

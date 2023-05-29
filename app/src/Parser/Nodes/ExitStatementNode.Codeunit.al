@@ -13,6 +13,11 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
         ExpressionSet := true;
     end;
 
+    procedure GetType(): Enum "Node Type FS";
+    begin
+        exit(Enum::"Node Type FS"::"Exit Statement");
+    end;
+
     var
         TopLevel: Boolean;
 
@@ -23,15 +28,17 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
-        ReturnValue: Codeunit "Return Value FS";
+        VoidValue: Codeunit "Void Value FS";
+        Value: Interface "Value FS";
     begin
         if not ExpressionSet then
-            exit(ReturnValue);
+            exit(VoidValue);
 
-        ReturnValue.Init(
-            Expression.Evaluate(Runtime)
-        );
-        exit(ReturnValue);
+        Value := Expression.Evaluate(Runtime);
+        Runtime.GetMemory().SetReturnValue(Value);
+
+        Runtime.SetExited(); // TODO move this to current memory?
+        exit(Value);
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS"
