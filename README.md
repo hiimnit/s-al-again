@@ -14,7 +14,7 @@ Currently? Not much. Code is parsed, semantically analyzed and executed. Message
 
 ### Sample code
 
-The entry point is a parameterless `trigger` called `OnRun`. You can define additional procedures (for now without reference parameters).
+The entry point is a parameterless `trigger` called `OnRun`. You can define additional procedures with `var` parameters and (named) return values.
 Global variables are not supported (yet?).
 
 ```sal
@@ -131,7 +131,6 @@ Right now only a handful of basic types is supported:
 ### Planned
 
 1. more built-in functions and methods
-1. correct value vs. reference handling
 1. `guid`, `dateformula`, `option`, `enum`
 1. replace `number` with `integer` and `decimal
 
