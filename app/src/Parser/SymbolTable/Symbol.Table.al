@@ -120,6 +120,19 @@ table 69001 "Symbol FS"
         );
     end;
 
+    procedure InsertGuid
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Guid,
+            NewOrder
+        );
+    end;
+
     procedure InsertAny
     (
         NewName: Text[120];
@@ -165,13 +178,25 @@ table 69001 "Symbol FS"
         end;
     end;
 
-    procedure Compare(Other: Record "Symbol FS"): Boolean
+    procedure CompareExact(Other: Record "Symbol FS"): Boolean
     begin
         if Rec.Type <> Other.Type then
             exit(false);
         if Rec.Subtype <> Other.Subtype then
             exit(false);
         exit(true);
+    end;
+
+    procedure CorercibleTo(Target: Record "Symbol FS"): Boolean
+    begin
+        case Rec.Type of
+            Rec.Type::Text:
+                exit(Target.Type in [Target.Type::Guid]);
+            Rec.Type::Guid:
+                exit(Target.Type in [Target.Type::Text]);
+        end;
+
+        exit(false);
     end;
 
     procedure TypeToText(): Text
@@ -224,6 +249,8 @@ table 69001 "Symbol FS"
                 exit(SymbolTable.TimeSymbol());
             Field.Type::DateTime:
                 exit(SymbolTable.DateTimeSymbol());
+            Field.Type::Guid:
+                exit(SymbolTable.GuidSymbol());
             else
                 Error('Accessing property "%1" of type %2 is not supported.', PropertyName, Field.Type);
         end;
@@ -271,6 +298,8 @@ table 69001 "Symbol FS"
                 Symbol := SymbolTable.TimeSymbol();
             Field.Type::DateTime:
                 Symbol := SymbolTable.DateTimeSymbol();
+            Field.Type::Guid:
+                Symbol := SymbolTable.GuidSymbol();
             else
                 exit(false);
         end;

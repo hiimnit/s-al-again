@@ -86,7 +86,7 @@ codeunit 69322 "Record Validate FS" implements "Method FS"
 
         ArgumentNode := ArgumentNode.Next();
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-        if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
+        if not Runtime.MatchTypesAnyOrCoercible(ParameterSymbol, Symbol) then
             Error(
                 'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
                 GetName(),

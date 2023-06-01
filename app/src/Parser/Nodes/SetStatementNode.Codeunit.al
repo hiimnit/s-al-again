@@ -106,7 +106,7 @@ codeunit 69027 "Set Statement Node FS" implements "Node FS"
                 BinaryOperator
             );
 
-        if ValueExpressionSymbol.Type <> VariableSymbol.Type then
+        if not Runtime.MatchTypesCoercible(VariableSymbol, ValueExpressionSymbol) then
             Error('Cannot assign type %1 to variable %2 of type %3.', ValueExpressionSymbol.Type, Name, VariableSymbol.Type);
 
         exit(SymbolTable.VoidSymbol());

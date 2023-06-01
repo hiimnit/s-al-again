@@ -133,7 +133,7 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         ParameterSymbol.InsertText('Filter', 1);
         ArgumentNode := ArgumentNode.Next();
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-        if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
+        if not Runtime.MatchTypesAnyOrCoercible(ParameterSymbol, Symbol) then
             Error(
                 'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
                 GetName(),
@@ -145,7 +145,7 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         ParameterSymbol.InsertAny('Any', 1);
         while ArgumentNode.Next(ArgumentNode) do begin
             Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-            if not Runtime.TypesMatch(ParameterSymbol, Symbol) then
+            if not Runtime.MatchTypesAnyOrCoercible(ParameterSymbol, Symbol) then
                 Error(
                     'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
                     GetName(),

@@ -105,7 +105,7 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
                 BinaryOperator
             );
 
-        if ExpressionSymbol.Type <> VariableSymbol.Type then
+        if not Runtime.MatchTypesCoercible(VariableSymbol, ExpressionSymbol) then
             Error('Cannot assign type %1 to variable %2 of type %3.', ExpressionSymbol.Type, Name, VariableSymbol.Type);
 
         exit(SymbolTable.VoidSymbol());

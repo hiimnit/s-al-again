@@ -886,6 +886,8 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::Time);
             'datetime':
                 exit(Enum::"Type FS"::DateTime);
+            'guid':
+                exit(Enum::"Type FS"::Guid);
             else
                 Error('Unknown type %1.', Identifier);
         end;

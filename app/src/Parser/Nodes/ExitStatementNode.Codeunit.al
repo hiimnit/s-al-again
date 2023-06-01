@@ -52,7 +52,7 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
             Error('Unexpected return value expression, return value should be void.');
 
         Symbol := Expression.ValidateSemantics(Runtime, SymbolTable);
-        if not Symbol.Compare(SymbolTable.GetReturnType()) then
+        if not Symbol.CompareExact(SymbolTable.GetReturnType()) then
             Error(
                 'Return type missmatch, expected %1, got %2.',
                 SymbolTable.GetReturnType().TypeToText(),

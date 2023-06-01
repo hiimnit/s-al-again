@@ -141,6 +141,14 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         exit(DateTime);
     end;
 
+    procedure GuidSymbol(): Record "Symbol FS"
+    var
+        Guid: Record "Symbol FS";
+    begin
+        Guid.Type := Guid.Type::Guid;
+        exit(Guid);
+    end;
+
     procedure SymbolFromType(Type: Enum "Type FS"): Record "Symbol FS"
     begin
         case Type of
@@ -156,6 +164,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
                 exit(TimeSymbol());
             Type::DateTime:
                 exit(DateTimeSymbol());
+            Type::Guid:
+                exit(GuidSymbol());
             Type::Void:
                 exit(VoidSymbol());
             else
