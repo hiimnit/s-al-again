@@ -45,6 +45,7 @@ codeunit 69105 "Record Value FS" implements "Value FS"
     var
         FromRecordRef: RecordRef;
     begin
+        // TODO test same number?
         FromRecordRef := NewValue.GetValue();
         CopyFieldValuesFromRecordRefToRecordRef(FromRecordRef, Value);
     end;
@@ -86,6 +87,10 @@ codeunit 69105 "Record Value FS" implements "Value FS"
         NumericValue: Codeunit "Numeric Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
+        DateValue: Codeunit "Date Value FS";
+        TimeValue: Codeunit "Time Value FS";
+        DateTimeValue: Codeunit "DateTime Value FS";
+        GuidValue: Codeunit "Guid Value FS";
     begin
         case true of
             Variant.IsInteger(),
@@ -104,6 +109,26 @@ codeunit 69105 "Record Value FS" implements "Value FS"
                 begin
                     TextValue.SetValue(Variant);
                     exit(TextValue);
+                end;
+            Variant.IsDate():
+                begin
+                    DateValue.SetValue(Variant);
+                    exit(DateValue);
+                end;
+            Variant.IsTime():
+                begin
+                    TimeValue.SetValue(Variant);
+                    exit(TimeValue);
+                end;
+            Variant.IsDateTime():
+                begin
+                    DateTimeValue.SetValue(Variant);
+                    exit(DateTimeValue);
+                end;
+            Variant.IsGuid():
+                begin
+                    GuidValue.SetValue(Variant);
+                    exit(GuidValue);
                 end;
             else
                 Error('Initilization of type from value %1 is not supported.', Value);

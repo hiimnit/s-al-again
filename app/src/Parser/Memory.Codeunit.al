@@ -89,6 +89,7 @@ codeunit 69009 "Memory FS"
         TimeValue: Codeunit "Time Value FS";
         DateTimeValue: Codeunit "DateTime Value FS";
         RecordValue: Codeunit "Record Value FS";
+        GuidValue: Codeunit "Guid Value FS";
         Value: Interface "Value FS";
     begin
         case Symbol.Type of
@@ -109,6 +110,8 @@ codeunit 69009 "Memory FS"
                     RecordValue.Init(Symbol.Subtype);
                     Value := RecordValue;
                 end;
+            Symbol.Type::Guid:
+                Value := GuidValue;
             else
                 Error('Initilization of type %1 is not supported.', Symbol.Type);
         end;

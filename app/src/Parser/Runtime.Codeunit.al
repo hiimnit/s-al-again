@@ -68,6 +68,8 @@ codeunit 69011 "Runtime FS"
         DWY2DateFunction: Codeunit "DWY2Date Function FS";
         DT2DateFunction: Codeunit "DT2Date Function FS";
         DT2TimeFunction: Codeunit "DT2Time Function FS";
+        CreateGuidFunction: Codeunit "CreateGuid Function FS";
+        IsNullGuidFunction: Codeunit "IsNullGuid Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -110,6 +112,10 @@ codeunit 69011 "Runtime FS"
                 exit(DT2DateFunction);
             DT2TimeFunction.GetName().ToLower():
                 exit(DT2TimeFunction);
+            CreateGuidFunction.GetName().ToLower():
+                exit(CreateGuidFunction);
+            IsNullGuidFunction.GetName().ToLower():
+                exit(IsNullGuidFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;
@@ -331,13 +337,19 @@ codeunit 69011 "Runtime FS"
     var
         Symbol: Record "Symbol FS";
     begin
-        if ExpectedSymbol."Pointer Parameter" then
+        Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+
+        if ExpectedSymbol."Pointer Parameter" then begin
             if ArgumentNode.Value().GetType() <> Enum::"Node Type FS"::Variable then
                 Error('Var parameter %1 must be a variable.', ExpectedSymbol.Name);
 
-        Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-        if TypesMatch(ExpectedSymbol, Symbol) then
-            exit;
+            if MatchTypesExact(ExpectedSymbol, Symbol) then
+                exit;
+
+            // TODO different error for var parameters?
+        end else
+            if MatchTypesAnyOrCoercible(ExpectedSymbol, Symbol) then
+                exit;
 
         Error(
             'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
@@ -347,7 +359,7 @@ codeunit 69011 "Runtime FS"
         );
     end;
 
-    procedure TypesMatch
+    procedure MatchTypesAnyOrCoercible
     (
         ExpectedSymbol: Record "Symbol FS";
         ActualSymbol: Record "Symbol FS"
@@ -355,7 +367,31 @@ codeunit 69011 "Runtime FS"
     begin
         if ExpectedSymbol.Type = ExpectedSymbol.Type::Any then
             exit(ActualSymbol.Type <> ActualSymbol.Type::Void);
-        exit(ExpectedSymbol.Compare(ActualSymbol));
+        exit(MatchTypesCoercible(ExpectedSymbol, ActualSymbol));
+    end;
+
+    procedure MatchTypesExact
+    (
+        ExpectedSymbol: Record "Symbol FS";
+        ActualSymbol: Record "Symbol FS"
+    ): Boolean
+    begin
+        exit(ExpectedSymbol.CompareExact(ActualSymbol));
+    end;
+
+    procedure MatchTypesCoercible
+    (
+        ExpectedSymbol: Record "Symbol FS";
+        ActualSymbol: Record "Symbol FS"
+    ): Boolean
+    begin
+        if ExpectedSymbol.CompareExact(ActualSymbol) then
+            exit(true);
+
+        if ActualSymbol.CorercibleTo(ExpectedSymbol) then
+            exit(true);
+
+        exit(false);
     end;
 
     procedure EvaluateArguments

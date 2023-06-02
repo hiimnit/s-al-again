@@ -12,6 +12,15 @@ Business Central extension adding a code editor for running scripts.
 
 Currently? Not much. Code is parsed, semantically analyzed and executed. Message with the memory state is displayed at the end of each procedure execution.
 
+### Goals
+
+1. Support copy-and-pasting existing AL code and running it without any changes
+1. Add new features to make life easier
+
+### Limitations
+
+!TODO describe current implementation limitations
+
 ### Sample code
 
 The entry point is a parameterless `trigger` called `OnRun`. You can define additional procedures with `var` parameters and (named) return values.
@@ -44,6 +53,50 @@ end;
 
 #### Data types
 
+| type                                | status | remark                                                                                                                                                                                  |
+|-------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `boolean`                           | ✅      |                                                                                                                                                                                         |
+| `text`                              | ✅ ⭕️   | Declaring maximum text length is not (yet) supported.                                                                                                                                   |
+| `code`                              | ⭕️     | `code` varibles are not supported, but `code` fields can be used as if they were `text` fields.                                                                                         |
+| `char`                              | ⭕️     | Planned.                                                                                                                                                                                |
+| `byte`                              | ⭕️     | Planned.                                                                                                                                                                                |
+| `guid`                              | ✅      |                                                                                                                                                                                         |
+| `enum`                              | ⭕️     | Planned (but maybe not possible outside of record fields?).                                                                                                                             |
+| `option`                            | ⭕️     | Planned.                                                                                                                                                                                |
+| `number`                            | ✅      | Currently used for both `integer` and `decimal`.                                                                                                                                        |
+| `integer`                           | ⭕️     | Planned, currently supported as `number`.                                                                                                                                               |
+| `decimal`                           | ⭕️     | Planned, currently supported as `number`.                                                                                                                                               |
+| `char`                              | ⭕️     |                                                                                                                                                                                         |
+| `byte`                              | ⭕️     |                                                                                                                                                                                         |
+| `date`                              | ✅      |                                                                                                                                                                                         |
+| `time`                              | ✅      |                                                                                                                                                                                         |
+| `datetime`                          | ✅      |                                                                                                                                                                                         |
+| `dateformula`                       | ⭕️     |                                                                                                                                                                                         |
+| `duration`                          | ⭕️     |                                                                                                                                                                                         |
+| `record`                            | ✅ ⭕️   | Temporary records are not supported - yet.                                                                                                                                              |
+| `recordid`                          | ⭕️     |                                                                                                                                                                                         |
+| `recordref` & `fieldref` & `keyref` | ❓      | Should be possible to implement - at least partially.                                                                                                                                   |
+| `blob` & `outstream` & `instream`   | ⭕️     |                                                                                                                                                                                         |
+| `textbuilder`                       | ⭕️     |                                                                                                                                                                                         |
+| `variant`                           | ❓      | Should be possible to implement - at least partially.                                                                                                                                   |
+| `dialog`                            | ❓      | Low priority.                                                                                                                                                                           |
+| `dictionary`                        | ❓      | Low priority.                                                                                                                                                                           |
+| `list`                              | ❓      | Low priority.                                                                                                                                                                           |
+| `codeunit`                          | ❌ ❓    | Runtime reflection for codeunits is not possible (at least as far as I know). `Codenit.Run(Integer)` is possible. It could be possible by generating another extension with "bindings"? |
+| `page`                              | ❌ ❓    | Same as codeunits. `Page.Run(Integer)` is possible.                                                                                                                                     |
+| `report`                            | ❌ ❓    | Same as codeunits. `Report.Run(Integer)` is possible.                                                                                                                                   |
+| `json*`                             | ❓      | Low priority.                                                                                                                                                                           |
+| `xml*`                              | ❓      | Low priority.                                                                                                                                                                           |
+| `http*`                             | ❓      | Low priority.                                                                                                                                                                           |
+| others                              | ❓      | No priority.                                                                                                                                                                            |
+
+##### Key
+
+- ✅ - supported
+- ⭕️ - planned/partially supported
+- ❓ - not supported/not planned
+- ❌ - not possible
+
 Right now only a handful of basic types is supported:
 
 - `number` (for both integers and decimals - this may cause problems when formatting numbers)
@@ -53,6 +106,7 @@ Right now only a handful of basic types is supported:
     - `ToLower(): Text`
     - `ToUpper(): Text`
     - `Contains(Text: Text): Boolean`
+- `guid`
 - `date`
 - `time`
 - `datetime`
@@ -127,6 +181,8 @@ Right now only a handful of basic types is supported:
 - `DWY2Date(WeekDay: Number, [Week: Number, [Year: Number]]): Date`
 - `DT2Date(DateTime: DateTime): Date`
 - `DT2Time(DateTime: DateTime): Time`
+- `CreateGuid(): Guid`
+- `IsNullGuid(Guid: Guid): Boolean`
 
 ### Planned
 

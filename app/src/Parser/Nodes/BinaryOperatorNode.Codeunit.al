@@ -61,26 +61,35 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 exit(EvaluateNumeric(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
                 exit(EvaluateBoolean(LeftValueVariant, RightValueVariant, Operator));
-            LeftValueVariant.IsText() and RightValueVariant.IsText():
+            LeftValueVariant.IsText() and RightValueVariant.IsText(),
+            LeftValueVariant.IsGuid() and RightValueVariant.IsText(),
+            LeftValueVariant.IsText() and RightValueVariant.IsGuid(),
+            LeftValueVariant.IsGuid() and RightValueVariant.IsGuid():
                 exit(EvaluateText(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsText() and RightValueVariant.IsDecimal(),
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsText():
+            LeftValueVariant.IsGuid() and RightValueVariant.IsDecimal():
                 exit(EvaluateTextMultiplication(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsText(),
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsGuid():
+                exit(EvaluateTextMultiplication(RightValueVariant, LeftValueVariant, Operator));
             LeftValueVariant.IsDate() and RightValueVariant.IsDate():
                 exit(EvaluateDate(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsTime() and RightValueVariant.IsTime():
                 exit(EvaluateTime(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsDateTime() and RightValueVariant.IsDateTime():
                 exit(EvaluateDateTime(LeftValueVariant, RightValueVariant, Operator));
-            LeftValueVariant.IsDate() and RightValueVariant.IsDecimal(),
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsDate():
+            LeftValueVariant.IsDate() and RightValueVariant.IsDecimal():
                 exit(EvaluateDateNumber(LeftValueVariant, RightValueVariant, Operator));
-            LeftValueVariant.IsTime() and RightValueVariant.IsDecimal(),
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsTime():
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDate():
+                exit(EvaluateDateNumber(RightValueVariant, LeftValueVariant, Operator));
+            LeftValueVariant.IsTime() and RightValueVariant.IsDecimal():
                 exit(EvaluateTimeNumber(LeftValueVariant, RightValueVariant, Operator));
-            LeftValueVariant.IsDateTime() and RightValueVariant.IsDecimal(),
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsDateTime():
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsTime():
+                exit(EvaluateTimeNumber(RightValueVariant, LeftValueVariant, Operator));
+            LeftValueVariant.IsDateTime() and RightValueVariant.IsDecimal():
                 exit(EvaluateDateTimeNumber(LeftValueVariant, RightValueVariant, Operator));
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDateTime():
+                exit(EvaluateDateTimeNumber(RightValueVariant, LeftValueVariant, Operator));
             else
                 Error('Unimplemented binary operator input types.'); // TODO nicer error?
         end;
@@ -185,25 +194,13 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         i: Integer;
         ResultBuilder: TextBuilder;
     begin
-        case true of
-            LeftValueVariant.IsText() and RightValueVariant.IsDecimal():
-                begin
-                    Text := LeftValueVariant;
-                    Number := RightValueVariant;
-                end;
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsText():
-                begin
-                    Number := LeftValueVariant;
-                    Text := RightValueVariant;
-                end;
-            else
-                Error('Invalid argument types.');
-        end;
+        Text := LeftValueVariant;
+        Number := RightValueVariant;
 
         case Operator of
             Operator::"*":
                 begin
-                    if Number < 1 then
+                    if Number < 1 then // XXX allow 0?
                         Error('Invalid text multiplication input - cannot multiply by %1.', Number);
                     for i := 1 to Number do
                         ResultBuilder.Append(Text);
@@ -302,20 +299,8 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         Date, Result : Date;
         Number: Decimal;
     begin
-        case true of
-            LeftValueVariant.IsDate() and RightValueVariant.IsDecimal():
-                begin
-                    Date := LeftValueVariant;
-                    Number := RightValueVariant;
-                end;
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsDate():
-                begin
-                    Number := LeftValueVariant;
-                    Date := RightValueVariant;
-                end;
-            else
-                Error('Invalid argument types.');
-        end;
+        Date := LeftValueVariant;
+        Number := RightValueVariant;
 
         case Operator of
             Operator::"+":
@@ -341,20 +326,8 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         Time, Result : Time;
         Number: Decimal;
     begin
-        case true of
-            LeftValueVariant.IsTime() and RightValueVariant.IsDecimal():
-                begin
-                    Time := LeftValueVariant;
-                    Number := RightValueVariant;
-                end;
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsTime():
-                begin
-                    Number := LeftValueVariant;
-                    Time := RightValueVariant;
-                end;
-            else
-                Error('Invalid argument types.');
-        end;
+        Time := LeftValueVariant;
+        Number := RightValueVariant;
 
         case Operator of
             Operator::"+":
@@ -380,20 +353,8 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         DateTime, Result : DateTime;
         Number: Decimal;
     begin
-        case true of
-            LeftValueVariant.IsDateTime() and RightValueVariant.IsDecimal():
-                begin
-                    DateTime := LeftValueVariant;
-                    Number := RightValueVariant;
-                end;
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsDateTime():
-                begin
-                    Number := LeftValueVariant;
-                    DateTime := RightValueVariant;
-                end;
-            else
-                Error('Invalid argument types.');
-        end;
+        DateTime := LeftValueVariant;
+        Number := RightValueVariant;
 
         case Operator of
             Operator::"+":
@@ -419,7 +380,10 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         Result: Boolean;
     begin
         case true of
-            LeftValueVariant.IsText() and RightValueVariant.IsText():
+            LeftValueVariant.IsText() and RightValueVariant.IsText(),
+            LeftValueVariant.IsText() and RightValueVariant.IsGuid(),
+            LeftValueVariant.IsGuid() and RightValueVariant.IsText(),
+            LeftValueVariant.IsGuid() and RightValueVariant.IsGuid():
                 Result := CompareText(LeftValueVariant, RightValueVariant, Operator);
             LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal():
                 Result := CompareNumber(LeftValueVariant, RightValueVariant, Operator);
@@ -656,7 +620,10 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     RightSymbol,
                     Operator
                 );
-            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Text):
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Text),
+            (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Text),
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Guid),
+            (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Guid):
                 ResultSymbol := ValidateText(
                     SymbolTable,
                     LeftSymbol,
@@ -664,7 +631,9 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     Operator
                 );
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Number),
-            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Text):
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Text),
+            (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Number),
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Guid):
                 ResultSymbol := ValidateTextMultiplication(
                     SymbolTable,
                     LeftSymbol,
@@ -721,6 +690,9 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
     begin
         case true of
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Text),
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Guid),
+            (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Text),
+            (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Guid),
             (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Number),
             (LeftSymbol.Type = LeftSymbol.Type::Boolean) and (RightSymbol.Type = RightSymbol.Type::Boolean),
             (LeftSymbol.Type = LeftSymbol.Type::Date) and (RightSymbol.Type = RightSymbol.Type::Date),
