@@ -60,4 +60,22 @@ codeunit 69108 "DateTime Value FS" implements "Value FS"
     begin
         exit(System.Format(Value, Length, FormatString));
     end;
+
+    procedure Evaluate(Input: Text; Throw: Boolean): Boolean
+    begin
+        if not Throw then
+            exit(System.Evaluate(Value, Input));
+
+        System.Evaluate(Value, Input);
+        exit(true);
+    end;
+
+    procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
+    begin
+        if not Throw then
+            exit(System.Evaluate(Value, Input, FormatNumber));
+
+        System.Evaluate(Value, Input, FormatNumber);
+        exit(true);
+    end;
 }

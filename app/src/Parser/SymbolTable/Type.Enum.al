@@ -12,6 +12,7 @@ enum 69005 "Type FS"
     value(60; Time) { }
     value(70; DateTime) { }
     value(80; Guid) { }
+    value(90; DateFormula) { }
 
     value(200; Any) { }
 }

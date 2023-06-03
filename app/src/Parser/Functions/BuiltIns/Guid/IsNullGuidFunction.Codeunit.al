@@ -7,7 +7,7 @@ codeunit 69221 "IsNullGuid Function FS" implements "Function FS"
         exit('IsNullGuid');
     end;
 
-    procedure GetReturnType(): Record "Symbol FS"
+    procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
@@ -33,7 +33,12 @@ codeunit 69221 "IsNullGuid Function FS" implements "Function FS"
         );
     end;
 
-    procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
+    procedure Evaluate
+    (
+        Runtime: Codeunit "Runtime FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        TopLevel: Boolean
+    ): Interface "Value FS"
     var
         BooleanValue: Codeunit "Boolean Value FS";
         Value: Interface "Value FS";

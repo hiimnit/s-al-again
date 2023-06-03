@@ -40,7 +40,7 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
                 ArgumentValues.Insert(Value);
             until not ArgumentNode.Next(ArgumentNode);
 
-        exit(Function.Evaluate(Runtime, ArgumentValues));
+        exit(Function.Evaluate(Runtime, ArgumentValues, TopLevel));
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
@@ -53,7 +53,7 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
             Arguments
         );
 
-        exit(Function.GetReturnType());
+        exit(Function.GetReturnType(TopLevel));
     end;
 
     procedure ValidateSemanticsWithContext

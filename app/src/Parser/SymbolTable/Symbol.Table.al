@@ -51,7 +51,8 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Number,
-            NewOrder
+            NewOrder,
+            false
         );
     end;
 
@@ -64,7 +65,8 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Text,
-            NewOrder
+            NewOrder,
+            false
         );
     end;
 
@@ -77,7 +79,8 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Boolean,
-            NewOrder
+            NewOrder,
+            false
         );
     end;
 
@@ -90,7 +93,8 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Date,
-            NewOrder
+            NewOrder,
+            false
         );
     end;
 
@@ -103,7 +107,8 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Time,
-            NewOrder
+            NewOrder,
+            false
         );
     end;
 
@@ -116,7 +121,8 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Boolean,
-            NewOrder
+            NewOrder,
+            false
         );
     end;
 
@@ -129,7 +135,22 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Guid,
-            NewOrder
+            NewOrder,
+            false
+        );
+    end;
+
+    procedure InsertDateFormula
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::DateFormula,
+            NewOrder,
+            false
         );
     end;
 
@@ -142,7 +163,22 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Any,
-            NewOrder
+            NewOrder,
+            false
+        );
+    end;
+
+    procedure InsertVarAny
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Any,
+            NewOrder,
+            true
         );
     end;
 
@@ -150,7 +186,8 @@ table 69001 "Symbol FS"
     (
         NewName: Text[120];
         NewType: Enum "Type FS";
-        NewOrder: Integer
+        NewOrder: Integer;
+        NewPointerParameter: Boolean
     )
     begin
         Rec.Init();
@@ -158,6 +195,7 @@ table 69001 "Symbol FS"
         Rec.Type := NewType;
         Rec.Scope := Rec.Scope::Parameter;
         Rec.Order := NewOrder;
+        Rec."Pointer Parameter" := NewPointerParameter;
         Rec.Insert();
     end;
 

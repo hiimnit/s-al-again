@@ -7,7 +7,7 @@ codeunit 69202 "Message Function FS" implements "Function FS"
         exit('Message');
     end;
 
-    procedure GetReturnType(): Record "Symbol FS"
+    procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
@@ -30,7 +30,8 @@ codeunit 69202 "Message Function FS" implements "Function FS"
         // first argument must be the text template
         ArgumentNode := Arguments.First();
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-        if Symbol.Type <> Symbol.Type::Text then
+        ParameterSymbol.InsertText('Template', 1);
+        if not Runtime.MatchTypesCoercible(ParameterSymbol, Symbol) then
             Error(
                 'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
                 GetName(),
@@ -39,7 +40,7 @@ codeunit 69202 "Message Function FS" implements "Function FS"
             );
 
         // all other arguments can be anything
-        ParameterSymbol.InsertAny('Any', 1);
+        ParameterSymbol.InsertAny('Any', 2);
         while ArgumentNode.Next(ArgumentNode) do begin
             Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
             if not Runtime.MatchTypesAnyOrCoercible(ParameterSymbol, Symbol) then
@@ -52,7 +53,12 @@ codeunit 69202 "Message Function FS" implements "Function FS"
         end;
     end;
 
-    procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
+    procedure Evaluate
+    (
+        Runtime: Codeunit "Runtime FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        TopLevel: Boolean
+    ): Interface "Value FS"
     var
         VoidValue: Codeunit "Void Value FS";
         Node: Codeunit "Value Linked List Node FS";

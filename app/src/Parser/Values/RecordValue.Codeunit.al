@@ -91,6 +91,7 @@ codeunit 69105 "Record Value FS" implements "Value FS"
         TimeValue: Codeunit "Time Value FS";
         DateTimeValue: Codeunit "DateTime Value FS";
         GuidValue: Codeunit "Guid Value FS";
+        DateFormulaValue: Codeunit "DateFormula Value FS";
     begin
         case true of
             Variant.IsInteger(),
@@ -130,6 +131,11 @@ codeunit 69105 "Record Value FS" implements "Value FS"
                     GuidValue.SetValue(Variant);
                     exit(GuidValue);
                 end;
+            Variant.IsDateFormula():
+                begin
+                    DateFormulaValue.SetValue(Variant);
+                    exit(DateFormulaValue);
+                end;
             else
                 Error('Initilization of type from value %1 is not supported.', Value);
         end;
@@ -164,5 +170,15 @@ codeunit 69105 "Record Value FS" implements "Value FS"
     procedure Format(Length: Integer; FormatString: Text): Text;
     begin
         exit(System.Format(Value, Length, FormatString));
+    end;
+
+    procedure Evaluate(Input: Text; Throw: Boolean): Boolean
+    begin
+        Error('Record values can not be evaluated.');
+    end;
+
+    procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
+    begin
+        Error('Record values can not be evaluated.');
     end;
 }

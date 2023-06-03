@@ -70,6 +70,7 @@ codeunit 69011 "Runtime FS"
         DT2TimeFunction: Codeunit "DT2Time Function FS";
         CreateGuidFunction: Codeunit "CreateGuid Function FS";
         IsNullGuidFunction: Codeunit "IsNullGuid Function FS";
+        EvaluateFunction: Codeunit "Evaluate Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -116,6 +117,8 @@ codeunit 69011 "Runtime FS"
                 exit(CreateGuidFunction);
             IsNullGuidFunction.GetName().ToLower():
                 exit(IsNullGuidFunction);
+            EvaluateFunction.GetName().ToLower():
+                exit(EvaluateFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;
@@ -339,11 +342,31 @@ codeunit 69011 "Runtime FS"
     begin
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
 
+        TestParameterVsArgument(
+            Runtime,
+            SymbolTable,
+            Name,
+            ExpectedSymbol,
+            ArgumentNode,
+            Symbol
+        );
+    end;
+
+    procedure TestParameterVsArgument
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Name: Text[120];
+        ExpectedSymbol: Record "Symbol FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS";
+        Symbol: Record "Symbol FS"
+    )
+    begin
         if ExpectedSymbol."Pointer Parameter" then begin
             if ArgumentNode.Value().GetType() <> Enum::"Node Type FS"::Variable then
                 Error('Var parameter %1 must be a variable.', ExpectedSymbol.Name);
 
-            if MatchTypesExact(ExpectedSymbol, Symbol) then
+            if MatchTypesAnyOrExact(ExpectedSymbol, Symbol) then
                 exit;
 
             // TODO different error for var parameters?
@@ -370,12 +393,14 @@ codeunit 69011 "Runtime FS"
         exit(MatchTypesCoercible(ExpectedSymbol, ActualSymbol));
     end;
 
-    procedure MatchTypesExact
+    procedure MatchTypesAnyOrExact
     (
         ExpectedSymbol: Record "Symbol FS";
         ActualSymbol: Record "Symbol FS"
     ): Boolean
     begin
+        if ExpectedSymbol.Type = ExpectedSymbol.Type::Any then
+            exit(ActualSymbol.Type <> ActualSymbol.Type::Void);
         exit(ExpectedSymbol.CompareExact(ActualSymbol));
     end;
 

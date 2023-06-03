@@ -7,7 +7,7 @@ codeunit 69217 "DWY2Date Function FS" implements "Function FS"
         exit('DWY2Date');
     end;
 
-    procedure GetReturnType(): Record "Symbol FS"
+    procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
@@ -38,7 +38,12 @@ codeunit 69217 "DWY2Date Function FS" implements "Function FS"
         );
     end;
 
-    procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
+    procedure Evaluate
+    (
+        Runtime: Codeunit "Runtime FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        TopLevel: Boolean
+    ): Interface "Value FS"
     var
         NumericValue: Codeunit "Numeric Value FS";
         ValueNode: Codeunit "Value Linked List Node FS";

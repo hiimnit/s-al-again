@@ -58,4 +58,14 @@ codeunit 69100 "Void Value FS" implements "Value FS"
     begin
         Error('Void values can not be formatted.');
     end;
+
+    procedure Evaluate(Input: Text; Throw: Boolean): Boolean
+    begin
+        Error('Void values can not be evaluated.');
+    end;
+
+    procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
+    begin
+        Error('Void values can not be evaluated.');
+    end;
 }
