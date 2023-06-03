@@ -71,7 +71,7 @@ end;
 | `date`                              | ✅      |                                                                                                                                                                                         |
 | `time`                              | ✅      |                                                                                                                                                                                         |
 | `datetime`                          | ✅      |                                                                                                                                                                                         |
-| `dateformula`                       | ⭕️     |                                                                                                                                                                                         |
+| `dateformula`                       | ✅     |                                                                                                                                                                                         |
 | `duration`                          | ⭕️     |                                                                                                                                                                                         |
 | `record`                            | ✅ ⭕️   | Temporary records are not supported - yet.                                                                                                                                              |
 | `recordid`                          | ⭕️     |                                                                                                                                                                                         |
@@ -168,6 +168,7 @@ Right now only a handful of basic types is supported:
 - `Format(Input: Any, [Length: Number, [FormatNumber: Number]]): Text`
 - `Format(Input: Any, [Length: Number, [FormatString: Text]]): Text`
 - `CalcDate(Formula: Text, [Date: Date]): Date`
+- `CalcDate(Formula: DateFormula, [Date: Date]): Date`
 - `ClosingDate(Date: Date): Date`
 - `CreateDateTime(Date: Date, Time: Time): DateTime`
 - `CurrentDateTime(): DateTime`
@@ -183,6 +184,7 @@ Right now only a handful of basic types is supported:
 - `DT2Time(DateTime: DateTime): Time`
 - `CreateGuid(): Guid`
 - `IsNullGuid(Guid: Guid): Boolean`
+- `Evaluate(var Value: Any, Input: Text, [FormatNumber: Number])[: Boolean]`
 
 ### Planned
 

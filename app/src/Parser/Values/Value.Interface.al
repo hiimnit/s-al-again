@@ -15,4 +15,7 @@ interface "Value FS"
     procedure Format(Length: Integer): Text
     procedure Format(Length: Integer; FormatNumber: Integer): Text
     procedure Format(Length: Integer; FormatString: Text): Text
+
+    procedure Evaluate(Input: Text; Throw: Boolean): Boolean
+    procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
 }

@@ -7,7 +7,7 @@ codeunit 69213 "CalcDate Function FS" implements "Function FS"
         exit('CalcDate');
     end;
 
-    procedure GetReturnType(): Record "Symbol FS"
+    procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
@@ -21,42 +21,92 @@ codeunit 69213 "CalcDate Function FS" implements "Function FS"
         Arguments: Codeunit "Node Linked List FS"
     )
     var
-        ParameterSymbol: Record "Symbol FS";
+        ParameterSymbol, Symbol : Record "Symbol FS";
+        ArgumentNode: Codeunit "Node Linked List Node FS";
     begin
-        ParameterSymbol.InsertText('Text', 1);
-        if Arguments.GetCount() > 1 then
-            ParameterSymbol.InsertDate('Date', 2);
+        if not (Arguments.GetCount() in [1, 2]) then
+            Error('Parameter count missmatch when calling method %1.', GetName());
 
-        Runtime.ValidateMethodCallArguments(
+        ArgumentNode := Arguments.First();
+
+        Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
+        case Symbol.Type of
+            Symbol.Type::DateFormula:
+                ParameterSymbol.InsertDateFormula('DateFormula', 1);
+            else
+                ParameterSymbol.InsertText('Text', 1);
+        end;
+        Runtime.TestParameterVsArgument(
             Runtime,
             SymbolTable,
             GetName(),
-            Arguments,
-            ParameterSymbol
+            ParameterSymbol,
+            ArgumentNode,
+            Symbol
+        );
+
+        if Arguments.GetCount() = 1 then
+            exit;
+
+        ArgumentNode := ArgumentNode.Next();
+        ParameterSymbol.InsertDate('Date', 2);
+        Runtime.TestParameterVsArgument(
+            Runtime,
+            SymbolTable,
+            GetName(),
+            ParameterSymbol,
+            ArgumentNode
         );
     end;
 
-    procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
+    procedure Evaluate
+    (
+        Runtime: Codeunit "Runtime FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        TopLevel: Boolean
+    ): Interface "Value FS"
     var
         DateValue: Codeunit "Date Value FS";
         ValueNode: Codeunit "Value Linked List Node FS";
+        DateFormula: DateFormula;
+        Value, Date : Interface "Value FS";
         Text: Text;
-        Date: Interface "Value FS";
+        Result: Date;
     begin
         ValueNode := ValueLinkedList.First();
-        Text := ValueNode.Value().GetValue();
+        Value := ValueNode.Value();
 
         if not ValueNode.HasNext() then begin
-            DateValue.SetValue(CalcDate(Text));
+            case true of
+                Value.GetValue().IsDateFormula:
+                    begin
+                        DateFormula := Value.GetValue();
+                        Result := CalcDate(DateFormula);
+                    end;
+                else
+                    Text := Value.GetValue();
+                    Result := CalcDate(Text);
+            end;
 
+            DateValue.SetValue(Result);
             exit(DateValue);
         end;
 
         ValueNode := ValueNode.Next();
         Date := ValueNode.Value();
 
-        DateValue.SetValue(CalcDate(Text, Date.GetValue()));
+        case true of
+            Value.GetValue().IsDateFormula:
+                begin
+                    DateFormula := Value.GetValue();
+                    Result := CalcDate(DateFormula, Date.GetValue());
+                end;
+            else
+                Text := Value.GetValue();
+                Result := CalcDate(Text, Date.GetValue());
+        end;
 
+        DateValue.SetValue(CalcDate(Text, Date.GetValue()));
         exit(DateValue);
     end;
 }

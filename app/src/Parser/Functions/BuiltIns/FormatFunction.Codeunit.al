@@ -7,7 +7,7 @@ codeunit 69205 "Format Function FS" implements "Function FS"
         exit('Format');
     end;
 
-    procedure GetReturnType(): Record "Symbol FS"
+    procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
@@ -55,7 +55,7 @@ codeunit 69205 "Format Function FS" implements "Function FS"
 
         ArgumentNode := ArgumentNode.Next();
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-        if not (Symbol.Type in [Symbol.Type::Text, Symbol.Type::Number]) then
+        if not (Symbol.Type in [Symbol.Type::Text, Symbol.Type::Number]) then // TODO guid is not included
             Error(
                 'Parameter call missmatch when calling method %1.\\Expected %2 or %3, got %4.',
                 GetName(),
@@ -66,7 +66,12 @@ codeunit 69205 "Format Function FS" implements "Function FS"
     end;
 
     // TODO formatting numbers has issues - unexpected results when formatting "integers"
-    procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
+    procedure Evaluate
+    (
+        Runtime: Codeunit "Runtime FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        TopLevel: Boolean
+    ): Interface "Value FS"
     var
         Node: Codeunit "Value Linked List Node FS";
         TextValue: Codeunit "Text Value FS";

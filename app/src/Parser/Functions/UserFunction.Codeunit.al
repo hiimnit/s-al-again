@@ -22,7 +22,7 @@ codeunit 69025 "User Function FS" implements "Function FS"
         exit(Name);
     end;
 
-    procedure GetReturnType(): Record "Symbol FS"
+    procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     begin
         exit(SymbolTable.GetReturnType());
     end;
@@ -47,7 +47,12 @@ codeunit 69025 "User Function FS" implements "Function FS"
         );
     end;
 
-    procedure Evaluate(Runtime: Codeunit "Runtime FS"; ValueLinkedList: Codeunit "Value Linked List FS"): Interface "Value FS"
+    procedure Evaluate
+    (
+        Runtime: Codeunit "Runtime FS";
+        ValueLinkedList: Codeunit "Value Linked List FS";
+        TopLevel: Boolean
+    ): Interface "Value FS"
     var
         Memory: Codeunit "Memory FS";
         Value: Interface "Value FS";

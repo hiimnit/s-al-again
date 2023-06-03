@@ -1,7 +1,7 @@
-codeunit 69102 "Boolean Value FS" implements "Value FS"
+codeunit 69110 "DateFormula Value FS" implements "Value FS"
 {
     var
-        Value: Boolean;
+        Value: DateFormula;
 
     procedure GetValue(): Variant;
     begin
@@ -15,15 +15,15 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
 
     procedure GetType(): Enum "Type FS"
     begin
-        exit(Enum::"Type FS"::Boolean);
+        exit(Enum::"Type FS"::DateFormula);
     end;
 
     procedure Copy(): Interface "Value FS"
     var
-        BooleanValue: Codeunit "Boolean Value FS";
+        DateFormulaValue: Codeunit "DateFormula Value FS";
     begin
-        BooleanValue.SetValue(Value);
-        exit(BooleanValue);
+        DateFormulaValue.SetValue(Value);
+        exit(DateFormulaValue);
     end;
 
     procedure Mutate(NewValue: Interface "Value FS");
@@ -33,12 +33,12 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
     begin
-        Error('Boolean values do not support property access');
+        Error('DateFormula values do not support property access');
     end;
 
     procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
     begin
-        Error('Boolean values do not support property access');
+        Error('DateFormula values do not support property access');
     end;
 
     procedure Format(): Text;

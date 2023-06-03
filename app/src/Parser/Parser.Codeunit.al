@@ -25,7 +25,7 @@ codeunit 69001 "Parser FS"
         Runtime.ValidateFunctionsSemantics(Runtime);
 
         Function := Runtime.LookupEntryPoint();
-        Function.Evaluate(Runtime, EmptyValueLinkedList);
+        Function.Evaluate(Runtime, EmptyValueLinkedList, true);
     end;
 
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
@@ -886,6 +886,8 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::Time);
             'datetime':
                 exit(Enum::"Type FS"::DateTime);
+            'dateformula':
+                exit(Enum::"Type FS"::DateFormula);
             'guid':
                 exit(Enum::"Type FS"::Guid);
             else

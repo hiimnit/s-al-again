@@ -90,6 +90,7 @@ codeunit 69009 "Memory FS"
         DateTimeValue: Codeunit "DateTime Value FS";
         RecordValue: Codeunit "Record Value FS";
         GuidValue: Codeunit "Guid Value FS";
+        DateFormulaValue: Codeunit "DateFormula Value FS";
         Value: Interface "Value FS";
     begin
         case Symbol.Type of
@@ -112,6 +113,8 @@ codeunit 69009 "Memory FS"
                 end;
             Symbol.Type::Guid:
                 Value := GuidValue;
+            Symbol.Type::DateFormula:
+                Value := DateFormulaValue;
             else
                 Error('Initilization of type %1 is not supported.', Symbol.Type);
         end;
