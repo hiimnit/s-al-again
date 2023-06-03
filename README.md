@@ -6,7 +6,7 @@ Scripting in AL - attempt #2.
 
 Business Central extension adding a code editor for running scripts.
 
-!TODO add an image
+![Editor](img/editor.png)
 
 ### What does it do?
 
@@ -71,7 +71,7 @@ end;
 | `date`                              | ✅      |                                                                                                                                                                                         |
 | `time`                              | ✅      |                                                                                                                                                                                         |
 | `datetime`                          | ✅      |                                                                                                                                                                                         |
-| `dateformula`                       | ✅     |                                                                                                                                                                                         |
+| `dateformula`                       | ✅      |                                                                                                                                                                                         |
 | `duration`                          | ⭕️     |                                                                                                                                                                                         |
 | `record`                            | ✅ ⭕️   | Temporary records are not supported - yet.                                                                                                                                              |
 | `recordid`                          | ⭕️     |                                                                                                                                                                                         |
@@ -97,42 +97,136 @@ end;
 - ❓ - not supported/not planned
 - ❌ - not possible
 
-Right now only a handful of basic types is supported:
+##### Record methods
 
-- `number` (for both integers and decimals - this may cause problems when formatting numbers)
-- `boolean`
-- `text`
-  - methods
-    - `ToLower(): Text`
-    - `ToUpper(): Text`
-    - `Contains(Text: Text): Boolean`
-- `guid`
-- `date`
-- `time`
-- `datetime`
-- `record`
-  - methods
-    - `FindFirst()[: Boolean]`
-    - `FindLast()[: Boolean]`
-    - `FindSet()[: Boolean]`
-    - `Next([Steps: Number]): Number`
-    - `SetRange(Field: Identifier, [FromValue: FieldType, [ToValue: FieldType]])`
-    - `SetFilter(Field: Identifier, Filter: Tex, [Substitution: Any, ...])` (up to 10 substitutions)
-    - `Insert([RunTrigger: Boolean])[: Boolean]`
-    - `Modify([RunTrigger: Boolean])[: Boolean]`
-    - `Delete([RunTrigger: Boolean])[: Boolean]`
-    - `Init()`
-    - `Reset()`
-    - `IsEmpty(): Boolean`
-    - `TableName(): Text`
-    - `TableCaption(): Text`
-    - `SetRecFilter()`
-    - `GetFilters(): Text`
-    - `Count(): Number`
-    - `GetView([UseNames: Boolean]): Text`
-    - `SetView(View: Text)`
-    - `FieldNo(Field: Identifier): Number`
-    - `Validate(Field: Identifier, [FromValue: FieldType])`
+| type                                                                        | status | remark                      |
+|-----------------------------------------------------------------------------|--------|-----------------------------|
+| `AddLink(URL: Text, [Description: Text]): Number`                           | ⭕️     |                             |
+| `AddLoadFields([Field: Identifier, ...])`                                   | ⭕️     |                             |
+| `AreFieldsLoaded(Field: Identifier, ...): Boolean`                          | ⭕️     |                             |
+| `Ascending([Ascending: Boolean]): Boolean`                                  | ⭕️     |                             |
+| `CalcFields(Field: Identifier, [Field: Identifier, ...])`                   | ⭕️     |                             |
+| `CalcSums(Field: Identifier, [Field: Identifier, ...])`                     | ⭕️     |                             |
+| `ChangeCompany([Company: Text])[: Boolean]`                                 | ⭕️     |                             |
+| `ClearMarks()`                                                              | ⭕️     |                             |
+| `Consistent(Consistent: Boolean)`                                           | ⭕️     |                             |
+| `Copy(FromRecord: Record, [ShareTable: Boolean])`                           | ⭕️     |                             |
+| `CopyFilter(Any, Any)`                                                      | ⭕️     |                             |
+| `CopyFilters(var Record)`                                                   | ⭕️     |                             |
+| `CopyLinks(var Record)`                                                     | ⭕️     |                             |
+| `CopyLinks(RecordRef)`                                                      | ⭕️     |                             |
+| `Count(): Number`                                                           | ✅      |                             |
+| `CountApprox(): Number`                                                     | ⭕️     |                             |
+| `CurrentCompany(): Text`                                                    | ⭕️     |                             |
+| `CurrentKey(): Text`                                                        | ⭕️     |                             |
+| `Delete([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
+| `DeleteAll([Boolean])`                                                      | ⭕️     |                             |
+| `DeleteLink(Integer)`                                                       | ⭕️     |                             |
+| `DeleteLinks()`                                                             | ⭕️     |                             |
+| `FieldActive(Any)`                                                          | ⭕️     |                             |
+| `FieldCaption(Any)`                                                         | ⭕️     |                             |
+| `FieldError(Any [, Text])`                                                  | ⭕️     |                             |
+| `FieldError(Any, ErrorInfo)`                                                | ⭕️     |                             |
+| `FieldName(Any)`                                                            | ⭕️     |                             |
+| `FieldNo(Field: Identifier): Number`                                        | ✅      |                             |
+| `FilterGroup([Integer])`                                                    | ⭕️     |                             |
+| `Find([Text])`                                                              | ⭕️     |                             |
+| `FindFirst()[: Boolean]`                                                    | ✅      |                             |
+| `FindLast()[: Boolean]`                                                     | ✅      |                             |
+| `FindSet()[: Boolean]`                                                      | ✅      |                             |
+| `FindSet([Boolean])`                                                        | ⭕️     |                             |
+| `FindSet(Boolean, Boolean)`                                                 | ⭕️     |                             |
+| `Get([Any,...])`                                                            | ⭕️     |                             |
+| `GetAscending(Any)`                                                         | ⭕️     |                             |
+| `GetBySystemId(Guid)`                                                       | ⭕️     |                             |
+| `GetFilter(Any)`                                                            | ⭕️     |                             |
+| `GetFilters(): Text`                                                        | ✅      |                             |
+| `GetPosition([Boolean])`                                                    | ⭕️     |                             |
+| `GetRangeMax(Any)`                                                          | ⭕️     |                             |
+| `GetRangeMin(Any)`                                                          | ⭕️     |                             |
+| `GetView([UseNames: Boolean]): Text`                                        | ✅      |                             |
+| `HasFilter()`                                                               | ⭕️     |                             |
+| `HasLinks()`                                                                | ⭕️     |                             |
+| `Init()`                                                                    | ✅      |                             |
+| `Insert([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
+| `Insert(Boolean, Boolean)`                                                  | ⭕️     |                             |
+| `IsEmpty(): Boolean`                                                        | ✅      |                             |
+| `IsTemporary()`                                                             | ⭕️     |                             |
+| `LoadFields(Any,...)`                                                       | ⭕️     |                             |
+| `LockTable([Boolean] [, Boolean])`                                          | ⭕️     |                             |
+| `Mark([Boolean])`                                                           | ⭕️     |                             |
+| `MarkedOnly([Boolean])`                                                     | ⭕️     |                             |
+| `Modify([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
+| `ModifyAll(Any, Any [, Boolean])`                                           | ⭕️     |                             |
+| `Next([Steps: Number]): Number`                                             | ✅      |                             |
+| `ReadConsistency()`                                                         | ⭕️     |                             |
+| `ReadIsolation([IsolationLevel])`                                           | ⭕️     |                             |
+| `ReadPermission()`                                                          | ⭕️     |                             |
+| `RecordId()`                                                                | ⭕️     |                             |
+| `RecordLevelLocking()`                                                      | ⭕️     |                             |
+| `Relation(Any)`                                                             | ⭕️     |                             |
+| `Rename(Any [, Any,...])`                                                   | ⭕️     |                             |
+| `Reset()`                                                                   | ✅      |                             |
+| `SecurityFiltering([SecurityFilter])`                                       | ⭕️     |                             |
+| `SetAscending(Any, Boolean)`                                                | ⭕️     |                             |
+| `SetAutoCalcFields([Any,...])`                                              | ⭕️     |                             |
+| `SetCurrentKey(Any [, Any,...])`                                            | ⭕️     |                             |
+| `SetFilter(Field: Identifier, Filter: Tex, [Substitution: Any, ...])`       | ✅      | only up to 10 substitutions |
+| `SetLoadFields([Any,...])`                                                  | ⭕️     |                             |
+| `SetPermissionFilter()`                                                     | ⭕️     |                             |
+| `SetPosition(Text)`                                                         | ⭕️     |                             |
+| `SetRange(Field: Identifier, [FromValue: FieldType, [ToValue: FieldType]])` | ✅      |                             |
+| `SetRecFilter()`                                                            | ✅      |                             |
+| `SetView(View: Text)`                                                       | ✅      |                             |
+| `TableCaption(): Text`                                                      | ✅      |                             |
+| `TableName(): Text`                                                         | ✅      |                             |
+| `TestField(Any)`                                                            | ⭕️     |                             |
+| `TestField(Any, ErrorInfo)`                                                 | ⭕️     |                             |
+| `TransferFields(var Record [, Boolean])`                                    | ⭕️     |                             |
+| `TransferFields(var Record, Boolean, Boolean)`                              | ⭕️     |                             |
+| `Validate(Field: Identifier, [FromValue: FieldType])`                       | ✅      |                             |
+| `WritePermission()`                                                         | ⭕️     |                             |
+
+##### Text methods
+
+| type                                     | status |
+|------------------------------------------|--------|
+| `ConvertStr(Text, Text, Text)`           | ⭕️     |
+| `CopyStr(Text, Integer [, Integer])`     | ⭕️     |
+| `DelChr(Text [, Text] [, Text])`         | ⭕️     |
+| `DelStr(Text, Integer [, Integer])`      | ⭕️     |
+| `IncStr(Text)`                           | ⭕️     |
+| `InsStr(Text, Text, Integer)`            | ⭕️     |
+| `LowerCase(Text)`                        | ⭕️     |
+| `MaxStrLen(Text)`                        | ⭕️     |
+| `MaxStrLen(Variant)`                     | ⭕️     |
+| `PadStr(Text, Integer [, Text])`         | ⭕️     |
+| `SelectStr(Integer, Text)`               | ⭕️     |
+| `StrCheckSum(Text [, Text] [, Integer])` | ⭕️     |
+| `StrLen(Text)`                           | ⭕️     |
+| `StrPos(Text, Text)`                     | ⭕️     |
+| `StrSubstNo(Text [, Any,...])`           | ⭕️     |
+| `UpperCase(Text)`                        | ⭕️     |
+| `Contains(Text: Text): Boolean`          | ✅      |
+| `EndsWith(Text)`                         | ⭕️     |
+| `IndexOf(Text [, Integer])`              | ⭕️     |
+| `IndexOfAny(Text [, Integer])`           | ⭕️     |
+| `IndexOfAny(List of [Char] [, Integer])` | ⭕️     |
+| `LastIndexOf(Text [, Integer])`          | ⭕️     |
+| `PadLeft(Integer [, Char])`              | ⭕️     |
+| `PadRight(Integer [, Char])`             | ⭕️     |
+| `Remove(Integer [, Integer])`            | ⭕️     |
+| `Replace(Text, Text)`                    | ⭕️     |
+| `Split([Text,...])`                      | ⭕️     |
+| `Split(List of [Text])`                  | ⭕️     |
+| `Split(List of [Char])`                  | ⭕️     |
+| `StartsWith(Text)`                       | ⭕️     |
+| `Substring(Integer [, Integer])`         | ⭕️     |
+| `ToLower(): Text`                        | ✅      |
+| `ToUpper(): Text`                        | ✅      |
+| `Trim()`                                 | ⭕️     |
+| `TrimEnd([Text])`                        | ⭕️     |
+| `TrimStart([Text])`                      | ⭕️     |
 
 #### Statements
 
@@ -142,6 +236,8 @@ Right now only a handful of basic types is supported:
 - `repeat-until` loop
 - `if` and `if-else` statement
 - `exit` statement - both variants, with and without an expression
+
+!TODO list unsupported statements - `case`, `foreach`, `break`, ?
 
 #### Operators
 
@@ -186,10 +282,12 @@ Right now only a handful of basic types is supported:
 - `IsNullGuid(Guid: Guid): Boolean`
 - `Evaluate(var Value: Any, Input: Text, [FormatNumber: Number])[: Boolean]`
 
+!TODO list unsupported and planned
+
 ### Planned
 
 1. more built-in functions and methods
-1. `guid`, `dateformula`, `option`, `enum`
+1. `option`, `enum`, others
 1. replace `number` with `integer` and `decimal
 
 ## editor
