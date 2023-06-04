@@ -78,4 +78,9 @@ codeunit 69107 "Time Value FS" implements "Value FS"
         System.Evaluate(Value, Input, FormatNumber);
         exit(true);
     end;
+
+    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    begin
+        Error('Time values do not support index access.');
+    end;
 }

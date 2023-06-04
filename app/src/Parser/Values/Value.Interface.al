@@ -18,4 +18,6 @@ interface "Value FS"
 
     procedure Evaluate(Input: Text; Throw: Boolean): Boolean
     procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
+
+    procedure At(Index: Interface "Value FS"): Interface "Value FS"
 }

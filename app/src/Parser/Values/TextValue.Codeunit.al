@@ -78,4 +78,14 @@ codeunit 69103 "Text Value FS" implements "Value FS"
         System.Evaluate(Value, Input, FormatNumber);
         exit(true);
     end;
+
+    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    var
+        CharValue: Codeunit "Char Value FS";
+    begin
+        CharValue.SetValue(
+            Value[Index.GetValue()]
+        );
+        exit(CharValue);
+    end;
 }

@@ -92,6 +92,7 @@ codeunit 69105 "Record Value FS" implements "Value FS"
         DateTimeValue: Codeunit "DateTime Value FS";
         GuidValue: Codeunit "Guid Value FS";
         DateFormulaValue: Codeunit "DateFormula Value FS";
+        CharValue: Codeunit "Char Value FS";
     begin
         case true of
             Variant.IsInteger(),
@@ -135,6 +136,11 @@ codeunit 69105 "Record Value FS" implements "Value FS"
                 begin
                     DateFormulaValue.SetValue(Variant);
                     exit(DateFormulaValue);
+                end;
+            Variant.IsChar():
+                begin
+                    CharValue.SetValue(Variant);
+                    exit(CharValue);
                 end;
             else
                 Error('Initilization of type from value %1 is not supported.', Value);
@@ -180,5 +186,10 @@ codeunit 69105 "Record Value FS" implements "Value FS"
     procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
     begin
         Error('Record values can not be evaluated.');
+    end;
+
+    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    begin
+        Error('Record values do not support index access.');
     end;
 }

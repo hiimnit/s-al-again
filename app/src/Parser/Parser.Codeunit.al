@@ -655,6 +655,8 @@ codeunit 69001 "Parser FS"
 
         PeekedLexeme := PeekNextLexeme();
 
+        // TODO parse []
+
         if PeekedLexeme.IsOperator(Enum::"Operator FS"::"(") then begin
             ProcedureCallNode.Init(
                 Lexeme."Identifier Name",
@@ -664,6 +666,8 @@ codeunit 69001 "Parser FS"
             ParseCallResult.Init(ProcedureCallNode);
             exit(ParseCallResult);
         end;
+
+        // TODO parse []
 
         VariableNode.Init(
             Lexeme."Identifier Name"
@@ -693,7 +697,7 @@ codeunit 69001 "Parser FS"
 
             PeekedLexeme := PeekNextLexeme();
             case true of
-                PeekedLexeme.IsOperator(Enum::"Operator FS"::"("):
+                PeekedLexeme.IsOperator(Enum::"Operator FS"::"("): // TODO parse [] before + after - this probably needs a rework
                     begin
                         Clear(MethodCallNode); // create new instance
                         MethodCallNode.Init(
@@ -760,7 +764,7 @@ codeunit 69001 "Parser FS"
 
                         exit(SetStatementNode);
                     end;
-                PeekedLexeme.IsOperator(Enum::"Operator FS"::"("):
+                PeekedLexeme.IsOperator(Enum::"Operator FS"::"("): // TODO parse [] before + after - this probably needs a rework
                     begin
                         Clear(MethodCallNode); // create new instance
                         MethodCallNode.Init(
@@ -890,6 +894,8 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::DateFormula);
             'guid':
                 exit(Enum::"Type FS"::Guid);
+            'char':
+                exit(Enum::"Type FS"::Char);
             else
                 Error('Unknown type %1.', Identifier);
         end;

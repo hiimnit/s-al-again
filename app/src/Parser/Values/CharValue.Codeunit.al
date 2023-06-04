@@ -1,7 +1,7 @@
-codeunit 69110 "DateFormula Value FS" implements "Value FS"
+codeunit 69111 "Char Value FS" implements "Value FS"
 {
     var
-        Value: DateFormula;
+        Value: Char;
 
     procedure GetValue(): Variant;
     begin
@@ -15,15 +15,15 @@ codeunit 69110 "DateFormula Value FS" implements "Value FS"
 
     procedure GetType(): Enum "Type FS"
     begin
-        exit(Enum::"Type FS"::DateFormula);
+        exit(Enum::"Type FS"::Char);
     end;
 
     procedure Copy(): Interface "Value FS"
     var
-        DateFormulaValue: Codeunit "DateFormula Value FS";
+        CharValue: Codeunit "Char Value FS";
     begin
-        DateFormulaValue.SetValue(Value);
-        exit(DateFormulaValue);
+        CharValue.SetValue(Value);
+        exit(CharValue);
     end;
 
     procedure Mutate(NewValue: Interface "Value FS");
@@ -33,12 +33,12 @@ codeunit 69110 "DateFormula Value FS" implements "Value FS"
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
     begin
-        Error('DateFormula values do not support property access');
+        Error('Char values do not support property access');
     end;
 
     procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
     begin
-        Error('DateFormula values do not support property access');
+        Error('Char values do not support property access');
     end;
 
     procedure Format(): Text;
@@ -81,6 +81,6 @@ codeunit 69110 "DateFormula Value FS" implements "Value FS"
 
     procedure At(Index: Interface "Value FS"): Interface "Value FS"
     begin
-        Error('DateFormula values do not support index access.');
+        Error('Char values do not support index access.');
     end;
 }

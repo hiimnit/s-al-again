@@ -149,6 +149,14 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         exit(Guid);
     end;
 
+    procedure CharSymbol(): Record "Symbol FS"
+    var
+        Char: Record "Symbol FS";
+    begin
+        Char.Type := Char.Type::Char;
+        exit(Char);
+    end;
+
     procedure SymbolFromType(Type: Enum "Type FS"): Record "Symbol FS"
     begin
         case Type of

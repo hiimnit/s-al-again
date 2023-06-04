@@ -19,4 +19,5 @@ enum 69006 "Node Type FS"
     value(13; "Unary Operator") { Caption = 'Unary Operator'; }
     value(14; "Variable") { Caption = 'Variable'; }
     value(15; "While Statement") { Caption = 'While Statement'; }
+    value(16; "Index Access") { Caption = 'Index Access'; }
 }
