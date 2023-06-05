@@ -33,7 +33,7 @@ codeunit 69029 "Index Access Node FS" implements "Node FS"
         Value := ValueExpression.Evaluate(Runtime);
         Index := IndexExpression.Evaluate(Runtime);
 
-        exit(Value.At(Index));
+        exit(Value.At(Value, Index));
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";

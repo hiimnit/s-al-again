@@ -77,6 +77,9 @@ codeunit 69105 "Record Value FS" implements "Value FS"
         Field.SetRange(FieldName, Name);
         Field.FindFirst(); // TODO duplicate
 
+        // TODO lets return field ref value instead? 
+        // ValueFromVariant would happen during GetValue()
+        // Underlying record would be modified in SetValue
         exit(ValueFromVariant(
             Value.Field(Field."No.").Value()
         ));
@@ -188,7 +191,7 @@ codeunit 69105 "Record Value FS" implements "Value FS"
         Error('Record values can not be evaluated.');
     end;
 
-    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
     begin
         Error('Record values do not support index access.');
     end;

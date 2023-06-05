@@ -69,7 +69,7 @@ codeunit 69100 "Void Value FS" implements "Value FS"
         Error('Void values can not be evaluated.');
     end;
 
-    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
     begin
         Error('Void values do not support index access.');
     end;

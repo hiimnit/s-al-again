@@ -165,15 +165,4 @@ codeunit 69009 "Memory FS"
 
         Set(ReturnValueName, Value);
     end;
-
-    procedure DebugMessage()
-    var
-        TextBuilder: TextBuilder;
-        k: Text;
-    begin
-        TextBuilder.Append('Memory:\\');
-        foreach k in LocalVariableMap.Keys() do
-            TextBuilder.Append(StrSubstNo('%1: %2\', k, LocalVariables[LocalVariableMap.Get(k)].GetValue()));
-        Message(TextBuilder.ToText());
-    end;
 }

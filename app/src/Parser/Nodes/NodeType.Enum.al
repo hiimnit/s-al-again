@@ -14,7 +14,6 @@ enum 69006 "Node Type FS"
     value(8; "Procedure Call") { Caption = 'Procedure Call'; }
     value(19; "Property Access") { Caption = 'Property Access'; }
     value(10; "Repeat Statement") { Caption = 'Repeat Statement'; }
-    value(11; "Set Statement") { Caption = 'Set Statement'; }
     value(12; "Statement List") { Caption = 'Statement List'; }
     value(13; "Unary Operator") { Caption = 'Unary Operator'; }
     value(14; "Variable") { Caption = 'Variable'; }

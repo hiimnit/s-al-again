@@ -79,13 +79,14 @@ codeunit 69103 "Text Value FS" implements "Value FS"
         exit(true);
     end;
 
-    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
     var
-        CharValue: Codeunit "Char Value FS";
+        TextCharValue: Codeunit "Text Char Value FS";
     begin
-        CharValue.SetValue(
-            Value[Index.GetValue()]
+        TextCharValue.Init(
+            Self,
+            Index.GetValue()
         );
-        exit(CharValue);
+        exit(TextCharValue);
     end;
 }

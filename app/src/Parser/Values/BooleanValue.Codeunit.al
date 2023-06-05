@@ -79,7 +79,7 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
         exit(true);
     end;
 
-    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
     begin
         Error('Boolean values do not support index access.');
     end;

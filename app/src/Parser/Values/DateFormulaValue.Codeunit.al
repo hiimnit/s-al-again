@@ -79,7 +79,7 @@ codeunit 69110 "DateFormula Value FS" implements "Value FS"
         exit(true);
     end;
 
-    procedure At(Index: Interface "Value FS"): Interface "Value FS"
+    procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
     begin
         Error('DateFormula values do not support index access.');
     end;
