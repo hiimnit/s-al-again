@@ -77,9 +77,8 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         BinaryOperatorNode: Codeunit "Binary Operator Node FS";
         BinaryOperator: Enum "Operator FS";
     begin
-        if VariableExpression.GetType() <> Enum::"Node Type FS"::Variable then
-            // TODO incomplete list - variables, fields + index access (to variables/fields?)
-            Error('Left side of assignment must be a variable.');
+        if not VariableExpression.Assignable() then
+            Error('Left side of assignment statement must be an assignable variable.');
 
         VariableSymbol := VariableExpression.ValidateSemantics(Runtime, SymbolTable);
         ExpressionSymbol := ValueExpression.ValidateSemantics(Runtime, SymbolTable);
