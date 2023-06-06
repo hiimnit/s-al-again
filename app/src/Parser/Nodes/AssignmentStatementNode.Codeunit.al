@@ -56,8 +56,8 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
                 Error('Unimplemented assignment operator %1.', Operator);
         end;
 
-        NewValue := ValueExpression.Evaluate(Runtime);
         VariableValue := VariableExpression.Evaluate(Runtime);
+        NewValue := ValueExpression.Evaluate(Runtime);
 
         if BinaryOperator <> BinaryOperator::" " then
             NewValue := BinaryOperatorNode.Evaluate(
