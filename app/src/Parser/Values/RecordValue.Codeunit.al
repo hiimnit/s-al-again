@@ -67,82 +67,14 @@ codeunit 69105 "Record Value FS" implements "Value FS"
     procedure GetProperty(Name: Text[120]): Interface "Value FS"
     var
         Field: Record Field;
+        RecordFieldValue: Codeunit "Record Field Value FS";
     begin
         Field.SetRange(TableNo, Value.Number());
         Field.SetRange(FieldName, Name);
         Field.FindFirst(); // TODO duplicate
 
-        // TODO lets return field ref value instead? 
-        // ValueFromVariant would happen during GetValue()
-        // Underlying record would be modified in SetValue
-        exit(ValueFromVariant(
-            Value.Field(Field."No.").Value()
-        ));
-    end;
-
-    local procedure ValueFromVariant(Variant: Variant): Interface "Value FS";
-    var
-        NumericValue: Codeunit "Numeric Value FS";
-        BooleanValue: Codeunit "Boolean Value FS";
-        TextValue: Codeunit "Text Value FS";
-        DateValue: Codeunit "Date Value FS";
-        TimeValue: Codeunit "Time Value FS";
-        DateTimeValue: Codeunit "DateTime Value FS";
-        GuidValue: Codeunit "Guid Value FS";
-        DateFormulaValue: Codeunit "DateFormula Value FS";
-        CharValue: Codeunit "Char Value FS";
-    begin
-        case true of
-            Variant.IsInteger(),
-            Variant.IsDecimal():
-                begin
-                    NumericValue.SetValue(Variant);
-                    exit(NumericValue);
-                end;
-            Variant.IsBoolean():
-                begin
-                    BooleanValue.SetValue(Variant);
-                    exit(BooleanValue);
-                end;
-            Variant.IsCode(),
-            Variant.IsText():
-                begin
-                    TextValue.SetValue(Variant);
-                    exit(TextValue);
-                end;
-            Variant.IsDate():
-                begin
-                    DateValue.SetValue(Variant);
-                    exit(DateValue);
-                end;
-            Variant.IsTime():
-                begin
-                    TimeValue.SetValue(Variant);
-                    exit(TimeValue);
-                end;
-            Variant.IsDateTime():
-                begin
-                    DateTimeValue.SetValue(Variant);
-                    exit(DateTimeValue);
-                end;
-            Variant.IsGuid():
-                begin
-                    GuidValue.SetValue(Variant);
-                    exit(GuidValue);
-                end;
-            Variant.IsDateFormula():
-                begin
-                    DateFormulaValue.SetValue(Variant);
-                    exit(DateFormulaValue);
-                end;
-            Variant.IsChar():
-                begin
-                    CharValue.SetValue(Variant);
-                    exit(CharValue);
-                end;
-            else
-                Error('Initilization of type from value %1 is not supported.', Variant);
-        end;
+        RecordFieldValue.Init(Value.Field(Field."No."));
+        exit(RecordFieldValue);
     end;
 
     procedure Format(): Text;

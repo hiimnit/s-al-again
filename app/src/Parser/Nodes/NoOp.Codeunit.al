@@ -5,6 +5,11 @@ codeunit 69015 "NoOp FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"NoOp");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

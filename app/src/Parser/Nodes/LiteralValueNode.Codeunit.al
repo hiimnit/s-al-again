@@ -63,6 +63,11 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Literal Value");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

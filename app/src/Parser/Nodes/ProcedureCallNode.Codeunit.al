@@ -20,6 +20,11 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Procedure Call");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

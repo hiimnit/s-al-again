@@ -18,7 +18,7 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
 
     procedure SetValue(NewValue: Variant)
     begin
-        Error('unimplemented');
+        FieldRef.Value(NewValue);
     end;
 
     procedure Copy(): Interface "Value FS"
@@ -30,7 +30,7 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
 
     procedure Mutate(NewValue: Interface "Value FS")
     begin
-        Error('unimplemented');
+        FieldRef.Value(NewValue.GetValue());
     end;
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS"
@@ -61,48 +61,36 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
 
     procedure Evaluate(Input: Text; Throw: Boolean): Boolean
     var
-        Char: Char;
+        Value: Interface "Value FS";
     begin
-        Error('unimplemented');
+        Value := Copy();
 
-        if not Throw then begin
-            if not System.Evaluate(Char, Input) then
-                exit(false);
+        if not Value.Evaluate(Input, Throw) then
+            exit(false);
 
-            SetValue(Char);
-            exit(true);
-        end;
+        Mutate(Value);
 
-        System.Evaluate(Char, Input);
-        SetValue(Char);
         exit(true);
     end;
 
     procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
     var
-        Char: Char;
+        Value: Interface "Value FS";
     begin
-        Error('unimplemented');
+        Value := Copy();
 
-        if not Throw then begin
-            if not System.Evaluate(Char, Input, FormatNumber) then
-                exit(false);
+        if not Value.Evaluate(Input, FormatNumber, Throw) then
+            exit(false);
 
-            SetValue(Char);
-            exit(true);
-        end;
+        Mutate(Value);
 
-        System.Evaluate(Char, Input, FormatNumber);
-        SetValue(Char);
         exit(true);
     end;
 
     procedure At(Self: Interface "Value FS"; IndexValue: Interface "Value FS"): Interface "Value FS"
     begin
-        Error('unimplemented');
-        // TODO call at on value?
-        // >>>> how is `Currency.Code[1] := 'X'` going to work?
-        // >>>> it should, but "Text Char Value FS" will have to be created here using this value 
+        // TODO this is a hack, used instead of reimplementing individual `Value.At`s
+        exit(Copy().At(Self, IndexValue));
     end;
 
     local procedure ValueFromVariant(Variant: Variant): Interface "Value FS"

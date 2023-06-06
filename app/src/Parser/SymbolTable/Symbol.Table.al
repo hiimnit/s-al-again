@@ -229,7 +229,7 @@ table 69001 "Symbol FS"
     begin
         case Rec.Type of
             Rec.Type::Text:
-                exit(Target.Type in [Target.Type::Guid]);
+                exit(Target.Type in [Target.Type::Char, Target.Type::Guid]);
             Rec.Type::Guid:
                 exit(Target.Type in [Target.Type::Text]);
             Rec.Type::Char:

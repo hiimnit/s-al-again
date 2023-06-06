@@ -19,6 +19,11 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Unary Operator");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

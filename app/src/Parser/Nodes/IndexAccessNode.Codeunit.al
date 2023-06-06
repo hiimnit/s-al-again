@@ -18,6 +18,11 @@ codeunit 69029 "Index Access Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Index Access");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(ValueExpression.Assignable());
+    end;
+
     var
         TopLevel: Boolean;
 

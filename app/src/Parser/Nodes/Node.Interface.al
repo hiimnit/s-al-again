@@ -19,4 +19,5 @@ interface "Node FS"
     procedure SetTopLevel(TopLevel: Boolean)
 
     procedure GetType(): Enum "Node Type FS"
+    procedure Assignable(): Boolean
 }

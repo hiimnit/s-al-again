@@ -19,6 +19,13 @@ codeunit 69028 "Property Access Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Property Access");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        // TODO investigate - this used to be `exit(AccessorExpression.Assignable())`
+        // but it looks like properties are always assignable?
+        exit(true);
+    end;
+
     var
         TopLevel: Boolean;
 

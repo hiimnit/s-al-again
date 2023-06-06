@@ -21,6 +21,11 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Binary Operator");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 
