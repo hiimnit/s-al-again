@@ -166,6 +166,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
                 exit(NumericSymbol());
             Type::Text:
                 exit(TextSymbol());
+            Type::Char:
+                exit(CharSymbol());
             Type::Date:
                 exit(DateSymbol());
             Type::Time:

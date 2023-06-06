@@ -24,8 +24,18 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
 
     procedure Init(Value: Text)
     var
+        CharValue: Codeunit "Char Value FS";
         TextValue: Codeunit "Text Value FS";
     begin
+        if StrLen(Value) = 1 then begin
+            // TODO should this happen in parser? char literal?
+            // FIXME looks like it should
+            CharValue.SetValue(Value);
+            LiteralValue := CharValue;
+            Type := Type::Char;
+            exit;
+        end;
+
         TextValue.SetValue(Value);
         LiteralValue := TextValue;
         Type := Type::Text;
