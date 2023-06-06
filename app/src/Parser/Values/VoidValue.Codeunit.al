@@ -12,11 +12,6 @@ codeunit 69100 "Void Value FS" implements "Value FS"
         Error('Cannot set value of void.');
     end;
 
-    procedure GetType(): Enum "Type FS"
-    begin
-        exit(Enum::"Type FS"::Void);
-    end;
-
     procedure Copy(): Interface "Value FS"
     var
         VoidValue: Codeunit "Void Value FS";
@@ -30,11 +25,6 @@ codeunit 69100 "Void Value FS" implements "Value FS"
     end;
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
-    begin
-        Error('Void values do not support property access');
-    end;
-
-    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
     begin
         Error('Void values do not support property access');
     end;

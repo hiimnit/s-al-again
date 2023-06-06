@@ -13,11 +13,6 @@ codeunit 69111 "Char Value FS" implements "Value FS"
         Value := NewValue;
     end;
 
-    procedure GetType(): Enum "Type FS"
-    begin
-        exit(Enum::"Type FS"::Char);
-    end;
-
     procedure Copy(): Interface "Value FS"
     var
         CharValue: Codeunit "Char Value FS";
@@ -32,11 +27,6 @@ codeunit 69111 "Char Value FS" implements "Value FS"
     end;
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
-    begin
-        Error('Char values do not support property access');
-    end;
-
-    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
     begin
         Error('Char values do not support property access');
     end;

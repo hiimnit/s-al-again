@@ -28,11 +28,6 @@ codeunit 69105 "Record Value FS" implements "Value FS"
         // TODO need to decide where SetValue will be used - values vs references
     end;
 
-    procedure GetType(): Enum "Type FS"
-    begin
-        exit(Enum::"Type FS"::Record);
-    end;
-
     procedure Copy(): Interface "Value FS"
     var
         RecordValue: Codeunit "Record Value FS";
@@ -146,19 +141,8 @@ codeunit 69105 "Record Value FS" implements "Value FS"
                     exit(CharValue);
                 end;
             else
-                Error('Initilization of type from value %1 is not supported.', Value);
+                Error('Initilization of type from value %1 is not supported.', Variant);
         end;
-    end;
-
-    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS")
-    var
-        Field: Record Field;
-    begin
-        Field.SetRange(TableNo, Value.Number());
-        Field.SetRange(FieldName, Name);
-        Field.FindFirst(); // TODO duplicate
-
-        Value.Field(Field."No.").Value(NewValue.GetValue())
     end;
 
     procedure Format(): Text;

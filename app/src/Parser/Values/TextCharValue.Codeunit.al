@@ -32,11 +32,6 @@ codeunit 69112 "Text Char Value FS" implements "Value FS"
         TextValue.SetValue(Text);
     end;
 
-    procedure GetType(): Enum "Type FS"
-    begin
-        exit(Enum::"Type FS"::Char);
-    end;
-
     procedure Copy(): Interface "Value FS"
     var
         CharValue: Codeunit "Char Value FS";
@@ -60,29 +55,36 @@ codeunit 69112 "Text Char Value FS" implements "Value FS"
         Error('Char values do not support property access');
     end;
 
-    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS")
-    begin
-        Error('Char values do not support property access');
-    end;
-
     procedure Format(): Text;
+    var
+        Char: Char;
     begin
-        exit(System.Format(GetValue()));
+        Char := GetValue();
+        exit(System.Format(Char));
     end;
 
     procedure Format(Length: Integer): Text;
+    var
+        Char: Char;
     begin
-        exit(System.Format(GetValue(), Length));
+        Char := GetValue();
+        exit(System.Format(Char, Length));
     end;
 
     procedure Format(Length: Integer; FormatNumber: Integer): Text;
+    var
+        Char: Char;
     begin
-        exit(System.Format(GetValue(), Length, FormatNumber));
+        Char := GetValue();
+        exit(System.Format(Char, Length, FormatNumber));
     end;
 
     procedure Format(Length: Integer; FormatString: Text): Text;
+    var
+        Char: Char;
     begin
-        exit(System.Format(GetValue(), Length, FormatString));
+        Char := GetValue();
+        exit(System.Format(Char, Length, FormatString));
     end;
 
     procedure Evaluate(Input: Text; Throw: Boolean): Boolean

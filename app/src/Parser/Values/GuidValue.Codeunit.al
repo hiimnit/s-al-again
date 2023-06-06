@@ -13,11 +13,6 @@ codeunit 69109 "Guid Value FS" implements "Value FS"
         Value := NewValue;
     end;
 
-    procedure GetType(): Enum "Type FS"
-    begin
-        exit(Enum::"Type FS"::Guid);
-    end;
-
     procedure Copy(): Interface "Value FS"
     var
         GuidValue: Codeunit "Guid Value FS";
@@ -32,11 +27,6 @@ codeunit 69109 "Guid Value FS" implements "Value FS"
     end;
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
-    begin
-        Error('Guid values do not support property access');
-    end;
-
-    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
     begin
         Error('Guid values do not support property access');
     end;
