@@ -444,6 +444,7 @@ codeunit 69000 "Lexer FS"
     var
         Lexeme: Record "Lexeme FS";
         StringBuilder: TextBuilder;
+        String: Text;
     begin
         AssertChar(Char, '''');
 
@@ -457,7 +458,10 @@ codeunit 69000 "Lexer FS"
             StringBuilder.Append(NextChar());
         until false;
 
-        exit(Lexeme.StringLiteral(StringBuilder.ToText()));
+        String := StringBuilder.ToText();
+        if StrLen(String) = 1 then
+            exit(Lexeme.CharLiteral(String));
+        exit(Lexeme.StringLiteral(String));
     end;
 
     local procedure ParseQuotedIdentifier(Char: Char): Record "Lexeme FS"

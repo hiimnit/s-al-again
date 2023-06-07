@@ -616,6 +616,8 @@ codeunit 69001 "Parser FS"
                     LiteralValueNode.Init(Lexeme."Boolean Value");
                 Lexeme.IsString():
                     LiteralValueNode.Init(Lexeme.GetStringValue());
+                Lexeme.IsChar():
+                    LiteralValueNode.Init(Lexeme."Char Value");
                 Lexeme.IsDate():
                     LiteralValueNode.Init(Lexeme."Date Value");
                 Lexeme.IsTime():
