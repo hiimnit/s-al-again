@@ -248,6 +248,7 @@ table 69000 "Lexeme FS"
             IsNumber(),
             IsBoolean(),
             IsString(),
+            IsChar(),
             IsDate(),
             IsTime(),
             IsDateTime()
