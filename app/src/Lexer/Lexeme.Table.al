@@ -23,6 +23,7 @@ table 69000 "Lexeme FS"
 
         field(7000; "String Value"; Text[250]) { }
         field(7001; "String Value Blob"; Blob) { }
+        field(8000; "Char Value"; Text[1]) { }
 
         field(10000; "Date Value"; Date) { }
         field(11000; "Time Value"; Time) { }
@@ -123,6 +124,14 @@ table 69000 "Lexeme FS"
         exit(Rec);
     end;
 
+    procedure CharLiteral(Value: Text): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Char;
+        Rec."Char Value" := Value;
+        exit(Rec);
+    end;
+
     local procedure SetStringValue(Value: Text)
     var
         OutStream: OutStream;
@@ -145,7 +154,6 @@ table 69000 "Lexeme FS"
         if not Rec."String Value Blob".HasValue() then
             exit(Rec."String Value");
 
-        // TODO calcfields should not be necessary here
         Rec."String Value Blob".CreateInStream(InStream, TextEncoding::UTF8);
         exit(TypeHelper.ReadAsTextWithSeparator(
             InStream,
@@ -214,6 +222,11 @@ table 69000 "Lexeme FS"
         exit(Rec.Type = Rec.Type::String);
     end;
 
+    procedure IsChar(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::Char);
+    end;
+
     procedure IsDate(): Boolean
     begin
         exit(Rec.Type = Rec.Type::Date);
@@ -235,6 +248,7 @@ table 69000 "Lexeme FS"
             IsNumber(),
             IsBoolean(),
             IsString(),
+            IsChar(),
             IsDate(),
             IsTime(),
             IsDateTime()

@@ -18,5 +18,8 @@ interface "Node FS"
     // XXX instead make a wrapper for interface node and put this there?
     procedure SetTopLevel(TopLevel: Boolean)
 
-    procedure GetType(): Enum "Node Type FS"
+    // TODO combine GetType, Assignable, IsLiteralValue to a single method with complex return type?
+    procedure GetType(): Enum "Node Type FS" // TODO unused?
+    procedure Assignable(): Boolean
+    procedure IsLiteralValue(): Boolean
 }

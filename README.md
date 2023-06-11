@@ -58,7 +58,7 @@ end;
 | `boolean`                           | ✅      |                                                                                                                                                                                         |
 | `text`                              | ✅ ⭕️   | Declaring maximum text length is not (yet) supported.                                                                                                                                   |
 | `code`                              | ⭕️     | `code` varibles are not supported, but `code` fields can be used as if they were `text` fields.                                                                                         |
-| `char`                              | ⭕️     | Planned.                                                                                                                                                                                |
+| `char`                              | ✅      |                                                                                                                                                                                         |
 | `byte`                              | ⭕️     | Planned.                                                                                                                                                                                |
 | `guid`                              | ✅      |                                                                                                                                                                                         |
 | `enum`                              | ⭕️     | Planned (but maybe not possible outside of record fields?).                                                                                                                             |
@@ -286,9 +286,9 @@ end;
 
 ### Planned
 
+1. replace `number` with `integer` and `decimal
 1. more built-in functions and methods
 1. `option`, `enum`, others
-1. replace `number` with `integer` and `decimal
 
 ## editor
 

@@ -232,6 +232,10 @@ table 69001 "Symbol FS"
                 exit(Target.Type in [Target.Type::Guid]);
             Rec.Type::Guid:
                 exit(Target.Type in [Target.Type::Text]);
+            Rec.Type::Char:
+                exit(Target.Type in [Target.Type::Text, Target.Type::Number]);
+            Rec.Type::Number:
+                exit(Target.Type in [Target.Type::Char]);
         end;
 
         exit(false);
@@ -343,6 +347,38 @@ table 69001 "Symbol FS"
         end;
 
         exit(true);
+    end;
+
+    procedure ValidateIndexAcces
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ValueSymbol: Record "Symbol FS";
+        IndexSymbol: Record "Symbol FS"
+    ): Record "Symbol FS"
+    var
+        ResultSymbol: Record "Symbol FS";
+    begin
+        case ValueSymbol.Type of
+            ValueSymbol.Type::Text:
+                begin
+                    if not Runtime.MatchTypesCoercible(
+                        SymbolTable.NumericSymbol(),
+                        IndexSymbol
+                    ) then
+                        Error(
+                            'Type %1 can not be used to index %2 value.',
+                            IndexSymbol.TypeToText(),
+                            ValueSymbol.TypeToText()
+                        );
+
+                    ResultSymbol := SymbolTable.CharSymbol();
+                end;
+            else
+                Error('Type %1 does not support index access.', ValueSymbol.TypeToText());
+        end;
+
+        exit(ResultSymbol);
     end;
 }
 

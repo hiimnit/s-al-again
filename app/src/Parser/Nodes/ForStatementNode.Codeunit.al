@@ -27,6 +27,16 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"For Statement");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

@@ -440,30 +440,10 @@ codeunit 69001 "Parser FS"
             Lexeme.IsKeyword(Enum::"Keyword FS"::"exit"):
                 exit(ParseExitStatement());
             Lexeme.IsIdentifier():
-                exit(ParseTopLevelExpression());
+                exit(ParseGetExpression(true));
         end;
 
         exit(NoOp);
-    end;
-
-    local procedure ParseAssignmentStatement(IdentifierName: Text[120]): Interface "Node FS"
-    var
-        PeekedLexeme, OperatorLexeme : Record "Lexeme FS";
-        AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
-    begin
-        PeekedLexeme := PeekNextLexeme();
-        if not PeekedLexeme.IsAssignmentOperator() then
-            Error('Unexpected token %1 - expected an assignment operator.', PeekedLexeme.Type);
-
-        OperatorLexeme := AssertNextLexeme(PeekNextLexeme());
-
-        AssignmentStatementNode.Init(
-            IdentifierName,
-            ParseExpression(),
-            OperatorLexeme."Operator Value"
-        );
-
-        exit(AssignmentStatementNode);
     end;
 
     local procedure ParseExpression(): Interface "Node FS"
@@ -583,7 +563,7 @@ codeunit 69001 "Parser FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         UnaryOperatorNode: Codeunit "Unary Operator Node FS";
-        ExpressionNode: Interface "Node FS";
+        ParenthesesNode: Codeunit "Parentheses Node FS";
     begin
         PeekedLexeme := PeekNextLexeme();
 
@@ -593,13 +573,13 @@ codeunit 69001 "Parser FS"
                     begin
                         NextLexeme();
 
-                        ExpressionNode := ParseExpression();
+                        ParenthesesNode.Init(ParseExpression());
 
                         AssertNextLexeme(
                             PeekedLexeme.Operator(Enum::"Operator FS"::")")
                         );
 
-                        exit(ExpressionNode);
+                        exit(ParenthesesNode);
                     end;
                 PeekedLexeme."Operator Value"::"+",
                 PeekedLexeme."Operator Value"::"-",
@@ -616,13 +596,12 @@ codeunit 69001 "Parser FS"
                     end;
             end;
 
-        exit(ParseGetExpression());
+        exit(ParseGetExpression(false));
     end;
 
-    local procedure ParseCall(): Codeunit "Parse Call Result FS"
+    local procedure ParseCall(): Interface "Node FS"
     var
         Lexeme, PeekedLexeme : Record "Lexeme FS";
-        ParseCallResult: Codeunit "Parse Call Result FS";
         VariableNode: Codeunit "Variable Node FS";
         ProcedureCallNode: Codeunit "Procedure Call Node FS";
         LiteralValueNode: Codeunit "Literal Value Node FS";
@@ -637,6 +616,8 @@ codeunit 69001 "Parser FS"
                     LiteralValueNode.Init(Lexeme."Boolean Value");
                 Lexeme.IsString():
                     LiteralValueNode.Init(Lexeme.GetStringValue());
+                Lexeme.IsChar():
+                    LiteralValueNode.Init(Lexeme."Char Value"[1]);
                 Lexeme.IsDate():
                     LiteralValueNode.Init(Lexeme."Date Value");
                 Lexeme.IsTime():
@@ -647,141 +628,100 @@ codeunit 69001 "Parser FS"
                     Error('Literal value parsing is not implemented for %1.', Lexeme.Type);
             end;
 
-            ParseCallResult.Init(LiteralValueNode);
-            exit(ParseCallResult);
+            exit(LiteralValueNode);
         end;
 
         AssertLexeme(Lexeme, PeekedLexeme.Identifier());
 
         PeekedLexeme := PeekNextLexeme();
-
         if PeekedLexeme.IsOperator(Enum::"Operator FS"::"(") then begin
             ProcedureCallNode.Init(
                 Lexeme."Identifier Name",
                 ParseArguments()
             );
 
-            ParseCallResult.Init(ProcedureCallNode);
-            exit(ParseCallResult);
+            exit(ProcedureCallNode);
         end;
 
         VariableNode.Init(
             Lexeme."Identifier Name"
         );
 
-        ParseCallResult.InitVariable(VariableNode);
-        exit(ParseCallResult);
+        exit(VariableNode);
     end;
 
-    local procedure ParseGetExpression(): Interface "Node FS"
-    var
-        Lexeme, PeekedLexeme : Record "Lexeme FS";
-        MethodCallNode: Codeunit "Method Call Node FS";
-        PropertyAccessNode: Codeunit "Property Access Node FS";
-        Call: Interface "Node FS";
-    begin
-        Call := ParseCall().GetNode();
-
-        while true do begin
-            PeekedLexeme := PeekNextLexeme();
-            if not PeekedLexeme.IsOperator(Enum::"Operator FS"::".") then
-                break;
-
-            AssertNextLexeme(PeekedLexeme);
-
-            Lexeme := AssertNextLexeme(Lexeme.Identifier());
-
-            PeekedLexeme := PeekNextLexeme();
-            case true of
-                PeekedLexeme.IsOperator(Enum::"Operator FS"::"("):
-                    begin
-                        Clear(MethodCallNode); // create new instance
-                        MethodCallNode.Init(
-                            Call,
-                            Lexeme."Identifier Name",
-                            ParseArguments()
-                        );
-
-                        Call := MethodCallNode;
-                    end;
-                else
-                    Clear(PropertyAccessNode); // create new instance
-                    PropertyAccessNode.Init(
-                        Call,
-                        Lexeme."Identifier Name"
-                    );
-                    Call := PropertyAccessNode;
-            end;
-        end;
-
-        exit(Call);
-    end;
-
-    local procedure ParseTopLevelExpression(): Interface "Node FS"
+    local procedure ParseGetExpression(TopLevel: Boolean): Interface "Node FS"
     var
         Lexeme, PeekedLexeme, OperatorLexeme : Record "Lexeme FS";
         MethodCallNode: Codeunit "Method Call Node FS";
         PropertyAccessNode: Codeunit "Property Access Node FS";
-        SetStatementNode: Codeunit "Set Statement Node FS";
-        ParseCallResult: Codeunit "Parse Call Result FS";
+        IndexAccessNode: Codeunit "Index Access Node FS";
+        AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
         Call: Interface "Node FS";
     begin
-        ParseCallResult := ParseCall();
-
-        PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsAssignmentOperator() and ParseCallResult.IsVariable() then
-            exit(ParseAssignmentStatement(
-                ParseCallResult.GetVariableName()
-            ));
-
-        Call := ParseCallResult.GetNode();
+        Call := ParseCall();
 
         while true do begin
             PeekedLexeme := PeekNextLexeme();
-            if not PeekedLexeme.IsOperator(Enum::"Operator FS"::".") then
-                break;
 
-            AssertNextLexeme(PeekedLexeme);
-
-            Lexeme := AssertNextLexeme(Lexeme.Identifier());
-
-            PeekedLexeme := PeekNextLexeme();
             case true of
-                PeekedLexeme.IsAssignmentOperator():
+                TopLevel and PeekedLexeme.IsAssignmentOperator():
                     begin
-                        OperatorLexeme := NextLexeme();
+                        OperatorLexeme := AssertNextLexeme(PeekNextLexeme());
 
-                        SetStatementNode.Init(
+                        AssignmentStatementNode.Init(
                             Call,
-                            Lexeme."Identifier Name",
                             ParseExpression(),
                             OperatorLexeme."Operator Value"
                         );
 
-                        exit(SetStatementNode);
+                        exit(AssignmentStatementNode);
                     end;
-                PeekedLexeme.IsOperator(Enum::"Operator FS"::"("):
+                PeekedLexeme.IsOperator(Enum::"Operator FS"::"."):
                     begin
-                        Clear(MethodCallNode); // create new instance
-                        MethodCallNode.Init(
+                        AssertNextLexeme(PeekedLexeme);
+
+                        Lexeme := AssertNextLexeme(Lexeme.Identifier());
+
+                        PeekedLexeme := PeekNextLexeme();
+                        if PeekedLexeme.IsOperator(Enum::"Operator FS"::"(") then begin
+                            Clear(MethodCallNode); // create new instance
+                            MethodCallNode.Init(
+                                Call,
+                                Lexeme."Identifier Name",
+                                ParseArguments()
+                            );
+
+                            Call := MethodCallNode;
+                        end else begin
+                            Clear(PropertyAccessNode); // create new instance
+                            PropertyAccessNode.Init(
+                                Call,
+                                Lexeme."Identifier Name"
+                            );
+
+                            Call := PropertyAccessNode;
+                        end;
+                    end;
+                PeekedLexeme.IsOperator(Enum::"Operator FS"::"["):
+                    begin
+                        AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"["));
+
+                        Clear(IndexAccessNode); // create new instance
+                        IndexAccessNode.Init(
                             Call,
-                            Lexeme."Identifier Name",
-                            ParseArguments()
+                            ParseExpression()
                         );
 
-                        Call := MethodCallNode;
+                        Call := IndexAccessNode;
+                        AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"]"));
                     end;
                 else
-                    Clear(PropertyAccessNode); // create new instance
-                    PropertyAccessNode.Init(
-                        Call,
-                        Lexeme."Identifier Name"
-                    );
-                    Call := PropertyAccessNode;
+                    break; // FIXME does this work now?
             end;
         end;
 
-        Call.SetTopLevel(true);
+        Call.SetTopLevel(TopLevel);
 
         exit(Call);
     end;
@@ -890,6 +830,8 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::DateFormula);
             'guid':
                 exit(Enum::"Type FS"::Guid);
+            'char':
+                exit(Enum::"Type FS"::Char);
             else
                 Error('Unknown type %1.', Identifier);
         end;

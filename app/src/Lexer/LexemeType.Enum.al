@@ -10,6 +10,7 @@ enum 69001 "Lexeme Type FS"
     value(5; Number) { }
     value(6; Bool) { }
     value(7; String) { }
+    value(8; Char) { }
 
     value(10; Date) { }
     value(11; Time) { }

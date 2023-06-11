@@ -2,6 +2,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
 {
     var
         LiteralValue: Interface "Value FS";
+        Type: Enum "Type FS";
 
     procedure Init(Value: Decimal)
     var
@@ -9,6 +10,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     begin
         NumericValue.SetValue(Value);
         LiteralValue := NumericValue;
+        Type := Type::Number;
     end;
 
     procedure Init(Value: Boolean)
@@ -17,6 +19,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     begin
         BooleanValue.SetValue(Value);
         LiteralValue := BooleanValue;
+        Type := Type::Boolean;
     end;
 
     procedure Init(Value: Text)
@@ -25,6 +28,16 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     begin
         TextValue.SetValue(Value);
         LiteralValue := TextValue;
+        Type := Type::Text;
+    end;
+
+    procedure Init(Value: Char)
+    var
+        CharValue: Codeunit "Char Value FS";
+    begin
+        CharValue.SetValue(Value);
+        LiteralValue := CharValue;
+        Type := Type::Char;
     end;
 
     procedure Init(Value: Date)
@@ -33,6 +46,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     begin
         DateValue.SetValue(Value);
         LiteralValue := DateValue;
+        Type := Type::Date;
     end;
 
     procedure Init(Value: Time)
@@ -41,6 +55,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     begin
         TimeValue.SetValue(Value);
         LiteralValue := TimeValue;
+        Type := Type::Time;
     end;
 
     procedure Init(Value: DateTime)
@@ -49,11 +64,22 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
     begin
         DateTimeValue.SetValue(Value);
         LiteralValue := DateTimeValue;
+        Type := Type::DateTime;
     end;
 
     procedure GetType(): Enum "Node Type FS";
     begin
         exit(Enum::"Node Type FS"::"Literal Value");
+    end;
+
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(true);
     end;
 
     var
@@ -71,7 +97,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     begin
-        exit(SymbolTable.SymbolFromType(LiteralValue.GetType()));
+        exit(SymbolTable.SymbolFromType(Type));
     end;
 
     procedure ValidateSemanticsWithContext

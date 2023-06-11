@@ -28,11 +28,6 @@ codeunit 69105 "Record Value FS" implements "Value FS"
         // TODO need to decide where SetValue will be used - values vs references
     end;
 
-    procedure GetType(): Enum "Type FS"
-    begin
-        exit(Enum::"Type FS"::Record);
-    end;
-
     procedure Copy(): Interface "Value FS"
     var
         RecordValue: Codeunit "Record Value FS";
@@ -72,84 +67,14 @@ codeunit 69105 "Record Value FS" implements "Value FS"
     procedure GetProperty(Name: Text[120]): Interface "Value FS"
     var
         Field: Record Field;
+        RecordFieldValue: Codeunit "Record Field Value FS";
     begin
         Field.SetRange(TableNo, Value.Number());
         Field.SetRange(FieldName, Name);
         Field.FindFirst(); // TODO duplicate
 
-        exit(ValueFromVariant(
-            Value.Field(Field."No.").Value()
-        ));
-    end;
-
-    local procedure ValueFromVariant(Variant: Variant): Interface "Value FS";
-    var
-        NumericValue: Codeunit "Numeric Value FS";
-        BooleanValue: Codeunit "Boolean Value FS";
-        TextValue: Codeunit "Text Value FS";
-        DateValue: Codeunit "Date Value FS";
-        TimeValue: Codeunit "Time Value FS";
-        DateTimeValue: Codeunit "DateTime Value FS";
-        GuidValue: Codeunit "Guid Value FS";
-        DateFormulaValue: Codeunit "DateFormula Value FS";
-    begin
-        case true of
-            Variant.IsInteger(),
-            Variant.IsDecimal():
-                begin
-                    NumericValue.SetValue(Variant);
-                    exit(NumericValue);
-                end;
-            Variant.IsBoolean():
-                begin
-                    BooleanValue.SetValue(Variant);
-                    exit(BooleanValue);
-                end;
-            Variant.IsCode(),
-            Variant.IsText():
-                begin
-                    TextValue.SetValue(Variant);
-                    exit(TextValue);
-                end;
-            Variant.IsDate():
-                begin
-                    DateValue.SetValue(Variant);
-                    exit(DateValue);
-                end;
-            Variant.IsTime():
-                begin
-                    TimeValue.SetValue(Variant);
-                    exit(TimeValue);
-                end;
-            Variant.IsDateTime():
-                begin
-                    DateTimeValue.SetValue(Variant);
-                    exit(DateTimeValue);
-                end;
-            Variant.IsGuid():
-                begin
-                    GuidValue.SetValue(Variant);
-                    exit(GuidValue);
-                end;
-            Variant.IsDateFormula():
-                begin
-                    DateFormulaValue.SetValue(Variant);
-                    exit(DateFormulaValue);
-                end;
-            else
-                Error('Initilization of type from value %1 is not supported.', Value);
-        end;
-    end;
-
-    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS")
-    var
-        Field: Record Field;
-    begin
-        Field.SetRange(TableNo, Value.Number());
-        Field.SetRange(FieldName, Name);
-        Field.FindFirst(); // TODO duplicate
-
-        Value.Field(Field."No.").Value(NewValue.GetValue())
+        RecordFieldValue.Init(Value.Field(Field."No."));
+        exit(RecordFieldValue);
     end;
 
     procedure Format(): Text;
@@ -180,5 +105,10 @@ codeunit 69105 "Record Value FS" implements "Value FS"
     procedure Evaluate(Input: Text; FormatNumber: Integer; Throw: Boolean): Boolean
     begin
         Error('Record values can not be evaluated.');
+    end;
+
+    procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
+    begin
+        Error('Record values do not support index access.');
     end;
 }

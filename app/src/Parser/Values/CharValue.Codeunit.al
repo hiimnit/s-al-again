@@ -1,7 +1,7 @@
-codeunit 69103 "Text Value FS" implements "Value FS"
+codeunit 69111 "Char Value FS" implements "Value FS"
 {
     var
-        Value: Text;
+        Value: Char;
 
     procedure GetValue(): Variant;
     begin
@@ -15,10 +15,10 @@ codeunit 69103 "Text Value FS" implements "Value FS"
 
     procedure Copy(): Interface "Value FS"
     var
-        TextValue: Codeunit "Text Value FS";
+        CharValue: Codeunit "Char Value FS";
     begin
-        TextValue.SetValue(Value);
-        exit(TextValue);
+        CharValue.SetValue(Value);
+        exit(CharValue);
     end;
 
     procedure Mutate(NewValue: Interface "Value FS");
@@ -28,7 +28,7 @@ codeunit 69103 "Text Value FS" implements "Value FS"
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
     begin
-        Error('Text values do not support property access');
+        Error('Char values do not support property access');
     end;
 
     procedure Format(): Text;
@@ -70,13 +70,7 @@ codeunit 69103 "Text Value FS" implements "Value FS"
     end;
 
     procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
-    var
-        TextCharValue: Codeunit "Text Char Value FS";
     begin
-        TextCharValue.Init(
-            Self,
-            Index.GetValue()
-        );
-        exit(TextCharValue);
+        Error('Char values do not support index access.');
     end;
 }

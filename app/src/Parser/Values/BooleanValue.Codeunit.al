@@ -13,11 +13,6 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
         Value := NewValue;
     end;
 
-    procedure GetType(): Enum "Type FS"
-    begin
-        exit(Enum::"Type FS"::Boolean);
-    end;
-
     procedure Copy(): Interface "Value FS"
     var
         BooleanValue: Codeunit "Boolean Value FS";
@@ -32,11 +27,6 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
     end;
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
-    begin
-        Error('Boolean values do not support property access');
-    end;
-
-    procedure SetProperty(Name: Text[120]; NewValue: Interface "Value FS");
     begin
         Error('Boolean values do not support property access');
     end;
@@ -77,5 +67,10 @@ codeunit 69102 "Boolean Value FS" implements "Value FS"
 
         System.Evaluate(Value, Input, FormatNumber);
         exit(true);
+    end;
+
+    procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
+    begin
+        Error('Boolean values do not support index access.');
     end;
 }

@@ -363,8 +363,8 @@ codeunit 69011 "Runtime FS"
     )
     begin
         if ExpectedSymbol."Pointer Parameter" then begin
-            if ArgumentNode.Value().GetType() <> Enum::"Node Type FS"::Variable then
-                Error('Var parameter %1 must be a variable.', ExpectedSymbol.Name);
+            if not ArgumentNode.Value().Assignable() then
+                Error('Var parameter %1 must be an assignable variable.', ExpectedSymbol.Name);
 
             if MatchTypesAnyOrExact(ExpectedSymbol, Symbol) then
                 exit;

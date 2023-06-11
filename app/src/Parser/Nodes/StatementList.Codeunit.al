@@ -8,6 +8,16 @@ codeunit 69016 "Statement List FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Statement List");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

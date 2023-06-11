@@ -21,6 +21,16 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         exit(Enum::"Node Type FS"::"Binary Operator");
     end;
 
+    procedure Assignable(): Boolean
+    begin
+        exit(false);
+    end;
+
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 
@@ -36,14 +46,22 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         LeftValueVariant := Left.Evaluate(Runtime).GetValue();
         RightValueVariant := Right.Evaluate(Runtime).GetValue();
 
-        exit(Evaluate(LeftValueVariant, RightValueVariant, BinaryOperator));
+        exit(Evaluate(
+            LeftValueVariant,
+            RightValueVariant,
+            BinaryOperator,
+            Left.IsLiteralValue(),
+            Right.IsLiteralValue()
+        ));
     end;
 
     procedure Evaluate
     (
         LeftValueVariant: Variant;
         RightValueVariant: Variant;
-        Operator: Enum "Operator FS"
+        Operator: Enum "Operator FS";
+        LeftIsLiteral: Boolean;
+        RightIsLiteral: Boolean
     ): Interface "Value FS";
     begin
         case Operator of
@@ -57,7 +75,9 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         end;
 
         case true of
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal():
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal(),
+            LeftValueVariant.IsChar() and RightValueVariant.IsDecimal(),
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsChar():
                 exit(EvaluateNumeric(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
                 exit(EvaluateBoolean(LeftValueVariant, RightValueVariant, Operator));
@@ -90,6 +110,14 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 exit(EvaluateDateTimeNumber(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsDecimal() and RightValueVariant.IsDateTime():
                 exit(EvaluateDateTimeNumber(RightValueVariant, LeftValueVariant, Operator));
+            LeftValueVariant.IsChar() and RightValueVariant.IsChar():
+                exit(EvaluateChar(
+                    LeftValueVariant,
+                    RightValueVariant,
+                    Operator,
+                    LeftIsLiteral,
+                    RightIsLiteral
+                ));
             else
                 Error('Unimplemented binary operator input types.'); // TODO nicer error?
         end;
@@ -369,6 +397,41 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         exit(DateTimeValue);
     end;
 
+    local procedure EvaluateChar
+    (
+        LeftValueVariant: Variant;
+        RightValueVariant: Variant;
+        Operator: Enum "Operator FS";
+        LeftIsLiteral: Boolean;
+        RightIsLiteral: Boolean
+    ): Interface "Value FS";
+    var
+        TextValue: Codeunit "Text Value FS";
+        LeftValue, RightValue : Char;
+        Result: Text;
+    begin
+        if LeftIsLiteral and RightIsLiteral then begin
+            LeftValue := LeftValueVariant;
+            RightValue := RightValueVariant;
+
+            case Operator of
+                Operator::"+":
+                    Result := Format(LeftValue) + Format(RightValue);
+                else
+                    Error('Unimplemented binary operator %1.', Operator);
+            end;
+
+            TextValue.SetValue(Result);
+            exit(TextValue);
+        end;
+
+        exit(EvaluateNumeric(
+            LeftValueVariant,
+            RightValueVariant,
+            Operator
+        ));
+    end;
+
     local procedure EvaluateComparison
     (
         LeftValueVariant: Variant;
@@ -383,8 +446,15 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             LeftValueVariant.IsText() and RightValueVariant.IsText(),
             LeftValueVariant.IsText() and RightValueVariant.IsGuid(),
             LeftValueVariant.IsGuid() and RightValueVariant.IsText(),
-            LeftValueVariant.IsGuid() and RightValueVariant.IsGuid():
+            LeftValueVariant.IsGuid() and RightValueVariant.IsGuid(),
+            LeftValueVariant.IsChar() and RightValueVariant.IsChar(),
+            LeftValueVariant.IsChar() and RightValueVariant.IsText(),
+            LeftValueVariant.IsText() and RightValueVariant.IsChar():
                 Result := CompareText(LeftValueVariant, RightValueVariant, Operator);
+            LeftValueVariant.IsChar() and RightValueVariant.IsDecimal():
+                Result := CompareCharNumber(LeftValueVariant, RightValueVariant, Operator);
+            LeftValueVariant.IsDecimal() and RightValueVariant.IsChar():
+                Result := CompareCharNumber(RightValueVariant, LeftValueVariant, Operator);
             LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal():
                 Result := CompareNumber(LeftValueVariant, RightValueVariant, Operator);
             LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
@@ -553,6 +623,31 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         end;
     end;
 
+    local procedure CompareCharNumber
+    (
+        LeftValue: Char;
+        RightValue: Decimal;
+        Operator: Enum "Operator FS"
+    ): Boolean
+    begin
+        case Operator of
+            Operator::"<":
+                exit(LeftValue < RightValue);
+            Operator::"<=":
+                exit(LeftValue <= RightValue);
+            Operator::"<>":
+                exit(LeftValue <> RightValue);
+            Operator::">=":
+                exit(LeftValue >= RightValue);
+            Operator::">":
+                exit(LeftValue > RightValue);
+            Operator::"=":
+                exit(LeftValue = RightValue);
+            else
+                Error('Unexpected comparison operator %1.', Operator);
+        end;
+    end;
+
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
         LeftSymbol, RightSymbol : Record "Symbol FS";
@@ -564,7 +659,9 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             SymbolTable,
             LeftSymbol,
             RightSymbol,
-            BinaryOperator
+            BinaryOperator,
+            Left.IsLiteralValue(),
+            Right.IsLiteralValue()
         ));
     end;
 
@@ -586,7 +683,9 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         SymbolTable: Codeunit "Symbol Table FS";
         LeftSymbol: Record "Symbol FS";
         RightSymbol: Record "Symbol FS";
-        Operator: Enum "Operator FS"
+        Operator: Enum "Operator FS";
+        LeftIsLiteral: Boolean;
+        RightIsLiteral: Boolean
     ): Record "Symbol FS";
     var
         ResultSymbol: Record "Symbol FS";
@@ -606,7 +705,9 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     RightSymbol,
                     Operator
                 );
-            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Number):
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Number),
+            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Number),
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Char):
                 ResultSymbol := ValidateNumeric(
                     SymbolTable,
                     LeftSymbol,
@@ -623,7 +724,9 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Text),
             (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Text),
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Guid),
-            (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Guid):
+            (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Guid),
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Char),
+            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Text):
                 ResultSymbol := ValidateText(
                     SymbolTable,
                     LeftSymbol,
@@ -673,6 +776,15 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     RightSymbol,
                     Operator
                 );
+            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Char):
+                ResultSymbol := ValidateChar(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator,
+                    LeftIsLiteral,
+                    RightIsLiteral
+                );
             else
                 Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
         end;
@@ -693,6 +805,11 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Guid),
             (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Text),
             (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Guid),
+            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Char),
+            (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Char),
+            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Text),
+            (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Char),
+            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Number),
             (LeftSymbol.Type = LeftSymbol.Type::Number) and (RightSymbol.Type = RightSymbol.Type::Number),
             (LeftSymbol.Type = LeftSymbol.Type::Boolean) and (RightSymbol.Type = RightSymbol.Type::Boolean),
             (LeftSymbol.Type = LeftSymbol.Type::Date) and (RightSymbol.Type = RightSymbol.Type::Date),
@@ -862,5 +979,34 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         end;
 
         exit(SymbolTable.DateTimeSymbol());
+    end;
+
+    local procedure ValidateChar
+    (
+        SymbolTable: Codeunit "Symbol Table FS";
+        LeftSymbol: Record "Symbol FS";
+        RightSymbol: Record "Symbol FS";
+        Operator: Enum "Operator FS";
+        LeftIsLiteral: Boolean;
+        RightIsLiteral: Boolean
+    ): Record "Symbol FS"
+    begin
+        if LeftIsLiteral and RightIsLiteral then begin
+            case Operator of
+                Operator::"+":
+                    ;
+                else
+                    Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
+            end;
+
+            exit(SymbolTable.TextSymbol());
+        end;
+
+        exit(ValidateNumeric(
+            SymbolTable,
+            LeftSymbol,
+            RightSymbol,
+            Operator
+        ));
     end;
 }
