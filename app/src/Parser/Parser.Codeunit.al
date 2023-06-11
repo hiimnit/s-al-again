@@ -563,7 +563,7 @@ codeunit 69001 "Parser FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         UnaryOperatorNode: Codeunit "Unary Operator Node FS";
-        ExpressionNode: Interface "Node FS";
+        ParenthesesNode: Codeunit "Parentheses Node FS";
     begin
         PeekedLexeme := PeekNextLexeme();
 
@@ -573,13 +573,13 @@ codeunit 69001 "Parser FS"
                     begin
                         NextLexeme();
 
-                        ExpressionNode := ParseExpression();
+                        ParenthesesNode.Init(ParseExpression());
 
                         AssertNextLexeme(
                             PeekedLexeme.Operator(Enum::"Operator FS"::")")
                         );
 
-                        exit(ExpressionNode);
+                        exit(ParenthesesNode);
                     end;
                 PeekedLexeme."Operator Value"::"+",
                 PeekedLexeme."Operator Value"::"-",
