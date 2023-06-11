@@ -25,6 +25,11 @@ codeunit 69023 "Procedure Call Node FS" implements "Node FS"
         exit(false);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

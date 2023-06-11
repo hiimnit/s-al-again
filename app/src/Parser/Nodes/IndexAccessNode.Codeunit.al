@@ -23,6 +23,11 @@ codeunit 69029 "Index Access Node FS" implements "Node FS"
         exit(ValueExpression.Assignable());
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

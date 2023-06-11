@@ -18,6 +18,11 @@ codeunit 69017 "Variable Node FS" implements "Node FS" // TODO rename to identif
         exit(true);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

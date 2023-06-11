@@ -26,6 +26,11 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
         exit(false);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 
@@ -63,7 +68,9 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
             NewValue := BinaryOperatorNode.Evaluate(
                 VariableValue.GetValue(),
                 NewValue.GetValue(),
-                BinaryOperator
+                BinaryOperator,
+                VariableExpression.IsLiteralValue(),
+                ValueExpression.IsLiteralValue()
             );
 
         VariableValue.Mutate(NewValue);
@@ -103,7 +110,9 @@ codeunit 69018 "Assignment Statement Node FS" implements "Node FS"
                 SymbolTable,
                 VariableSymbol,
                 ExpressionSymbol,
-                BinaryOperator
+                BinaryOperator,
+                VariableExpression.IsLiteralValue(),
+                ValueExpression.IsLiteralValue()
             );
 
         if not Runtime.MatchTypesCoercible(VariableSymbol, ExpressionSymbol) then

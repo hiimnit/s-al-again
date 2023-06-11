@@ -10,6 +10,11 @@ codeunit 69015 "NoOp FS" implements "Node FS"
         exit(false);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

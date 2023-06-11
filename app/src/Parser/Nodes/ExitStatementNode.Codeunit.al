@@ -23,6 +23,11 @@ codeunit 69024 "Exit Statement Node FS" implements "Node FS"
         exit(false);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 

@@ -77,6 +77,11 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         exit(false);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(true);
+    end;
+
     var
         TopLevel: Boolean;
 

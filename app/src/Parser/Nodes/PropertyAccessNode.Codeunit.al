@@ -26,6 +26,11 @@ codeunit 69028 "Property Access Node FS" implements "Node FS"
         exit(true);
     end;
 
+    procedure IsLiteralValue(): Boolean
+    begin
+        exit(false);
+    end;
+
     var
         TopLevel: Boolean;
 
