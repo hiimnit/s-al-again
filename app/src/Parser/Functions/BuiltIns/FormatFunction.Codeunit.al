@@ -41,7 +41,7 @@ codeunit 69205 "Format Function FS" implements "Function FS"
             exit;
 
         ArgumentNode := ArgumentNode.Next();
-        ParameterSymbol.InsertNumber('Length', 2);
+        ParameterSymbol.InsertInteger('Length', 2);
         Runtime.TestParameterVsArgument(
             Runtime,
             SymbolTable,

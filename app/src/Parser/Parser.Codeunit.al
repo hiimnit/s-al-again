@@ -810,9 +810,10 @@ codeunit 69001 "Parser FS"
     local procedure ParseType(Identifier: Text): Enum "Type FS"
     begin
         case Identifier.ToLower() of
-            // TODO support standard integer and decimal types?
-            'number':
-                exit(Enum::"Type FS"::Number);
+            'integer':
+                exit(Enum::"Type FS"::Integer);
+            'decimal':
+                exit(Enum::"Type FS"::Decimal);
             // TODO support code type?
             'text':
                 exit(Enum::"Type FS"::Text);

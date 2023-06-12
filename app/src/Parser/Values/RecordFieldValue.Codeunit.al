@@ -95,7 +95,8 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
 
     local procedure ValueFromVariant(Variant: Variant): Interface "Value FS"
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
+        DecimalValue: Codeunit "Decimal Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
         DateValue: Codeunit "Date Value FS";
@@ -106,11 +107,15 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
         CharValue: Codeunit "Char Value FS";
     begin
         case true of
-            Variant.IsInteger(),
+            Variant.IsInteger():
+                begin
+                    IntegerValue.SetValue(Variant);
+                    exit(IntegerValue);
+                end;
             Variant.IsDecimal():
                 begin
-                    NumericValue.SetValue(Variant);
-                    exit(NumericValue);
+                    DecimalValue.SetValue(Variant);
+                    exit(DecimalValue);
                 end;
             Variant.IsBoolean():
                 begin

@@ -4,7 +4,8 @@ enum 69005 "Type FS"
     Extensible = false;
 
     value(0; Void) { }
-    value(10; Number) { }
+    value(11; Integer) { }
+    value(12; Decimal) { }
     value(20; Boolean) { }
     value(30; Text) { }
     value(40; Record) { }

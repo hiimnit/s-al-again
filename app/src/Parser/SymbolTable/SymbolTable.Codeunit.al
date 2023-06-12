@@ -101,12 +101,20 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         exit(Boolean);
     end;
 
-    procedure NumericSymbol(): Record "Symbol FS"
+    procedure IntegerSymbol(): Record "Symbol FS"
     var
-        Numeric: Record "Symbol FS";
+        Integer: Record "Symbol FS";
     begin
-        Numeric.Type := Numeric.Type::Number;
-        exit(Numeric);
+        Integer.Type := Integer.Type::Integer;
+        exit(Integer);
+    end;
+
+    procedure DecimalSymbol(): Record "Symbol FS"
+    var
+        Decimal: Record "Symbol FS";
+    begin
+        Decimal.Type := Decimal.Type::Decimal;
+        exit(Decimal);
     end;
 
     procedure TextSymbol(): Record "Symbol FS"
@@ -162,8 +170,10 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         case Type of
             Type::Boolean:
                 exit(BooleanSymbol());
-            Type::Number:
-                exit(NumericSymbol());
+            Type::Integer:
+                exit(IntegerSymbol());
+            Type::Decimal:
+                exit(DecimalSymbol());
             Type::Text:
                 exit(TextSymbol());
             Type::Char:

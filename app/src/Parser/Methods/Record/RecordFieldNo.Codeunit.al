@@ -11,12 +11,12 @@ codeunit 69321 "Record FieldNo FS" implements "Method FS"
         TopLevel: Boolean
     ): Interface "Value FS";
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
         RecordRef: RecordRef;
     begin
         RecordRef := Self.GetValue();
-        NumericValue.SetValue(FindFieldId(RecordRef.Number(), FieldName));
-        exit(NumericValue);
+        IntegerValue.SetValue(FindFieldId(RecordRef.Number(), FieldName));
+        exit(IntegerValue);
     end;
 
     local procedure FindFieldId
@@ -40,7 +40,7 @@ codeunit 69321 "Record FieldNo FS" implements "Method FS"
 
     procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";
     begin
-        exit(Enum::"Type FS"::Number);
+        exit(Enum::"Type FS"::Integer);
     end;
 
     procedure ValidateCallArguments

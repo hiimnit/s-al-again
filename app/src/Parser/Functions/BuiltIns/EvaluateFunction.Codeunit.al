@@ -28,7 +28,7 @@ codeunit 69222 "Evaluate Function FS" implements "Function FS"
         ParameterSymbol.InsertVarAny('Any', 1);
         ParameterSymbol.InsertText('Input', 2);
         if Arguments.GetCount() > 2 then
-            ParameterSymbol.InsertNumber('FormatNumber', 3);
+            ParameterSymbol.InsertInteger('FormatNumber', 3);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,

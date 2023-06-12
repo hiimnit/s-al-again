@@ -1,4 +1,4 @@
-codeunit 69101 "Numeric Value FS" implements "Value FS"
+codeunit 69115 "Decimal Value FS" implements "Value FS"
 {
     var
         Value: Decimal;
@@ -15,10 +15,10 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
 
     procedure Copy(): Interface "Value FS"
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        DecimalValue: Codeunit "Decimal Value FS";
     begin
-        NumericValue.SetValue(Value);
-        exit(NumericValue);
+        DecimalValue.SetValue(Value);
+        exit(DecimalValue);
     end;
 
     procedure Mutate(NewValue: Interface "Value FS");
@@ -28,7 +28,7 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
 
     procedure GetProperty(Name: Text[120]): Interface "Value FS";
     begin
-        Error('Numeric values do not support property access');
+        Error('Decimal values do not support property access');
     end;
 
     procedure Format(): Text;
@@ -71,6 +71,6 @@ codeunit 69101 "Numeric Value FS" implements "Value FS"
 
     procedure At(Self: Interface "Value FS"; Index: Interface "Value FS"): Interface "Value FS"
     begin
-        Error('Numeric values do not support index access.');
+        Error('Decimal values do not support index access.');
     end;
 }

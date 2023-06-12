@@ -82,7 +82,8 @@ codeunit 69009 "Memory FS"
     // TODO change to a "Validated Symbol"?
     procedure DefaultValueFromType(Symbol: Record "Symbol FS"): Interface "Value FS";
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
+        DecimalValue: Codeunit "Decimal Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
         DateValue: Codeunit "Date Value FS";
@@ -95,8 +96,10 @@ codeunit 69009 "Memory FS"
         Value: Interface "Value FS";
     begin
         case Symbol.Type of
-            Symbol.Type::Number:
-                Value := NumericValue;
+            Symbol.Type::Integer:
+                Value := IntegerValue;
+            Symbol.Type::Decimal:
+                Value := DecimalValue;
             Symbol.Type::Boolean:
                 Value := BooleanValue;
             Symbol.Type::Text:

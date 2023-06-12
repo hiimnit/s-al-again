@@ -4,13 +4,22 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         LiteralValue: Interface "Value FS";
         Type: Enum "Type FS";
 
+    procedure Init(Value: Integer) // FIXME is this called?
+    var
+        IntegerValue: Codeunit "Integer Value FS";
+    begin
+        IntegerValue.SetValue(Value);
+        LiteralValue := IntegerValue;
+        Type := Type::Integer;
+    end;
+
     procedure Init(Value: Decimal)
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        DecimalValue: Codeunit "Decimal Value FS";
     begin
-        NumericValue.SetValue(Value);
-        LiteralValue := NumericValue;
-        Type := Type::Number;
+        DecimalValue.SetValue(Value);
+        LiteralValue := DecimalValue;
+        Type := Type::Decimal;
     end;
 
     procedure Init(Value: Boolean)

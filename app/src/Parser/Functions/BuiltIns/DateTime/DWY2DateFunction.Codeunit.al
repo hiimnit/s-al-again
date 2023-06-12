@@ -23,11 +23,11 @@ codeunit 69217 "DWY2Date Function FS" implements "Function FS"
     var
         ParameterSymbol: Record "Symbol FS";
     begin
-        ParameterSymbol.InsertNumber('WeekDay', 1);
+        ParameterSymbol.InsertInteger('WeekDay', 1);
         if Arguments.GetCount() > 1 then
-            ParameterSymbol.InsertNumber('Week', 2);
+            ParameterSymbol.InsertInteger('Week', 2);
         if Arguments.GetCount() > 2 then
-            ParameterSymbol.InsertNumber('Year', 3);
+            ParameterSymbol.InsertInteger('Year', 3);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
@@ -45,7 +45,7 @@ codeunit 69217 "DWY2Date Function FS" implements "Function FS"
         TopLevel: Boolean
     ): Interface "Value FS"
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        DateValue: Codeunit "Date Value FS";
         ValueNode: Codeunit "Value Linked List Node FS";
         Day, Month, Year : Interface "Value FS";
     begin
@@ -53,34 +53,34 @@ codeunit 69217 "DWY2Date Function FS" implements "Function FS"
         Day := ValueNode.Value();
 
         if not ValueNode.HasNext() then begin
-            NumericValue.SetValue(DWY2Date(
+            DateValue.SetValue(DWY2Date(
                 Day.GetValue()
             ));
 
-            exit(NumericValue);
+            exit(DateValue);
         end;
 
         ValueNode := ValueNode.Next();
         Month := ValueNode.Value();
 
         if not ValueNode.HasNext() then begin
-            NumericValue.SetValue(DWY2Date(
+            DateValue.SetValue(DWY2Date(
                 Day.GetValue(),
                 Month.GetValue()
             ));
 
-            exit(NumericValue);
+            exit(DateValue);
         end;
 
         ValueNode := ValueNode.Next();
         Year := ValueNode.Value();
 
-        NumericValue.SetValue(DWY2Date(
+        DateValue.SetValue(DWY2Date(
             Day.GetValue(),
             Month.GetValue(),
             Year.GetValue()
         ));
 
-        exit(NumericValue);
+        exit(DateValue);
     end;
 }

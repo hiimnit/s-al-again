@@ -11,7 +11,7 @@ codeunit 69200 "Abs Function FS" implements "Function FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(SymbolTable.NumericSymbol());
+        exit(SymbolTable.DecimalSymbol());
     end;
 
     procedure ValidateCallArguments
@@ -23,7 +23,7 @@ codeunit 69200 "Abs Function FS" implements "Function FS"
     var
         ParameterSymbol: Record "Symbol FS";
     begin
-        ParameterSymbol.InsertNumber('Number', 1);
+        ParameterSymbol.InsertDecimal('Number', 1);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
@@ -41,15 +41,15 @@ codeunit 69200 "Abs Function FS" implements "Function FS"
         TopLevel: Boolean
     ): Interface "Value FS"
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        DecimalValue: Codeunit "Decimal Value FS";
         Node: Codeunit "Value Linked List Node FS";
         Value: Decimal;
     begin
         Node := ValueLinkedList.First();
 
         Value := Abs(Node.Value().GetValue());
-        NumericValue.SetValue(Value);
+        DecimalValue.SetValue(Value);
 
-        exit(NumericValue);
+        exit(DecimalValue);
     end;
 }
