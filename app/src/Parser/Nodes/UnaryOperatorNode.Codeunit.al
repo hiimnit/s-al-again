@@ -46,7 +46,14 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         case Operator of
             Operator::"+",
             Operator::"-":
-                exit(EvaluateNumeric(ValueVariant));
+                case true of
+                    ValueVariant.IsInteger():
+                        exit(EvaluateInteger(ValueVariant));
+                    ValueVariant.IsDecimal():
+                        exit(EvaluateDecimal(ValueVariant));
+                    else
+                        Error('Unimplemented unary operator %1.', Operator);
+                end;
             Operator::"not":
                 exit(EvaluateBoolean(ValueVariant));
             else
@@ -54,9 +61,29 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         end;
     end;
 
-    local procedure EvaluateNumeric(ValueVariant: Variant): Interface "Value FS";
+    local procedure EvaluateInteger(ValueVariant: Variant): Interface "Value FS";
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
+        Value, Result : Integer;
+    begin
+        Value := ValueVariant;
+
+        case Operator of
+            Operator::"+":
+                Result := Value;
+            Operator::"-":
+                Result := -Value;
+            else
+                Error('Unimplemented unary operator %1.', Operator);
+        end;
+
+        IntegerValue.SetValue(Result);
+        exit(IntegerValue);
+    end;
+
+    local procedure EvaluateDecimal(ValueVariant: Variant): Interface "Value FS";
+    var
+        DecimalValue: Codeunit "Decimal Value FS";
         Value, Result : Decimal;
     begin
         Value := ValueVariant;
@@ -70,8 +97,8 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
                 Error('Unimplemented unary operator %1.', Operator);
         end;
 
-        NumericValue.SetValue(Result);
-        exit(NumericValue);
+        DecimalValue.SetValue(Result);
+        exit(DecimalValue);
     end;
 
     local procedure EvaluateBoolean(ValueVariant: Variant): Interface "Value FS";
@@ -101,7 +128,7 @@ codeunit 69013 "Unary Operator Node FS" implements "Node FS"
         case Operator of
             Operator::"+",
             Operator::"-":
-                if Symbol.Type <> Symbol.Type::Number then
+                if Symbol.Type in [Symbol.Type::Integer, Symbol.Type::Decimal] then
                     Error('Unary operator %1 can not be applied to symbol %2.', Operator, Symbol.Type);
             Operator::"not":
                 if Symbol.Type <> Symbol.Type::Boolean then

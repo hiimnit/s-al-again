@@ -298,6 +298,7 @@ codeunit 69001 "Parser FS"
             Lexeme.Keyword(Enum::"Keyword FS"::"for")
         );
 
+        // TODO parse assignment instead
         IdentifierName := AssertNextLexeme(Lexeme.Identifier())."Identifier Name";
 
         AssertNextLexeme(
@@ -610,8 +611,10 @@ codeunit 69001 "Parser FS"
 
         if Lexeme.IsLiteralValue() then begin
             case true of
-                Lexeme.IsNumber():
-                    LiteralValueNode.Init(Lexeme."Number Value");
+                Lexeme.IsInteger():
+                    LiteralValueNode.Init(Lexeme."Integer Value");
+                Lexeme.IsDecimal():
+                    LiteralValueNode.Init(Lexeme."Decimal Value");
                 Lexeme.IsBoolean():
                     LiteralValueNode.Init(Lexeme."Boolean Value");
                 Lexeme.IsString():

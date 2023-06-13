@@ -45,10 +45,11 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         TopLevel := NewTopLevel;
     end;
 
+    // FIXME lets finally fix this
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
-        NumericValue: Codeunit "Numeric Value FS";
+        NumericValue: Codeunit "Decimal Value FS"; // FIXME
         InitialValue: Interface "Value FS";
         Value, FinalValue : Decimal;
     begin
@@ -101,15 +102,15 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
         Symbol: Record "Symbol FS";
     begin
         Symbol := SymbolTable.Lookup(IdentifierName);
-        if Symbol.Type <> Symbol.Type::Number then
+        if Symbol.IsNumeric() then
             Error('For variable must be of a number type.');
 
         Symbol := InitialValueExpression.ValidateSemantics(Runtime, SymbolTable);
-        if Symbol.Type <> Symbol.Type::Number then
+        if Symbol.IsNumeric() then
             Error('For initial expression must evaluate to a number type.');
 
         Symbol := FinalValueExpression.ValidateSemantics(Runtime, SymbolTable);
-        if Symbol.Type <> Symbol.Type::Number then
+        if Symbol.IsNumeric() then
             Error('For final expression must evaluate to a number type.');
 
         Statement.ValidateSemantics(Runtime, SymbolTable);

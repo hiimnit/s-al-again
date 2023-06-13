@@ -55,12 +55,13 @@ codeunit 69205 "Format Function FS" implements "Function FS"
 
         ArgumentNode := ArgumentNode.Next();
         Symbol := ArgumentNode.Value().ValidateSemantics(Runtime, SymbolTable);
-        if not (Symbol.Type in [Symbol.Type::Text, Symbol.Type::Number]) then // TODO guid is not included
+        if not Runtime.MatchTypesAnyOrCoercible(SymbolTable.TextSymbol(), Symbol)
+            and not Runtime.MatchTypesAnyOrCoercible(SymbolTable.IntegerSymbol(), Symbol)
+        then
             Error(
-                'Parameter call missmatch when calling method %1.\\Expected %2 or %3, got %4.',
+                'Parameter call missmatch when calling method %1.\\Expected %2, got %3.',
                 GetName(),
-                Symbol.Type::Text,
-                Symbol.Type::Number,
+                Symbol.Type::Integer,
                 Symbol.TypeToText()
             );
     end;
