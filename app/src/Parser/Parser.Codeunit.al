@@ -290,20 +290,14 @@ codeunit 69001 "Parser FS"
     var
         Lexeme: Record "Lexeme FS";
         ForStatementNode: Codeunit "For Statement Node FS";
-        InitialValueExpression, FinalValueExpression, Statement : Interface "Node FS";
-        IdentifierName: Text[120];
+        VariableExpression, InitialValueExpression, FinalValueExpression, Statement : Interface "Node FS";
         DownToLoop: Boolean;
     begin
-        AssertNextLexeme(
-            Lexeme.Keyword(Enum::"Keyword FS"::"for")
-        );
+        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"for"));
 
-        // TODO parse assignment instead
-        IdentifierName := AssertNextLexeme(Lexeme.Identifier())."Identifier Name";
+        VariableExpression := ParseGetExpression(false);
 
-        AssertNextLexeme(
-            Lexeme.Operator(Enum::"Operator FS"::":=")
-        );
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":="));
 
         InitialValueExpression := ParseExpression();
 
@@ -331,7 +325,7 @@ codeunit 69001 "Parser FS"
 
         ForStatementNode.Init(
             Statement,
-            IdentifierName,
+            VariableExpression,
             InitialValueExpression,
             FinalValueExpression,
             DownToLoop
