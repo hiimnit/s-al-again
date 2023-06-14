@@ -4,7 +4,7 @@ codeunit 69010 "Literal Value Node FS" implements "Node FS"
         LiteralValue: Interface "Value FS";
         Type: Enum "Type FS";
 
-    procedure Init(Value: Integer) // FIXME is this called?
+    procedure Init(Value: Integer)
     var
         IntegerValue: Codeunit "Integer Value FS";
     begin

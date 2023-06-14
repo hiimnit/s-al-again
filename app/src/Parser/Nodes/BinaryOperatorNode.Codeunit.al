@@ -121,15 +121,6 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         end;
     end;
 
-    local procedure IsNumeric(Variant: Variant): Boolean
-    begin
-        exit(
-            Variant.IsInteger()
-            or Variant.IsDecimal()
-            or Variant.IsChar()
-        );
-    end;
-
     local procedure EvaluateNumeric
     (
         LeftValueVariant: Variant;
@@ -817,7 +808,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     LeftIsLiteral,
                     RightIsLiteral
                 );
-            LeftSymbol.IsNumeric() and RightSymbol.IsNumeric():
+            IsNumeric(LeftSymbol) and IsNumeric(RightSymbol):
                 ResultSymbol := ValidateNumeric(
                     SymbolTable,
                     LeftSymbol,
@@ -863,24 +854,24 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     RightSymbol,
                     Operator
                 );
-            LeftSymbol.IsNumeric() and (RightSymbol.Type = RightSymbol.Type::Date),
-            (LeftSymbol.Type = LeftSymbol.Type::Date) and RightSymbol.IsNumeric():
+            IsNumeric(LeftSymbol) and (RightSymbol.Type = RightSymbol.Type::Date),
+            (LeftSymbol.Type = LeftSymbol.Type::Date) and IsNumeric(RightSymbol):
                 ResultSymbol := ValidateDateNumber(
                     SymbolTable,
                     LeftSymbol,
                     RightSymbol,
                     Operator
                 );
-            LeftSymbol.IsNumeric() and (RightSymbol.Type = RightSymbol.Type::Time),
-            (LeftSymbol.Type = LeftSymbol.Type::Time) and RightSymbol.IsNumeric():
+            IsNumeric(LeftSymbol) and (RightSymbol.Type = RightSymbol.Type::Time),
+            (LeftSymbol.Type = LeftSymbol.Type::Time) and IsNumeric(RightSymbol):
                 ResultSymbol := ValidateTimeNumber(
                     SymbolTable,
                     LeftSymbol,
                     RightSymbol,
                     Operator
                 );
-            LeftSymbol.IsNumeric() and (RightSymbol.Type = RightSymbol.Type::DateTime),
-            (LeftSymbol.Type = LeftSymbol.Type::DateTime) and RightSymbol.IsNumeric():
+            IsNumeric(LeftSymbol) and (RightSymbol.Type = RightSymbol.Type::DateTime),
+            (LeftSymbol.Type = LeftSymbol.Type::DateTime) and IsNumeric(RightSymbol):
                 ResultSymbol := ValidateDateTimeNumber(
                     SymbolTable,
                     LeftSymbol,
@@ -910,7 +901,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Char),
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Char),
             (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Text),
-            LeftSymbol.IsNumeric() and RightSymbol.IsNumeric(),
+            IsNumeric(LeftSymbol) and IsNumeric(RightSymbol),
             (LeftSymbol.Type = LeftSymbol.Type::Boolean) and (RightSymbol.Type = RightSymbol.Type::Boolean),
             (LeftSymbol.Type = LeftSymbol.Type::Date) and (RightSymbol.Type = RightSymbol.Type::Date),
             (LeftSymbol.Type = LeftSymbol.Type::Time) and (RightSymbol.Type = RightSymbol.Type::Time),
@@ -1115,5 +1106,24 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
             RightSymbol,
             Operator
         ));
+    end;
+
+    local procedure IsNumeric(Variant: Variant): Boolean
+    begin
+        exit(
+            Variant.IsInteger()
+            or Variant.IsDecimal()
+            or Variant.IsChar()
+        );
+    end;
+
+    local procedure IsNumeric(Symbol: Record "Symbol FS"): Boolean
+    begin
+        // FIXME instead check if coercible to number?
+        exit(Symbol.Type in [
+            Symbol.Type::Integer,
+            Symbol.Type::Decimal,
+            Symbol.Type::Char
+        ]);
     end;
 }

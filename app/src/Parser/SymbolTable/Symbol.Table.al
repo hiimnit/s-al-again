@@ -398,16 +398,6 @@ table 69001 "Symbol FS"
 
         exit(ResultSymbol);
     end;
-
-    procedure IsNumeric(): Boolean
-    begin
-        // FIXME instead check if coercible to number?
-        exit(Rec.Type in [
-            Rec.Type::Integer,
-            Rec.Type::Decimal,
-            Rec.Type::Char
-        ]);
-    end;
 }
 
 enum 69004 "Scope FS"

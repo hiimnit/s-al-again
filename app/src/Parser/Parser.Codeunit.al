@@ -714,7 +714,7 @@ codeunit 69001 "Parser FS"
                         AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"]"));
                     end;
                 else
-                    break; // FIXME does this work now?
+                    break;
             end;
         end;
 
