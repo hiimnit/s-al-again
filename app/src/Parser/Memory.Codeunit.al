@@ -147,11 +147,6 @@ codeunit 69009 "Memory FS"
         exit(LocalVariables[LocalVariableMap.Get(Name.ToLower())]);
     end;
 
-    procedure Set(Name: Text; Value: Interface "Value FS")
-    begin
-        LocalVariables[LocalVariableMap.Get(Name.ToLower())].Mutate(Value);
-    end;
-
     procedure GetReturnValue(): Interface "Value FS"
     begin
         if ReturnValueName = '' then
@@ -166,6 +161,6 @@ codeunit 69009 "Memory FS"
             exit;
         end;
 
-        Set(ReturnValueName, Value);
+        Get(ReturnValueName).Mutate(Value);
     end;
 }
