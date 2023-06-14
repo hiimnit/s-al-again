@@ -75,9 +75,15 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
         end;
 
         case true of
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsDecimal(),
-            LeftValueVariant.IsChar() and RightValueVariant.IsDecimal(),
-            LeftValueVariant.IsDecimal() and RightValueVariant.IsChar():
+            LeftValueVariant.IsChar() and RightValueVariant.IsChar():
+                exit(EvaluateChar(
+                    LeftValueVariant,
+                    RightValueVariant,
+                    Operator,
+                    LeftIsLiteral,
+                    RightIsLiteral
+                ));
+            IsNumeric(LeftValueVariant) and IsNumeric(RightValueVariant):
                 exit(EvaluateNumeric(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsBoolean() and RightValueVariant.IsBoolean():
                 exit(EvaluateBoolean(LeftValueVariant, RightValueVariant, Operator));
@@ -110,17 +116,18 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                 exit(EvaluateDateTimeNumber(LeftValueVariant, RightValueVariant, Operator));
             LeftValueVariant.IsDecimal() and RightValueVariant.IsDateTime():
                 exit(EvaluateDateTimeNumber(RightValueVariant, LeftValueVariant, Operator));
-            LeftValueVariant.IsChar() and RightValueVariant.IsChar():
-                exit(EvaluateChar(
-                    LeftValueVariant,
-                    RightValueVariant,
-                    Operator,
-                    LeftIsLiteral,
-                    RightIsLiteral
-                ));
             else
                 Error('Unimplemented binary operator input types.'); // TODO nicer error?
         end;
+    end;
+
+    local procedure IsNumeric(Variant: Variant): Boolean
+    begin
+        exit(
+            Variant.IsInteger()
+            or Variant.IsDecimal()
+            or Variant.IsChar()
+        );
     end;
 
     local procedure EvaluateNumeric
@@ -801,6 +808,15 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     RightSymbol,
                     Operator
                 );
+            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Char):
+                ResultSymbol := ValidateChar(
+                    SymbolTable,
+                    LeftSymbol,
+                    RightSymbol,
+                    Operator,
+                    LeftIsLiteral,
+                    RightIsLiteral
+                );
             LeftSymbol.IsNumeric() and RightSymbol.IsNumeric():
                 ResultSymbol := ValidateNumeric(
                     SymbolTable,
@@ -827,7 +843,7 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     RightSymbol,
                     Operator
                 );
-            // TODO integer only here?
+            // TODO integer only here? // FIXME
             (LeftSymbol.Type = LeftSymbol.Type::Text) and (RightSymbol.Type = RightSymbol.Type::Integer),
             (LeftSymbol.Type = LeftSymbol.Type::Integer) and (RightSymbol.Type = RightSymbol.Type::Text),
             (LeftSymbol.Type = LeftSymbol.Type::Guid) and (RightSymbol.Type = RightSymbol.Type::Integer),
@@ -870,15 +886,6 @@ codeunit 69012 "Binary Operator Node FS" implements "Node FS"
                     LeftSymbol,
                     RightSymbol,
                     Operator
-                );
-            (LeftSymbol.Type = LeftSymbol.Type::Char) and (RightSymbol.Type = RightSymbol.Type::Char):
-                ResultSymbol := ValidateChar(
-                    SymbolTable,
-                    LeftSymbol,
-                    RightSymbol,
-                    Operator,
-                    LeftIsLiteral,
-                    RightIsLiteral
                 );
             else
                 Error('Operator %1 is not supported for types %2 and %3.', Operator, LeftSymbol.Type, RightSymbol.Type);
