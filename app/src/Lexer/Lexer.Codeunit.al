@@ -313,7 +313,9 @@ codeunit 69000 "Lexer FS"
                         exit(Lexeme.Time(ParseTime(Number, Digits, DecimalPlaces)));
                     end;
                 else
-                    exit(Lexeme.Number(Number));
+                    if DecimalSeparatorFound then
+                        exit(Lexeme.Decimal(Number));
+                    exit(Lexeme.Integer(Number));
             end;
         until false;
     end;

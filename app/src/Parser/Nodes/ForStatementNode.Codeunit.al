@@ -2,21 +2,20 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
 {
     var
         Statement: Interface "Node FS";
-        IdentifierName: Text[120];
-        InitialValueExpression, FinalValueExpression : Interface "Node FS";
+        VariableExpression, InitialValueExpression, FinalValueExpression : Interface "Node FS";
         DownToLoop: Boolean;
 
     procedure Init
     (
         NewStatement: Interface "Node FS";
-        NewIdentifierName: Text[120];
+        NewVariableExpression: Interface "Node FS";
         NewInitialValueExpression: Interface "Node FS";
         NewFinalValueExpression: Interface "Node FS";
         NewDownToLoop: Boolean
     )
     begin
         Statement := NewStatement;
-        IdentifierName := NewIdentifierName;
+        VariableExpression := NewVariableExpression;
         InitialValueExpression := NewInitialValueExpression;
         FinalValueExpression := NewFinalValueExpression;
         DownToLoop := NewDownToLoop;
@@ -48,32 +47,29 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS";
     var
         VoidValue: Codeunit "Void Value FS";
-        NumericValue: Codeunit "Numeric Value FS";
-        InitialValue: Interface "Value FS";
+        VariableValue, InitialValue : Interface "Value FS";
         Value, FinalValue : Decimal;
     begin
+        VariableValue := VariableExpression.Evaluate(Runtime);
         InitialValue := InitialValueExpression.Evaluate(Runtime);
-        Runtime.GetMemory().Set(IdentifierName, InitialValue);
+        VariableValue.Mutate(InitialValue);
+
         FinalValue := FinalValueExpression.Evaluate(Runtime).GetValue();
 
-        // TODO rework using the standard for loop?
-        Value := Runtime.GetMemory().Get(IdentifierName).GetValue();
-        if not CheckCondition(Value, FinalValue) then
-            while true do begin
-                Statement.Evaluate(Runtime);
-                if Runtime.IsExited() then
-                    exit(VoidValue);
+        while not CheckCondition(Value, FinalValue) do begin
+            Statement.Evaluate(Runtime);
+            if Runtime.IsExited() then
+                exit(VoidValue);
 
-                // TODO this is not correct, investigate further
-                // >>>> when using decimals, end value can different from the final value
-                // >>>> maybe check for equality first?
-                Value := Increment(Runtime.GetMemory().Get(IdentifierName).GetValue());
-                if CheckCondition(Value, FinalValue) then
-                    break;
+            // when using decimals, end value can different from the final value
+            // unless they are equal
+            if Value = FinalValue then
+                break;
 
-                NumericValue.SetValue(Value);
-                Runtime.GetMemory().Set(IdentifierName, NumericValue);
-            end;
+            VariableValue := VariableExpression.Evaluate(Runtime);
+            Value := Increment(VariableValue.GetValue());
+            VariableValue.SetValue(Value);
+        end;
 
         exit(VoidValue);
     end;
@@ -98,18 +94,30 @@ codeunit 69020 "For Statement Node FS" implements "Node FS"
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
-        Symbol: Record "Symbol FS";
+        Symbol, VariableSymbol : Record "Symbol FS";
     begin
-        Symbol := SymbolTable.Lookup(IdentifierName);
-        if Symbol.Type <> Symbol.Type::Number then
-            Error('For variable must be of a number type.');
+        if not VariableExpression.Assignable() then
+            Error('Left side of for statement assignment must be an assignable variable.');
+
+        VariableSymbol := VariableExpression.ValidateSemantics(Runtime, SymbolTable);
+        if not Runtime.MatchTypesCoercible(
+            SymbolTable.DecimalSymbol(),
+            VariableSymbol
+        ) then
+            Error('For statement variable must be of a number type.');
 
         Symbol := InitialValueExpression.ValidateSemantics(Runtime, SymbolTable);
-        if Symbol.Type <> Symbol.Type::Number then
-            Error('For initial expression must evaluate to a number type.');
+        if not Runtime.MatchTypesCoercible(
+            VariableSymbol,
+            Symbol
+        ) then
+            Error('For statement initial expression must evaluate to a number type.');
 
         Symbol := FinalValueExpression.ValidateSemantics(Runtime, SymbolTable);
-        if Symbol.Type <> Symbol.Type::Number then
+        if not Runtime.MatchTypesCoercible(
+            VariableSymbol,
+            Symbol
+        ) then
             Error('For final expression must evaluate to a number type.');
 
         Statement.ValidateSemantics(Runtime, SymbolTable);

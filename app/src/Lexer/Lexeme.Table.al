@@ -17,7 +17,8 @@ table 69000 "Lexeme FS"
 
         field(4000; "Identifier Name"; Text[120]) { }
 
-        field(5000; "Number Value"; Decimal) { }
+        field(5001; "Integer Value"; Integer) { }
+        field(5002; "Decimal Value"; Decimal) { }
 
         field(6000; "Boolean Value"; Boolean) { }
 
@@ -42,11 +43,19 @@ table 69000 "Lexeme FS"
         exit(Rec);
     end;
 
-    procedure Number(Value: Decimal): Record "Lexeme FS"
+    procedure Integer(Value: Integer): Record "Lexeme FS"
     begin
         Rec.Init();
-        Rec.Type := Rec.Type::Number;
-        Rec."Number Value" := Value;
+        Rec.Type := Rec.Type::Integer;
+        Rec."Integer Value" := Value;
+        exit(Rec);
+    end;
+
+    procedure Decimal(Value: Decimal): Record "Lexeme FS"
+    begin
+        Rec.Init();
+        Rec.Type := Rec.Type::Decimal;
+        Rec."Decimal Value" := Value;
         exit(Rec);
     end;
 
@@ -174,10 +183,14 @@ table 69000 "Lexeme FS"
                 exit(Format(Rec."Keyword Value"));
             Rec.Type::Operator:
                 exit(Format(Rec."Operator Value"));
-            Rec.Type::Number:
-                exit(Format(Rec."Number Value", 0, 9));
+            Rec.Type::Integer:
+                exit(Format(Rec."Integer Value", 0, 9));
+            Rec.Type::Decimal:
+                exit(Format(Rec."Decimal Value", 0, 9));
             Rec.Type::String:
                 exit(Rec.GetStringValue());
+            Rec.Type::Char:
+                exit(Rec."Char Value");
             else
                 Rec.FieldError(Type);
         end;
@@ -207,9 +220,14 @@ table 69000 "Lexeme FS"
         exit(Rec.Type = Rec.Type::Identifier);
     end;
 
-    procedure IsNumber(): Boolean
+    procedure IsInteger(): Boolean
     begin
-        exit(Rec.Type = Rec.Type::Number);
+        exit(Rec.Type = Rec.Type::Integer);
+    end;
+
+    procedure IsDecimal(): Boolean
+    begin
+        exit(Rec.Type = Rec.Type::Decimal);
     end;
 
     procedure IsBoolean(): Boolean
@@ -245,7 +263,8 @@ table 69000 "Lexeme FS"
     procedure IsLiteralValue(): Boolean
     begin
         exit(true in [
-            IsNumber(),
+            IsInteger(),
+            IsDecimal(),
             IsBoolean(),
             IsString(),
             IsChar(),

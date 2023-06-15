@@ -42,7 +42,7 @@ table 69001 "Symbol FS"
         key(Order; Order) { }
     }
 
-    procedure InsertNumber
+    procedure InsertInteger
     (
         NewName: Text[120];
         NewOrder: Integer
@@ -50,7 +50,21 @@ table 69001 "Symbol FS"
     begin
         InsertParameter(
             NewName,
-            Rec.Type::Number,
+            Rec.Type::Integer,
+            NewOrder,
+            false
+        );
+    end;
+
+    procedure InsertDecimal
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Decimal,
             NewOrder,
             false
         );
@@ -233,9 +247,11 @@ table 69001 "Symbol FS"
             Rec.Type::Guid:
                 exit(Target.Type in [Target.Type::Text]);
             Rec.Type::Char:
-                exit(Target.Type in [Target.Type::Text, Target.Type::Number]);
-            Rec.Type::Number:
-                exit(Target.Type in [Target.Type::Char]);
+                exit(Target.Type in [Target.Type::Text, Target.Type::Integer, Target.Type::Decimal]);
+            Rec.Type::Integer:
+                exit(Target.Type in [Target.Type::Char, Target.Type::Decimal]);
+            Rec.Type::Decimal:
+                exit(Target.Type in [Target.Type::Char, Target.Type::Integer]);
         end;
 
         exit(false);
@@ -277,9 +293,10 @@ table 69001 "Symbol FS"
             Error('Field "%1" from table "%2" is obsolete.', PropertyName, Rec.Subtype);
 
         case Field.Type of
-            Field.Type::Integer,
+            Field.Type::Integer:
+                exit(SymbolTable.IntegerSymbol());
             Field.Type::Decimal:
-                exit(SymbolTable.NumericSymbol());
+                exit(SymbolTable.DecimalSymbol());
             Field.Type::Boolean:
                 exit(SymbolTable.BooleanSymbol());
             Field.Type::Code,
@@ -326,9 +343,10 @@ table 69001 "Symbol FS"
             exit(false);
 
         case Field.Type of
-            Field.Type::Integer,
+            Field.Type::Integer:
+                Symbol := SymbolTable.IntegerSymbol();
             Field.Type::Decimal:
-                Symbol := SymbolTable.NumericSymbol();
+                Symbol := SymbolTable.DecimalSymbol();
             Field.Type::Boolean:
                 Symbol := SymbolTable.BooleanSymbol();
             Field.Type::Code,
@@ -363,7 +381,7 @@ table 69001 "Symbol FS"
             ValueSymbol.Type::Text:
                 begin
                     if not Runtime.MatchTypesCoercible(
-                        SymbolTable.NumericSymbol(),
+                        SymbolTable.IntegerSymbol(),
                         IndexSymbol
                     ) then
                         Error(

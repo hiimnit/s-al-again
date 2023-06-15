@@ -290,19 +290,14 @@ codeunit 69001 "Parser FS"
     var
         Lexeme: Record "Lexeme FS";
         ForStatementNode: Codeunit "For Statement Node FS";
-        InitialValueExpression, FinalValueExpression, Statement : Interface "Node FS";
-        IdentifierName: Text[120];
+        VariableExpression, InitialValueExpression, FinalValueExpression, Statement : Interface "Node FS";
         DownToLoop: Boolean;
     begin
-        AssertNextLexeme(
-            Lexeme.Keyword(Enum::"Keyword FS"::"for")
-        );
+        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"for"));
 
-        IdentifierName := AssertNextLexeme(Lexeme.Identifier())."Identifier Name";
+        VariableExpression := ParseGetExpression(false);
 
-        AssertNextLexeme(
-            Lexeme.Operator(Enum::"Operator FS"::":=")
-        );
+        AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":="));
 
         InitialValueExpression := ParseExpression();
 
@@ -330,7 +325,7 @@ codeunit 69001 "Parser FS"
 
         ForStatementNode.Init(
             Statement,
-            IdentifierName,
+            VariableExpression,
             InitialValueExpression,
             FinalValueExpression,
             DownToLoop
@@ -610,8 +605,10 @@ codeunit 69001 "Parser FS"
 
         if Lexeme.IsLiteralValue() then begin
             case true of
-                Lexeme.IsNumber():
-                    LiteralValueNode.Init(Lexeme."Number Value");
+                Lexeme.IsInteger():
+                    LiteralValueNode.Init(Lexeme."Integer Value");
+                Lexeme.IsDecimal():
+                    LiteralValueNode.Init(Lexeme."Decimal Value");
                 Lexeme.IsBoolean():
                     LiteralValueNode.Init(Lexeme."Boolean Value");
                 Lexeme.IsString():
@@ -717,7 +714,7 @@ codeunit 69001 "Parser FS"
                         AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"]"));
                     end;
                 else
-                    break; // FIXME does this work now?
+                    break;
             end;
         end;
 
@@ -810,9 +807,10 @@ codeunit 69001 "Parser FS"
     local procedure ParseType(Identifier: Text): Enum "Type FS"
     begin
         case Identifier.ToLower() of
-            // TODO support standard integer and decimal types?
-            'number':
-                exit(Enum::"Type FS"::Number);
+            'integer':
+                exit(Enum::"Type FS"::Integer);
+            'decimal':
+                exit(Enum::"Type FS"::Decimal);
             // TODO support code type?
             'text':
                 exit(Enum::"Type FS"::Text);

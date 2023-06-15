@@ -82,7 +82,8 @@ codeunit 69009 "Memory FS"
     // TODO change to a "Validated Symbol"?
     procedure DefaultValueFromType(Symbol: Record "Symbol FS"): Interface "Value FS";
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
+        DecimalValue: Codeunit "Decimal Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
         DateValue: Codeunit "Date Value FS";
@@ -95,8 +96,10 @@ codeunit 69009 "Memory FS"
         Value: Interface "Value FS";
     begin
         case Symbol.Type of
-            Symbol.Type::Number:
-                Value := NumericValue;
+            Symbol.Type::Integer:
+                Value := IntegerValue;
+            Symbol.Type::Decimal:
+                Value := DecimalValue;
             Symbol.Type::Boolean:
                 Value := BooleanValue;
             Symbol.Type::Text:
@@ -144,11 +147,6 @@ codeunit 69009 "Memory FS"
         exit(LocalVariables[LocalVariableMap.Get(Name.ToLower())]);
     end;
 
-    procedure Set(Name: Text; Value: Interface "Value FS")
-    begin
-        LocalVariables[LocalVariableMap.Get(Name.ToLower())].Mutate(Value);
-    end;
-
     procedure GetReturnValue(): Interface "Value FS"
     begin
         if ReturnValueName = '' then
@@ -163,6 +161,6 @@ codeunit 69009 "Memory FS"
             exit;
         end;
 
-        Set(ReturnValueName, Value);
+        Get(ReturnValueName).Mutate(Value);
     end;
 }

@@ -11,7 +11,7 @@ codeunit 69201 "Power Function FS" implements "Function FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(SymbolTable.NumericSymbol());
+        exit(SymbolTable.DecimalSymbol());
     end;
 
     procedure ValidateCallArguments
@@ -23,8 +23,8 @@ codeunit 69201 "Power Function FS" implements "Function FS"
     var
         ParameterSymbol: Record "Symbol FS";
     begin
-        ParameterSymbol.InsertNumber('Number', 1);
-        ParameterSymbol.InsertNumber('Power', 2);
+        ParameterSymbol.InsertDecimal('Number', 1);
+        ParameterSymbol.InsertDecimal('Power', 2);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
@@ -42,7 +42,7 @@ codeunit 69201 "Power Function FS" implements "Function FS"
         TopLevel: Boolean
     ): Interface "Value FS"
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        DecimalValue: Codeunit "Decimal Value FS";
         Node: Codeunit "Value Linked List Node FS";
         Number, Power, Result : Decimal;
     begin
@@ -52,8 +52,8 @@ codeunit 69201 "Power Function FS" implements "Function FS"
         Power := Node.Value().GetValue();
 
         Result := Power(Number, Power);
-        NumericValue.SetValue(Result);
+        DecimalValue.SetValue(Result);
 
-        exit(NumericValue);
+        exit(DecimalValue);
     end;
 }

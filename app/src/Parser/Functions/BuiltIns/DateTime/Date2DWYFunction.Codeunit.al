@@ -11,7 +11,7 @@ codeunit 69215 "Date2DWY Function FS" implements "Function FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(SymbolTable.NumericSymbol());
+        exit(SymbolTable.IntegerSymbol());
     end;
 
     procedure ValidateCallArguments
@@ -24,7 +24,7 @@ codeunit 69215 "Date2DWY Function FS" implements "Function FS"
         ParameterSymbol: Record "Symbol FS";
     begin
         ParameterSymbol.InsertDate('Date', 1);
-        ParameterSymbol.InsertNumber('Part', 2);
+        ParameterSymbol.InsertInteger('Part', 2);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
@@ -42,7 +42,7 @@ codeunit 69215 "Date2DWY Function FS" implements "Function FS"
         TopLevel: Boolean
     ): Interface "Value FS"
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
         ValueNode: Codeunit "Value Linked List Node FS";
         Date, Number : Interface "Value FS";
     begin
@@ -51,11 +51,11 @@ codeunit 69215 "Date2DWY Function FS" implements "Function FS"
         ValueNode := ValueNode.Next();
         Number := ValueNode.Value();
 
-        NumericValue.SetValue(Date2DWY(
+        IntegerValue.SetValue(Date2DWY(
             Date.GetValue(),
             Number.GetValue()
         ));
 
-        exit(NumericValue);
+        exit(IntegerValue);
     end;
 }

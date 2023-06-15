@@ -8,12 +8,12 @@ codeunit 69318 "Record Count FS" implements "Method FS"
         TopLevel: Boolean
     ): Interface "Value FS";
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
         RecordRef: RecordRef;
     begin
         RecordRef := Self.GetValue();
-        NumericValue.SetValue(RecordRef.Count());
-        exit(NumericValue);
+        IntegerValue.SetValue(RecordRef.Count());
+        exit(IntegerValue);
     end;
 
     procedure GetName(): Text[120];
@@ -23,7 +23,7 @@ codeunit 69318 "Record Count FS" implements "Method FS"
 
     procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";
     begin
-        exit(Enum::"Type FS"::Number);
+        exit(Enum::"Type FS"::Integer);
     end;
 
     procedure ValidateCallArguments

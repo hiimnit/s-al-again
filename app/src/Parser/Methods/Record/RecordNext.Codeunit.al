@@ -8,7 +8,7 @@ codeunit 69307 "Record Next FS" implements "Method FS"
         TopLevel: Boolean
     ): Interface "Value FS";
     var
-        NumericValue: Codeunit "Numeric Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
         ValueLinkedList: Codeunit "Value Linked List FS";
         Node: Codeunit "Value Linked List Node FS";
         RecordRef: RecordRef;
@@ -21,8 +21,8 @@ codeunit 69307 "Record Next FS" implements "Method FS"
         if ValueLinkedList.First(Node) then
             Steps := Node.Value().GetValue();
 
-        NumericValue.SetValue(RecordRef.Next(Steps));
-        exit(NumericValue);
+        IntegerValue.SetValue(RecordRef.Next(Steps));
+        exit(IntegerValue);
     end;
 
     procedure GetName(): Text[120];
@@ -32,7 +32,7 @@ codeunit 69307 "Record Next FS" implements "Method FS"
 
     procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";
     begin
-        exit(Enum::"Type FS"::Number);
+        exit(Enum::"Type FS"::Integer);
     end;
 
     procedure ValidateCallArguments
@@ -48,7 +48,7 @@ codeunit 69307 "Record Next FS" implements "Method FS"
         if Arguments.GetCount() = 0 then
             exit;
 
-        ParameterSymbol.InsertNumber('Steps', 1);
+        ParameterSymbol.InsertInteger('Steps', 1);
         Runtime.ValidateMethodCallArguments(
             Runtime,
             SymbolTable,
