@@ -27,7 +27,7 @@ The entry point is a parameterless `trigger` called `OnRun`. You can define addi
 Global variables are not supported (yet?).
 
 ```sal
-procedure WriteLineMultiplied(text: text; count: number)
+procedure WriteLineMultiplied(text: text; count: integer)
 begin
     WriteLine(text * count);
 end;
@@ -58,15 +58,13 @@ end;
 | `boolean`                           | ✅      |                                                                                                                                                                                         |
 | `text`                              | ✅ ⭕️   | Declaring maximum text length is not (yet) supported.                                                                                                                                   |
 | `code`                              | ⭕️     | `code` varibles are not supported, but `code` fields can be used as if they were `text` fields.                                                                                         |
-| `char`                              | ✅      |                                                                                                                                                                                         |
 | `byte`                              | ⭕️     | Planned.                                                                                                                                                                                |
 | `guid`                              | ✅      |                                                                                                                                                                                         |
 | `enum`                              | ⭕️     | Planned (but maybe not possible outside of record fields?).                                                                                                                             |
 | `option`                            | ⭕️     | Planned.                                                                                                                                                                                |
-| `number`                            | ✅      | Currently used for both `integer` and `decimal`.                                                                                                                                        |
-| `integer`                           | ⭕️     | Planned, currently supported as `number`.                                                                                                                                               |
-| `decimal`                           | ⭕️     | Planned, currently supported as `number`.                                                                                                                                               |
-| `char`                              | ⭕️     |                                                                                                                                                                                         |
+| `integer`                           | ✅      |                                                                                                                                                                                         |
+| `decimal`                           | ✅      |                                                                                                                                                                                         |
+| `char`                              | ✅     |                                                                                                                                                                                         |
 | `byte`                              | ⭕️     |                                                                                                                                                                                         |
 | `date`                              | ✅      |                                                                                                                                                                                         |
 | `time`                              | ✅      |                                                                                                                                                                                         |
@@ -101,7 +99,7 @@ end;
 
 | type                                                                        | status | remark                      |
 |-----------------------------------------------------------------------------|--------|-----------------------------|
-| `AddLink(URL: Text, [Description: Text]): Number`                           | ⭕️     |                             |
+| `AddLink(URL: Text, [Description: Text]): Integer`                           | ⭕️     |                             |
 | `AddLoadFields([Field: Identifier, ...])`                                   | ⭕️     |                             |
 | `AreFieldsLoaded(Field: Identifier, ...): Boolean`                          | ⭕️     |                             |
 | `Ascending([Ascending: Boolean]): Boolean`                                  | ⭕️     |                             |
@@ -115,8 +113,8 @@ end;
 | `CopyFilters(var Record)`                                                   | ⭕️     |                             |
 | `CopyLinks(var Record)`                                                     | ⭕️     |                             |
 | `CopyLinks(RecordRef)`                                                      | ⭕️     |                             |
-| `Count(): Number`                                                           | ✅      |                             |
-| `CountApprox(): Number`                                                     | ⭕️     |                             |
+| `Count(): Integer`                                                           | ✅      |                             |
+| `CountApprox(): Integer`                                                     | ⭕️     |                             |
 | `CurrentCompany(): Text`                                                    | ⭕️     |                             |
 | `CurrentKey(): Text`                                                        | ⭕️     |                             |
 | `Delete([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
@@ -128,7 +126,7 @@ end;
 | `FieldError(Any [, Text])`                                                  | ⭕️     |                             |
 | `FieldError(Any, ErrorInfo)`                                                | ⭕️     |                             |
 | `FieldName(Any)`                                                            | ⭕️     |                             |
-| `FieldNo(Field: Identifier): Number`                                        | ✅      |                             |
+| `FieldNo(Field: Identifier): Integer`                                        | ✅      |                             |
 | `FilterGroup([Integer])`                                                    | ⭕️     |                             |
 | `Find([Text])`                                                              | ⭕️     |                             |
 | `FindFirst()[: Boolean]`                                                    | ✅      |                             |
@@ -158,7 +156,7 @@ end;
 | `MarkedOnly([Boolean])`                                                     | ⭕️     |                             |
 | `Modify([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
 | `ModifyAll(Any, Any [, Boolean])`                                           | ⭕️     |                             |
-| `Next([Steps: Number]): Number`                                             | ✅      |                             |
+| `Next([Steps: Integer]): Integer`                                             | ✅      |                             |
 | `ReadConsistency()`                                                         | ⭕️     |                             |
 | `ReadIsolation([IsolationLevel])`                                           | ⭕️     |                             |
 | `ReadPermission()`                                                          | ⭕️     |                             |
@@ -259,10 +257,10 @@ end;
 - `Message(Text: Text, [Substitution: Any, ...])` (up to 10 substitutions)
 - `Error(Text: Text, [Substitution: Any, ...])` (up to 10 substitutions)
 - `WriteLine(Text: Text, [Substitution: Any, ...])` (up to 10 substitutions)
-- `Abs(Number: Number): Number`
-- `Power(Number: Number, Power: Number): Number`
-- `Format(Input: Any, [Length: Number, [FormatNumber: Number]]): Text`
-- `Format(Input: Any, [Length: Number, [FormatString: Text]]): Text`
+- `Abs(Number: Decimal): Decimal`
+- `Power(Number: Decimal, Power: Decimal): Decimal`
+- `Format(Input: Any, [Length: Integer, [FormatNumber: Integer]]): Text`
+- `Format(Input: Any, [Length: Integer, [FormatString: Text]]): Text`
 - `CalcDate(Formula: Text, [Date: Date]): Date`
 - `CalcDate(Formula: DateFormula, [Date: Date]): Date`
 - `ClosingDate(Date: Date): Date`
@@ -272,21 +270,21 @@ end;
 - `Time(): Time`
 - `Today(): Date`
 - `WorkDate([WorkDate: Date]): Date`
-- `Date2DMY(Date: Date, Part: Number): Number`
-- `Date2DWY(Date: Date, Part: Number): Number`
-- `DMY2Date(Day: Number, [Month: Number, [Year: Number]]): Date`
-- `DWY2Date(WeekDay: Number, [Week: Number, [Year: Number]]): Date`
+- `Date2DMY(Date: Date, Part: Integer): Integer`
+- `Date2DWY(Date: Date, Part: Integer): Integer`
+- `DMY2Date(Day: Integer, [Month: Integer, [Year: Integer]]): Date`
+- `DWY2Date(WeekDay: Integer, [Week: Integer, [Year: Integer]]): Date`
 - `DT2Date(DateTime: DateTime): Date`
 - `DT2Time(DateTime: DateTime): Time`
 - `CreateGuid(): Guid`
 - `IsNullGuid(Guid: Guid): Boolean`
-- `Evaluate(var Value: Any, Input: Text, [FormatNumber: Number])[: Boolean]`
+- `Evaluate(var Value: Any, Input: Text, [FormatNumber: Integer])[: Boolean]`
 
 !TODO list unsupported and planned
 
 ### Planned
 
-1. replace `number` with `integer` and `decimal
+1. support `text` length (and add `code`?)
 1. more built-in functions and methods
 1. `option`, `enum`, others
 
