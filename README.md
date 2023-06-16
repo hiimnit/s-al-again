@@ -56,15 +56,14 @@ end;
 | type                                | status | remark                                                                                                                                                                                  |
 |-------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `boolean`                           | ✅      |                                                                                                                                                                                         |
-| `text`                              | ✅ ⭕️   | Declaring maximum text length is not (yet) supported.                                                                                                                                   |
-| `code`                              | ⭕️     | `code` varibles are not supported, but `code` fields can be used as if they were `text` fields.                                                                                         |
-| `byte`                              | ⭕️     | Planned.                                                                                                                                                                                |
+| `text`                              | ✅      |                                                                                                                                                                                         |
+| `code`                              | ✅      |                                                                                                                                                                                         |
 | `guid`                              | ✅      |                                                                                                                                                                                         |
 | `enum`                              | ⭕️     | Planned (but maybe not possible outside of record fields?).                                                                                                                             |
 | `option`                            | ⭕️     | Planned.                                                                                                                                                                                |
 | `integer`                           | ✅      |                                                                                                                                                                                         |
 | `decimal`                           | ✅      |                                                                                                                                                                                         |
-| `char`                              | ✅     |                                                                                                                                                                                         |
+| `char`                              | ✅      |                                                                                                                                                                                         |
 | `byte`                              | ⭕️     |                                                                                                                                                                                         |
 | `date`                              | ✅      |                                                                                                                                                                                         |
 | `time`                              | ✅      |                                                                                                                                                                                         |
@@ -99,7 +98,7 @@ end;
 
 | type                                                                        | status | remark                      |
 |-----------------------------------------------------------------------------|--------|-----------------------------|
-| `AddLink(URL: Text, [Description: Text]): Integer`                           | ⭕️     |                             |
+| `AddLink(URL: Text, [Description: Text]): Integer`                          | ⭕️     |                             |
 | `AddLoadFields([Field: Identifier, ...])`                                   | ⭕️     |                             |
 | `AreFieldsLoaded(Field: Identifier, ...): Boolean`                          | ⭕️     |                             |
 | `Ascending([Ascending: Boolean]): Boolean`                                  | ⭕️     |                             |
@@ -113,8 +112,8 @@ end;
 | `CopyFilters(var Record)`                                                   | ⭕️     |                             |
 | `CopyLinks(var Record)`                                                     | ⭕️     |                             |
 | `CopyLinks(RecordRef)`                                                      | ⭕️     |                             |
-| `Count(): Integer`                                                           | ✅      |                             |
-| `CountApprox(): Integer`                                                     | ⭕️     |                             |
+| `Count(): Integer`                                                          | ✅      |                             |
+| `CountApprox(): Integer`                                                    | ⭕️     |                             |
 | `CurrentCompany(): Text`                                                    | ⭕️     |                             |
 | `CurrentKey(): Text`                                                        | ⭕️     |                             |
 | `Delete([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
@@ -126,7 +125,7 @@ end;
 | `FieldError(Any [, Text])`                                                  | ⭕️     |                             |
 | `FieldError(Any, ErrorInfo)`                                                | ⭕️     |                             |
 | `FieldName(Any)`                                                            | ⭕️     |                             |
-| `FieldNo(Field: Identifier): Integer`                                        | ✅      |                             |
+| `FieldNo(Field: Identifier): Integer`                                       | ✅      |                             |
 | `FilterGroup([Integer])`                                                    | ⭕️     |                             |
 | `Find([Text])`                                                              | ⭕️     |                             |
 | `FindFirst()[: Boolean]`                                                    | ✅      |                             |
@@ -156,7 +155,7 @@ end;
 | `MarkedOnly([Boolean])`                                                     | ⭕️     |                             |
 | `Modify([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
 | `ModifyAll(Any, Any [, Boolean])`                                           | ⭕️     |                             |
-| `Next([Steps: Integer]): Integer`                                             | ✅      |                             |
+| `Next([Steps: Integer]): Integer`                                           | ✅      |                             |
 | `ReadConsistency()`                                                         | ⭕️     |                             |
 | `ReadIsolation([IsolationLevel])`                                           | ⭕️     |                             |
 | `ReadPermission()`                                                          | ⭕️     |                             |
@@ -284,7 +283,7 @@ end;
 
 ### Planned
 
-1. support `text` length (and add `code`?)
+1. maxstrlen?
 1. more built-in functions and methods
 1. `option`, `enum`, others
 

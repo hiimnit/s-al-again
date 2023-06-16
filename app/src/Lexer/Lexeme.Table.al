@@ -43,6 +43,11 @@ table 69000 "Lexeme FS"
         exit(Rec);
     end;
 
+    procedure Integer(): Record "Lexeme FS"
+    begin
+        exit(Rec.Integer(0));
+    end;
+
     procedure Integer(Value: Integer): Record "Lexeme FS"
     begin
         Rec.Init();

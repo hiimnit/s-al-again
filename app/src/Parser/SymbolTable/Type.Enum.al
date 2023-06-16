@@ -8,6 +8,7 @@ enum 69005 "Type FS"
     value(12; Decimal) { }
     value(20; Boolean) { }
     value(30; Text) { }
+    value(31; Code) { }
     value(40; Record) { }
     value(50; Date) { }
     value(60; Time) { }

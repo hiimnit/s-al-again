@@ -86,6 +86,7 @@ codeunit 69009 "Memory FS"
         DecimalValue: Codeunit "Decimal Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
+        CodeValue: Codeunit "Code Value FS";
         DateValue: Codeunit "Date Value FS";
         TimeValue: Codeunit "Time Value FS";
         DateTimeValue: Codeunit "DateTime Value FS";
@@ -103,7 +104,17 @@ codeunit 69009 "Memory FS"
             Symbol.Type::Boolean:
                 Value := BooleanValue;
             Symbol.Type::Text:
-                Value := TextValue;
+                begin
+                    if Symbol."Length Defined" then
+                        TextValue.SetMaxLength(Symbol.Length);
+                    Value := TextValue;
+                end;
+            Symbol.Type::Code:
+                begin
+                    if Symbol."Length Defined" then
+                        CodeValue.SetMaxLength(Symbol.Length);
+                    Value := CodeValue;
+                end;
             Symbol.Type::Date:
                 Value := DateValue;
             Symbol.Type::Time:

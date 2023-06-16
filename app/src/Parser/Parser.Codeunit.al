@@ -130,6 +130,7 @@ codeunit 69001 "Parser FS"
                 AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::":"));
             end;
 
+            // TODO parse length
             Lexeme := AssertNextLexeme(Lexeme.Identifier());
             ReturnTypeSymbol.Type := ParseType(Lexeme."Identifier Name");
 
@@ -168,6 +169,17 @@ codeunit 69001 "Parser FS"
         if PeekedLexeme.IsIdentifier() then begin
             SubtypeLexeme := AssertNextLexeme(PeekedLexeme);
             Symbol.Subtype := SubtypeLexeme."Identifier Name";
+
+            PeekedLexeme := PeekNextLexeme();
+        end;
+
+        if PeekedLexeme.IsOperator(Enum::"Operator FS"::"[") then begin
+            AssertNextLexeme(PeekedLexeme);
+
+            Lexeme := AssertNextLexeme(PeekedLexeme.Integer());
+            Symbol.SetLength(Lexeme."Integer Value");
+
+            AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"]"));
         end;
 
         exit(Symbol);
@@ -227,7 +239,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseCompoundStatement
     (
         OpeningKeyword: Enum "Keyword FS";
-        ClosingKeyword: Enum "Keyword FS"
+                            ClosingKeyword: Enum "Keyword FS"
     ): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
@@ -811,9 +823,10 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::Integer);
             'decimal':
                 exit(Enum::"Type FS"::Decimal);
-            // TODO support code type?
             'text':
                 exit(Enum::"Type FS"::Text);
+            'code':
+                exit(Enum::"Type FS"::Code);
             'boolean':
                 exit(Enum::"Type FS"::Boolean);
             'record':

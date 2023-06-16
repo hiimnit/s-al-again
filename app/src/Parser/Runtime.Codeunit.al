@@ -190,7 +190,8 @@ codeunit 69011 "Runtime FS"
     ): Interface "Method FS"
     begin
         case Type of
-            Type::Text:
+            Type::Text,
+            Type::Code: // TODO is this going to work? // FIXME
                 exit(LookupTextMethod(Name));
             Type::Record:
                 exit(LookupRecordMethod(Name));

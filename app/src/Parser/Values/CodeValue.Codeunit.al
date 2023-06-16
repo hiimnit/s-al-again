@@ -1,4 +1,4 @@
-codeunit 69103 "Text Value FS" implements "Value FS"
+codeunit 69104 "Code Value FS" implements "Value FS"
 {
     var
         MaxLength: Integer;
@@ -30,6 +30,7 @@ codeunit 69103 "Text Value FS" implements "Value FS"
             );
 
         Value := NewValue;
+        Value := Value.ToUpper();
     end;
 
     procedure Copy(): Interface "Value FS"
