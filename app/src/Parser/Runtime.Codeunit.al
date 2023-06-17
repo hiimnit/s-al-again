@@ -72,6 +72,18 @@ codeunit 69011 "Runtime FS"
         IsNullGuidFunction: Codeunit "IsNullGuid Function FS";
         EvaluateFunction: Codeunit "Evaluate Function FS";
         MaxStrLenFunction: Codeunit "MaxStrLen Function FS";
+        ConvertStrFunction: Codeunit "ConvertStr Function FS";
+        CopyStrFunction: Codeunit "CopyStr Function FS";
+        DelChrFunction: Codeunit "DelChr Function FS";
+        DelStrFunction: Codeunit "DelStr Function FS";
+        IncStrFunction: Codeunit "IncStr Function FS";
+        InsStrFunction: Codeunit "InsStr Function FS";
+        LowerCaseFunction: Codeunit "LowerCase Function FS";
+        PadStrFunction: Codeunit "PadStr Function FS";
+        SelectStrFunction: Codeunit "SelectStr Function FS";
+        StrCheckSumFunction: Codeunit "StrCheckSum Function FS";
+        StrLenFunction: Codeunit "StrLen Function FS";
+        StrPosFunction: Codeunit "StrPos Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -122,6 +134,30 @@ codeunit 69011 "Runtime FS"
                 exit(EvaluateFunction);
             MaxStrLenFunction.GetName().ToLower():
                 exit(MaxStrLenFunction);
+            ConvertStrFunction.GetName().ToLower():
+                exit(ConvertStrFunction);
+            CopyStrFunction.GetName().ToLower():
+                exit(CopyStrFunction);
+            DelChrFunction.GetName().ToLower():
+                exit(DelChrFunction);
+            DelStrFunction.GetName().ToLower():
+                exit(DelStrFunction);
+            IncStrFunction.GetName().ToLower():
+                exit(IncStrFunction);
+            InsStrFunction.GetName().ToLower():
+                exit(InsStrFunction);
+            LowerCaseFunction.GetName().ToLower():
+                exit(LowerCaseFunction);
+            PadStrFunction.GetName().ToLower():
+                exit(PadStrFunction);
+            SelectStrFunction.GetName().ToLower():
+                exit(SelectStrFunction);
+            StrCheckSumFunction.GetName().ToLower():
+                exit(StrCheckSumFunction);
+            StrLenFunction.GetName().ToLower():
+                exit(StrLenFunction);
+            StrPosFunction.GetName().ToLower():
+                exit(StrPosFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;
