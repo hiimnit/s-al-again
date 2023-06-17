@@ -22,10 +22,9 @@ codeunit 69104 "Code Value FS" implements "Value FS"
     begin
         if MaxLengthDefined and (StrLen(NewValue) > MaxLength) then
             Error(
-                // TODO get the same error as base app? // FIXME
-                'Text is longer than maximum allowed length - %1 vs %2.\\Text: %3.',
-                MaxLength,
+                'The length of the string is %1, but it must be less than or equal to %2 characters. Value: %3.',
                 StrLen(NewValue),
+                MaxLength,
                 NewValue
             );
 
