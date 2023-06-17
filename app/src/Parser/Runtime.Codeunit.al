@@ -71,6 +71,7 @@ codeunit 69011 "Runtime FS"
         CreateGuidFunction: Codeunit "CreateGuid Function FS";
         IsNullGuidFunction: Codeunit "IsNullGuid Function FS";
         EvaluateFunction: Codeunit "Evaluate Function FS";
+        MaxStrLenFunction: Codeunit "MaxStrLen Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -119,6 +120,8 @@ codeunit 69011 "Runtime FS"
                 exit(IsNullGuidFunction);
             EvaluateFunction.GetName().ToLower():
                 exit(EvaluateFunction);
+            MaxStrLenFunction.GetName().ToLower():
+                exit(MaxStrLenFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;

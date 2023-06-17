@@ -301,6 +301,7 @@ table 69001 "Symbol FS"
     var
         AllObj: Record AllObj;
         Field: Record Field;
+        Symbol: Record "Symbol FS";
     begin
         if Rec.Type <> Rec.Type::Record then
             Error('Type %1 does not support property access.', Rec.Type);
@@ -327,9 +328,17 @@ table 69001 "Symbol FS"
             Field.Type::Boolean:
                 exit(SymbolTable.BooleanSymbol());
             Field.Type::Text:
-                exit(SymbolTable.TextSymbol());
+                begin
+                    Symbol := SymbolTable.TextSymbol();
+                    Symbol.SetLength(Field.Len);
+                    exit(Symbol);
+                end;
             Field.Type::Code:
-                exit(SymbolTable.CodeSymbol());
+                begin
+                    Symbol := SymbolTable.CodeSymbol();
+                    Symbol.SetLength(Field.Len);
+                    exit(Symbol);
+                end;
             Field.Type::Date:
                 exit(SymbolTable.DateSymbol());
             Field.Type::Time:
@@ -378,9 +387,15 @@ table 69001 "Symbol FS"
             Field.Type::Boolean:
                 Symbol := SymbolTable.BooleanSymbol();
             Field.Type::Text:
-                Symbol := SymbolTable.TextSymbol();
+                begin
+                    Symbol := SymbolTable.TextSymbol();
+                    Symbol.SetLength(Field.Len);
+                end;
             Field.Type::Code:
-                Symbol := SymbolTable.CodeSymbol();
+                begin
+                    Symbol := SymbolTable.CodeSymbol();
+                    Symbol.SetLength(Field.Len);
+                end;
             Field.Type::Date:
                 Symbol := SymbolTable.DateSymbol();
             Field.Type::Time:
