@@ -270,7 +270,7 @@ table 69001 "Symbol FS"
             Rec.Type::Text:
                 exit(Target.Type in [Target.Type::Code, Target.Type::Guid]);
             Rec.Type::Code:
-                exit(Target.Type in [Target.Type::Code, Target.Type::Guid]);
+                exit(Target.Type in [Target.Type::Text, Target.Type::Guid]);
             Rec.Type::Guid:
                 exit(Target.Type in [Target.Type::Text, Target.Type::Code]);
             Rec.Type::Char:
