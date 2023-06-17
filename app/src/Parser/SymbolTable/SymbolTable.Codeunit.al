@@ -125,6 +125,14 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         exit(Text);
     end;
 
+    procedure CodeSymbol(): Record "Symbol FS"
+    var
+        Code: Record "Symbol FS";
+    begin
+        Code.Type := Code.Type::Code;
+        exit(Code);
+    end;
+
     procedure DateSymbol(): Record "Symbol FS"
     var
         Date: Record "Symbol FS";

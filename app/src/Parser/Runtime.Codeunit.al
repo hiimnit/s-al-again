@@ -71,6 +71,21 @@ codeunit 69011 "Runtime FS"
         CreateGuidFunction: Codeunit "CreateGuid Function FS";
         IsNullGuidFunction: Codeunit "IsNullGuid Function FS";
         EvaluateFunction: Codeunit "Evaluate Function FS";
+        MaxStrLenFunction: Codeunit "MaxStrLen Function FS";
+        ConvertStrFunction: Codeunit "ConvertStr Function FS";
+        CopyStrFunction: Codeunit "CopyStr Function FS";
+        DelChrFunction: Codeunit "DelChr Function FS";
+        DelStrFunction: Codeunit "DelStr Function FS";
+        IncStrFunction: Codeunit "IncStr Function FS";
+        InsStrFunction: Codeunit "InsStr Function FS";
+        LowerCaseFunction: Codeunit "LowerCase Function FS";
+        PadStrFunction: Codeunit "PadStr Function FS";
+        SelectStrFunction: Codeunit "SelectStr Function FS";
+        StrCheckSumFunction: Codeunit "StrCheckSum Function FS";
+        StrLenFunction: Codeunit "StrLen Function FS";
+        StrPosFunction: Codeunit "StrPos Function FS";
+        StrSubstNoFunction: Codeunit "StrSubstNo Function FS";
+        UpperCaseEndFunction: Codeunit "UpperCaseEnd Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -119,6 +134,36 @@ codeunit 69011 "Runtime FS"
                 exit(IsNullGuidFunction);
             EvaluateFunction.GetName().ToLower():
                 exit(EvaluateFunction);
+            MaxStrLenFunction.GetName().ToLower():
+                exit(MaxStrLenFunction);
+            ConvertStrFunction.GetName().ToLower():
+                exit(ConvertStrFunction);
+            CopyStrFunction.GetName().ToLower():
+                exit(CopyStrFunction);
+            DelChrFunction.GetName().ToLower():
+                exit(DelChrFunction);
+            DelStrFunction.GetName().ToLower():
+                exit(DelStrFunction);
+            IncStrFunction.GetName().ToLower():
+                exit(IncStrFunction);
+            InsStrFunction.GetName().ToLower():
+                exit(InsStrFunction);
+            LowerCaseFunction.GetName().ToLower():
+                exit(LowerCaseFunction);
+            PadStrFunction.GetName().ToLower():
+                exit(PadStrFunction);
+            SelectStrFunction.GetName().ToLower():
+                exit(SelectStrFunction);
+            StrCheckSumFunction.GetName().ToLower():
+                exit(StrCheckSumFunction);
+            StrLenFunction.GetName().ToLower():
+                exit(StrLenFunction);
+            StrPosFunction.GetName().ToLower():
+                exit(StrPosFunction);
+            StrSubstNoFunction.GetName().ToLower():
+                exit(StrSubstNoFunction);
+            UpperCaseEndFunction.GetName().ToLower():
+                exit(UpperCaseEndFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;
@@ -190,7 +235,8 @@ codeunit 69011 "Runtime FS"
     ): Interface "Method FS"
     begin
         case Type of
-            Type::Text:
+            Type::Text,
+            Type::Code:
                 exit(LookupTextMethod(Name));
             Type::Record:
                 exit(LookupRecordMethod(Name));
@@ -207,6 +253,19 @@ codeunit 69011 "Runtime FS"
         TextToUpper: Codeunit "Text ToUpper FS";
         TextToLower: Codeunit "Text ToLower FS";
         TextContains: Codeunit "Text Contains FS";
+        TextEndsWith: Codeunit "Text EndsWith FS";
+        TextIndexOf: Codeunit "Text IndexOf FS";
+        TextIndexOfAny: Codeunit "Text IndexOfAny FS";
+        TextLastIndexOf: Codeunit "Text LastIndexOf FS";
+        TextPadLeft: Codeunit "Text PadLeft FS";
+        TextPadRight: Codeunit "Text PadRight FS";
+        TextRemove: Codeunit "Text Remove FS";
+        TextReplace: Codeunit "Text Replace FS";
+        TextStartsWith: Codeunit "Text StartsWith FS";
+        TextSubstring: Codeunit "Text Substring FS";
+        TextTrim: Codeunit "Text Trim FS";
+        TextTrimEnd: Codeunit "Text TrimEnd FS";
+        TextTrimStart: Codeunit "Text TrimStart FS";
     begin
         case Name.ToLower() of
             TextToUpper.GetName().ToLower():
@@ -215,6 +274,32 @@ codeunit 69011 "Runtime FS"
                 exit(TextToLower);
             TextContains.GetName().ToLower():
                 exit(TextContains);
+            TextEndsWith.GetName().ToLower():
+                exit(TextEndsWith);
+            TextIndexOf.GetName().ToLower():
+                exit(TextIndexOf);
+            TextIndexOfAny.GetName().ToLower():
+                exit(TextIndexOfAny);
+            TextLastIndexOf.GetName().ToLower():
+                exit(TextLastIndexOf);
+            TextPadLeft.GetName().ToLower():
+                exit(TextPadLeft);
+            TextPadRight.GetName().ToLower():
+                exit(TextPadRight);
+            TextRemove.GetName().ToLower():
+                exit(TextRemove);
+            TextReplace.GetName().ToLower():
+                exit(TextReplace);
+            TextStartsWith.GetName().ToLower():
+                exit(TextStartsWith);
+            TextSubstring.GetName().ToLower():
+                exit(TextSubstring);
+            TextTrim.GetName().ToLower():
+                exit(TextTrim);
+            TextTrimEnd.GetName().ToLower():
+                exit(TextTrimEnd);
+            TextTrimStart.GetName().ToLower():
+                exit(TextTrimStart);
             else
                 Error('Unknown Text method %1.', Name);
         end;

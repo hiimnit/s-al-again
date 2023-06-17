@@ -1,4 +1,4 @@
-codeunit 69302 "Text Contains FS" implements "Method FS"
+codeunit 69339 "Text IndexOfAny FS" implements "Method FS"
 {
     SingleInstance = true;
 
@@ -10,29 +10,43 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
         TopLevel: Boolean
     ): Interface "Value FS"
     var
-        BooleanValue: Codeunit "Boolean Value FS";
+        IntegerValue: Codeunit "Integer Value FS";
         ValueLinkedList: Codeunit "Value Linked List FS";
         Node: Codeunit "Value Linked List Node FS";
-        Text, Subtext : Text;
+        Subtext, StartIndex : Interface "Value FS";
+        Text: Text;
     begin
         Text := Self.GetValue();
 
         ValueLinkedList := Runtime.EvaluateArguments(Runtime, Arguments);
         Node := ValueLinkedList.First();
-        Subtext := Node.Value().GetValue();
+        Subtext := Node.Value();
 
-        BooleanValue.SetValue(Text.Contains(Subtext));
-        exit(BooleanValue);
+        if not Node.HasNext() then begin
+            IntegerValue.SetValue(Text.IndexOfAny(
+                Subtext.GetValue()
+            ));
+            exit(IntegerValue);
+        end;
+
+        Node := Node.Next();
+        StartIndex := Node.Value();
+
+        IntegerValue.SetValue(Text.IndexOfAny(
+            Subtext.GetValue(),
+            StartIndex.GetValue()
+        ));
+        exit(IntegerValue);
     end;
 
     procedure GetName(): Text[120];
     begin
-        exit('Contains');
+        exit('IndexOfAny');
     end;
 
     procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";
     begin
-        exit(Enum::"Type FS"::Boolean);
+        exit(Enum::"Type FS"::Integer);
     end;
 
     procedure ValidateCallArguments
@@ -46,6 +60,8 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
         ParameterSymbol: Record "Symbol FS";
     begin
         ParameterSymbol.InsertText('Value', 1);
+        if Arguments.GetCount() > 1 then
+            ParameterSymbol.InsertInteger('StartIndex', 2);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,

@@ -1,19 +1,17 @@
-codeunit 69222 "Evaluate Function FS" implements "Function FS"
+codeunit 69226 "DelChr Function FS" implements "Function FS"
 {
     SingleInstance = true;
 
     procedure GetName(): Text[120];
     begin
-        exit('Evaluate');
+        exit('DelChr');
     end;
 
     procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
-        if TopLevel then
-            exit(SymbolTable.VoidSymbol());
-        exit(SymbolTable.BooleanSymbol());
+        exit(SymbolTable.TextSymbol());
     end;
 
     procedure ValidateCallArguments
@@ -25,10 +23,11 @@ codeunit 69222 "Evaluate Function FS" implements "Function FS"
     var
         ParameterSymbol: Record "Symbol FS";
     begin
-        ParameterSymbol.InsertVarAny('Any', 1);
-        ParameterSymbol.InsertText('Input', 2);
+        ParameterSymbol.InsertText('String', 1);
+        if Arguments.GetCount() > 1 then
+            ParameterSymbol.InsertText('Where', 2);
         if Arguments.GetCount() > 2 then
-            ParameterSymbol.InsertInteger('FormatNumber', 3);
+            ParameterSymbol.InsertText('Which', 3);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
@@ -47,32 +46,42 @@ codeunit 69222 "Evaluate Function FS" implements "Function FS"
     ): Interface "Value FS"
     var
         Node: Codeunit "Value Linked List Node FS";
-        BooleanValue: Codeunit "Boolean Value FS";
-        VoidValue: Codeunit "Void Value FS";
-        Value, Input, Format : Interface "Value FS";
-        Result: Boolean;
+        TextValue: Codeunit "Text Value FS";
+        Input, Where, Which : Interface "Value FS";
+        Result: Text;
     begin
         Node := ValueLinkedList.First();
-        Value := Node.Value();
-
-        Node := Node.Next();
         Input := Node.Value();
 
         if not Node.HasNext() then begin
-            Result := Value.Evaluate(Input.GetValue(), TopLevel);
-            if TopLevel then
-                exit(VoidValue);
-            BooleanValue.SetValue(Result);
-            exit(BooleanValue);
+            Result := DelChr(
+                Input.GetValue()
+            );
+            TextValue.SetValue(Result);
+            exit(TextValue);
         end;
 
         Node := Node.Next();
-        Format := Node.Value();
+        Where := Node.Value();
 
-        Result := Value.Evaluate(Input.GetValue(), Format.GetValue(), TopLevel);
-        if TopLevel then
-            exit(VoidValue);
-        BooleanValue.SetValue(Result);
-        exit(BooleanValue);
+        if not Node.HasNext() then begin
+            Result := DelChr(
+                Input.GetValue(),
+                Where.GetValue()
+            );
+            TextValue.SetValue(Result);
+            exit(TextValue);
+        end;
+
+        Node := Node.Next();
+        Which := Node.Value();
+
+        Result := DelChr(
+            Input.GetValue(),
+            Where.GetValue(),
+            Which.GetValue()
+        );
+        TextValue.SetValue(Result);
+        exit(TextValue);
     end;
 }

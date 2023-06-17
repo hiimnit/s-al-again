@@ -56,15 +56,14 @@ end;
 | type                                | status | remark                                                                                                                                                                                  |
 |-------------------------------------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `boolean`                           | ✅      |                                                                                                                                                                                         |
-| `text`                              | ✅ ⭕️   | Declaring maximum text length is not (yet) supported.                                                                                                                                   |
-| `code`                              | ⭕️     | `code` varibles are not supported, but `code` fields can be used as if they were `text` fields.                                                                                         |
-| `byte`                              | ⭕️     | Planned.                                                                                                                                                                                |
+| `text`                              | ✅      |                                                                                                                                                                                         |
+| `code`                              | ✅      |                                                                                                                                                                                         |
 | `guid`                              | ✅      |                                                                                                                                                                                         |
 | `enum`                              | ⭕️     | Planned (but maybe not possible outside of record fields?).                                                                                                                             |
 | `option`                            | ⭕️     | Planned.                                                                                                                                                                                |
 | `integer`                           | ✅      |                                                                                                                                                                                         |
 | `decimal`                           | ✅      |                                                                                                                                                                                         |
-| `char`                              | ✅     |                                                                                                                                                                                         |
+| `char`                              | ✅      |                                                                                                                                                                                         |
 | `byte`                              | ⭕️     |                                                                                                                                                                                         |
 | `date`                              | ✅      |                                                                                                                                                                                         |
 | `time`                              | ✅      |                                                                                                                                                                                         |
@@ -99,7 +98,7 @@ end;
 
 | type                                                                        | status | remark                      |
 |-----------------------------------------------------------------------------|--------|-----------------------------|
-| `AddLink(URL: Text, [Description: Text]): Integer`                           | ⭕️     |                             |
+| `AddLink(URL: Text, [Description: Text]): Integer`                          | ⭕️     |                             |
 | `AddLoadFields([Field: Identifier, ...])`                                   | ⭕️     |                             |
 | `AreFieldsLoaded(Field: Identifier, ...): Boolean`                          | ⭕️     |                             |
 | `Ascending([Ascending: Boolean]): Boolean`                                  | ⭕️     |                             |
@@ -113,8 +112,8 @@ end;
 | `CopyFilters(var Record)`                                                   | ⭕️     |                             |
 | `CopyLinks(var Record)`                                                     | ⭕️     |                             |
 | `CopyLinks(RecordRef)`                                                      | ⭕️     |                             |
-| `Count(): Integer`                                                           | ✅      |                             |
-| `CountApprox(): Integer`                                                     | ⭕️     |                             |
+| `Count(): Integer`                                                          | ✅      |                             |
+| `CountApprox(): Integer`                                                    | ⭕️     |                             |
 | `CurrentCompany(): Text`                                                    | ⭕️     |                             |
 | `CurrentKey(): Text`                                                        | ⭕️     |                             |
 | `Delete([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
@@ -126,7 +125,7 @@ end;
 | `FieldError(Any [, Text])`                                                  | ⭕️     |                             |
 | `FieldError(Any, ErrorInfo)`                                                | ⭕️     |                             |
 | `FieldName(Any)`                                                            | ⭕️     |                             |
-| `FieldNo(Field: Identifier): Integer`                                        | ✅      |                             |
+| `FieldNo(Field: Identifier): Integer`                                       | ✅      |                             |
 | `FilterGroup([Integer])`                                                    | ⭕️     |                             |
 | `Find([Text])`                                                              | ⭕️     |                             |
 | `FindFirst()[: Boolean]`                                                    | ✅      |                             |
@@ -156,7 +155,7 @@ end;
 | `MarkedOnly([Boolean])`                                                     | ⭕️     |                             |
 | `Modify([RunTrigger: Boolean])[: Boolean]`                                  | ✅      |                             |
 | `ModifyAll(Any, Any [, Boolean])`                                           | ⭕️     |                             |
-| `Next([Steps: Integer]): Integer`                                             | ✅      |                             |
+| `Next([Steps: Integer]): Integer`                                           | ✅      |                             |
 | `ReadConsistency()`                                                         | ⭕️     |                             |
 | `ReadIsolation([IsolationLevel])`                                           | ⭕️     |                             |
 | `ReadPermission()`                                                          | ⭕️     |                             |
@@ -187,44 +186,43 @@ end;
 
 ##### Text methods
 
-| type                                     | status |
-|------------------------------------------|--------|
-| `ConvertStr(Text, Text, Text)`           | ⭕️     |
-| `CopyStr(Text, Integer [, Integer])`     | ⭕️     |
-| `DelChr(Text [, Text] [, Text])`         | ⭕️     |
-| `DelStr(Text, Integer [, Integer])`      | ⭕️     |
-| `IncStr(Text)`                           | ⭕️     |
-| `InsStr(Text, Text, Integer)`            | ⭕️     |
-| `LowerCase(Text)`                        | ⭕️     |
-| `MaxStrLen(Text)`                        | ⭕️     |
-| `MaxStrLen(Variant)`                     | ⭕️     |
-| `PadStr(Text, Integer [, Text])`         | ⭕️     |
-| `SelectStr(Integer, Text)`               | ⭕️     |
-| `StrCheckSum(Text [, Text] [, Integer])` | ⭕️     |
-| `StrLen(Text)`                           | ⭕️     |
-| `StrPos(Text, Text)`                     | ⭕️     |
-| `StrSubstNo(Text [, Any,...])`           | ⭕️     |
-| `UpperCase(Text)`                        | ⭕️     |
-| `Contains(Text: Text): Boolean`          | ✅      |
-| `EndsWith(Text)`                         | ⭕️     |
-| `IndexOf(Text [, Integer])`              | ⭕️     |
-| `IndexOfAny(Text [, Integer])`           | ⭕️     |
-| `IndexOfAny(List of [Char] [, Integer])` | ⭕️     |
-| `LastIndexOf(Text [, Integer])`          | ⭕️     |
-| `PadLeft(Integer [, Char])`              | ⭕️     |
-| `PadRight(Integer [, Char])`             | ⭕️     |
-| `Remove(Integer [, Integer])`            | ⭕️     |
-| `Replace(Text, Text)`                    | ⭕️     |
-| `Split([Text,...])`                      | ⭕️     |
-| `Split(List of [Text])`                  | ⭕️     |
-| `Split(List of [Char])`                  | ⭕️     |
-| `StartsWith(Text)`                       | ⭕️     |
-| `Substring(Integer [, Integer])`         | ⭕️     |
-| `ToLower(): Text`                        | ✅      |
-| `ToUpper(): Text`                        | ✅      |
-| `Trim()`                                 | ⭕️     |
-| `TrimEnd([Text])`                        | ⭕️     |
-| `TrimStart([Text])`                      | ⭕️     |
+| type                                     | status | remark                      |
+|------------------------------------------|--------|-----------------------------|
+| `ConvertStr(Text, Text, Text)`           | ✅      |                             |
+| `CopyStr(Text, Integer [, Integer])`     | ✅      |                             |
+| `DelChr(Text [, Text] [, Text])`         | ✅      |                             |
+| `DelStr(Text, Integer [, Integer])`      | ✅      |                             |
+| `IncStr(Text)`                           | ✅      |                             |
+| `InsStr(Text, Text, Integer)`            | ✅      |                             |
+| `LowerCase(Text)`                        | ✅      |                             |
+| `MaxStrLen(Text)`                        | ✅      |                             |
+| `PadStr(Text, Integer [, Text])`         | ✅      |                             |
+| `SelectStr(Integer, Text)`               | ✅      |                             |
+| `StrCheckSum(Text [, Text] [, Integer])` | ✅      |                             |
+| `StrLen(Text)`                           | ✅      |                             |
+| `StrPos(Text, Text)`                     | ✅      |                             |
+| `StrSubstNo(Text [, Any,...])`           | ✅      | only up to 10 substitutions |
+| `UpperCase(Text)`                        | ✅      |                             |
+| `Contains(Text: Text): Boolean`          | ✅      |                             |
+| `EndsWith(Text)`                         | ✅      |                             |
+| `IndexOf(Text [, Integer])`              | ✅      |                             |
+| `IndexOfAny(Text [, Integer])`           | ✅      |                             |
+| `IndexOfAny(List of [Char] [, Integer])` | ⭕️     |                             |
+| `LastIndexOf(Text [, Integer])`          | ✅      |                             |
+| `PadLeft(Integer [, Char])`              | ✅      |                             |
+| `PadRight(Integer [, Char])`             | ✅      |                             |
+| `Remove(Integer [, Integer])`            | ✅      |                             |
+| `Replace(Text, Text)`                    | ✅      |                             |
+| `Split([Text,...])`                      | ⭕️     |                             |
+| `Split(List of [Text])`                  | ⭕️     |                             |
+| `Split(List of [Char])`                  | ⭕️     |                             |
+| `StartsWith(Text)`                       | ✅      |                             |
+| `Substring(Integer [, Integer])`         | ✅      |                             |
+| `ToLower(): Text`                        | ✅      |                             |
+| `ToUpper(): Text`                        | ✅      |                             |
+| `Trim()`                                 | ✅      |                             |
+| `TrimEnd([Text])`                        | ✅      |                             |
+| `TrimStart([Text])`                      | ✅      |                             |
 
 #### Statements
 
@@ -284,9 +282,14 @@ end;
 
 ### Planned
 
-1. support `text` length (and add `code`?)
+1. editor improvements
+    - ui improvements (render empty lines)
+    - highlighting
+    - intellisense
 1. more built-in functions and methods
 1. `option`, `enum`, others
+1. allow `Record.SetRange(Record.Field, ...);`
+1. strlen as a method?
 
 ## editor
 

@@ -1,4 +1,4 @@
-codeunit 69302 "Text Contains FS" implements "Method FS"
+codeunit 69347 "Text Trim FS" implements "Method FS"
 {
     SingleInstance = true;
 
@@ -10,29 +10,22 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
         TopLevel: Boolean
     ): Interface "Value FS"
     var
-        BooleanValue: Codeunit "Boolean Value FS";
-        ValueLinkedList: Codeunit "Value Linked List FS";
-        Node: Codeunit "Value Linked List Node FS";
-        Text, Subtext : Text;
+        TextValue: Codeunit "Text Value FS";
+        Text: Text;
     begin
         Text := Self.GetValue();
-
-        ValueLinkedList := Runtime.EvaluateArguments(Runtime, Arguments);
-        Node := ValueLinkedList.First();
-        Subtext := Node.Value().GetValue();
-
-        BooleanValue.SetValue(Text.Contains(Subtext));
-        exit(BooleanValue);
+        TextValue.SetValue(Text.Trim());
+        exit(TextValue);
     end;
 
     procedure GetName(): Text[120];
     begin
-        exit('Contains');
+        exit('Trim');
     end;
 
     procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";
     begin
-        exit(Enum::"Type FS"::Boolean);
+        exit(Enum::"Type FS"::Text);
     end;
 
     procedure ValidateCallArguments
@@ -45,8 +38,6 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
     var
         ParameterSymbol: Record "Symbol FS";
     begin
-        ParameterSymbol.InsertText('Value', 1);
-
         Runtime.ValidateMethodCallArguments(
             Runtime,
             SymbolTable,

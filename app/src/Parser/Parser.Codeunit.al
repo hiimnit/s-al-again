@@ -109,7 +109,7 @@ codeunit 69001 "Parser FS"
                     Pointer := true;
                 end;
 
-                ParameterSymbol := ParseVariableDefinition();
+                ParameterSymbol := ParseVariableDefinition(true);
                 SymbolTable.DefineParameter(ParameterSymbol, Pointer);
 
                 PeekedLexeme := PeekNextLexeme();
@@ -123,22 +123,8 @@ codeunit 69001 "Parser FS"
 
         ReturnTypeSymbol := SymbolTable.VoidSymbol();
         PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
-            Lexeme := AssertNextLexeme(PeekedLexeme);
-            if Lexeme.IsIdentifier() then begin
-                ReturnTypeSymbol.Name := Lexeme."Identifier Name";
-                AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::":"));
-            end;
-
-            Lexeme := AssertNextLexeme(Lexeme.Identifier());
-            ReturnTypeSymbol.Type := ParseType(Lexeme."Identifier Name");
-
-            PeekedLexeme := PeekNextLexeme();
-            if PeekedLexeme.IsIdentifier() then begin
-                Lexeme := AssertNextLexeme(PeekedLexeme);
-                ReturnTypeSymbol.Subtype := Lexeme."Identifier Name";
-            end;
-        end;
+        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then
+            ReturnTypeSymbol := ParseVariableDefinition(false);
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
 
@@ -152,22 +138,36 @@ codeunit 69001 "Parser FS"
         exit(UserFunction);
     end;
 
-    local procedure ParseVariableDefinition(): Record "Symbol FS"
+    local procedure ParseVariableDefinition(NameRequired: Boolean): Record "Symbol FS"
     var
         Symbol: Record "Symbol FS";
         Lexeme, PeekedLexeme, NameLexeme, TypeLexeme, SubtypeLexeme : Record "Lexeme FS";
     begin
-        NameLexeme := AssertNextLexeme(Lexeme.Identifier());
+        PeekedLexeme := PeekNextLexeme();
+        if NameRequired or PeekedLexeme.IsIdentifier() then begin
+            NameLexeme := AssertNextLexeme(Lexeme.Identifier());
+            Symbol.Name := NameLexeme."Identifier Name";
+        end;
+
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
         TypeLexeme := AssertNextLexeme(Lexeme.Identifier());
-
-        Symbol.Name := NameLexeme."Identifier Name";
         Symbol.Type := ParseType(TypeLexeme."Identifier Name");
 
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsIdentifier() then begin
             SubtypeLexeme := AssertNextLexeme(PeekedLexeme);
             Symbol.Subtype := SubtypeLexeme."Identifier Name";
+
+            PeekedLexeme := PeekNextLexeme();
+        end;
+
+        if PeekedLexeme.IsOperator(Enum::"Operator FS"::"[") then begin
+            AssertNextLexeme(PeekedLexeme);
+
+            Lexeme := AssertNextLexeme(PeekedLexeme.Integer());
+            Symbol.SetLength(Lexeme."Integer Value");
+
+            AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"]"));
         end;
 
         exit(Symbol);
@@ -191,7 +191,7 @@ codeunit 69001 "Parser FS"
                 if not PeekedLexeme.IsIdentifier() then
                     break;
 
-                VariableSymbol := ParseVariableDefinition();
+                VariableSymbol := ParseVariableDefinition(true);
                 SymbolTable.DefineLocal(VariableSymbol);
 
                 AssertNextLexeme(
@@ -227,7 +227,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseCompoundStatement
     (
         OpeningKeyword: Enum "Keyword FS";
-        ClosingKeyword: Enum "Keyword FS"
+                            ClosingKeyword: Enum "Keyword FS"
     ): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
@@ -811,9 +811,10 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::Integer);
             'decimal':
                 exit(Enum::"Type FS"::Decimal);
-            // TODO support code type?
             'text':
                 exit(Enum::"Type FS"::Text);
+            'code':
+                exit(Enum::"Type FS"::Code);
             'boolean':
                 exit(Enum::"Type FS"::Boolean);
             'record':

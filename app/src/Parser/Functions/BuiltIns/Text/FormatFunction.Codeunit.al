@@ -66,7 +66,6 @@ codeunit 69205 "Format Function FS" implements "Function FS"
             );
     end;
 
-    // TODO formatting numbers has issues - unexpected results when formatting "integers"
     procedure Evaluate
     (
         Runtime: Codeunit "Runtime FS";

@@ -34,6 +34,14 @@ table 69001 "Symbol FS"
         {
             Caption = 'Pointer Parameter';
         }
+        field(40; Length; Integer)
+        {
+            Caption = 'Length';
+        }
+        field(41; "Length Defined"; Boolean)
+        {
+            Caption = 'Length Defined';
+        }
     }
 
     keys
@@ -79,6 +87,20 @@ table 69001 "Symbol FS"
         InsertParameter(
             NewName,
             Rec.Type::Text,
+            NewOrder,
+            false
+        );
+    end;
+
+    procedure InsertChar
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Char,
             NewOrder,
             false
         );
@@ -213,6 +235,12 @@ table 69001 "Symbol FS"
         Rec.Insert();
     end;
 
+    procedure SetLength(NewLength: Integer)
+    begin
+        Rec.Length := NewLength;
+        Rec."Length Defined" := true;
+    end;
+
     procedure ValidateType()
     var
         AllObj: Record AllObj;
@@ -227,6 +255,17 @@ table 69001 "Symbol FS"
                     if AllObj.IsEmpty() then
                         Error('Table "%1" does not exist.', Rec.Subtype);
                 end;
+        end;
+
+        if Rec."Length Defined" then begin
+            if not (Rec.Type in [
+                Rec.Type::Text,
+                Rec.Type::Code
+            ]) then
+                Error('Length can only be defined for %1 and %2.', Rec.Type::Text, Rec.Type::Code);
+
+            if Rec.Length < 1 then
+                Error('Length must be positive.');
         end;
     end;
 
@@ -243,11 +282,13 @@ table 69001 "Symbol FS"
     begin
         case Rec.Type of
             Rec.Type::Text:
-                exit(Target.Type in [Target.Type::Guid]);
+                exit(Target.Type in [Target.Type::Code, Target.Type::Guid]);
+            Rec.Type::Code:
+                exit(Target.Type in [Target.Type::Text, Target.Type::Guid]);
             Rec.Type::Guid:
-                exit(Target.Type in [Target.Type::Text]);
+                exit(Target.Type in [Target.Type::Text, Target.Type::Code]);
             Rec.Type::Char:
-                exit(Target.Type in [Target.Type::Text, Target.Type::Integer, Target.Type::Decimal]);
+                exit(Target.Type in [Target.Type::Text, Target.Type::Code, Target.Type::Integer, Target.Type::Decimal]);
             Rec.Type::Integer:
                 exit(Target.Type in [Target.Type::Char, Target.Type::Decimal]);
             Rec.Type::Decimal:
@@ -274,6 +315,7 @@ table 69001 "Symbol FS"
     var
         AllObj: Record AllObj;
         Field: Record Field;
+        Symbol: Record "Symbol FS";
     begin
         if Rec.Type <> Rec.Type::Record then
             Error('Type %1 does not support property access.', Rec.Type);
@@ -299,9 +341,18 @@ table 69001 "Symbol FS"
                 exit(SymbolTable.DecimalSymbol());
             Field.Type::Boolean:
                 exit(SymbolTable.BooleanSymbol());
-            Field.Type::Code,
             Field.Type::Text:
-                exit(SymbolTable.TextSymbol());
+                begin
+                    Symbol := SymbolTable.TextSymbol();
+                    Symbol.SetLength(Field.Len);
+                    exit(Symbol);
+                end;
+            Field.Type::Code:
+                begin
+                    Symbol := SymbolTable.CodeSymbol();
+                    Symbol.SetLength(Field.Len);
+                    exit(Symbol);
+                end;
             Field.Type::Date:
                 exit(SymbolTable.DateSymbol());
             Field.Type::Time:
@@ -349,9 +400,16 @@ table 69001 "Symbol FS"
                 Symbol := SymbolTable.DecimalSymbol();
             Field.Type::Boolean:
                 Symbol := SymbolTable.BooleanSymbol();
-            Field.Type::Code,
             Field.Type::Text:
-                Symbol := SymbolTable.TextSymbol();
+                begin
+                    Symbol := SymbolTable.TextSymbol();
+                    Symbol.SetLength(Field.Len);
+                end;
+            Field.Type::Code:
+                begin
+                    Symbol := SymbolTable.CodeSymbol();
+                    Symbol.SetLength(Field.Len);
+                end;
             Field.Type::Date:
                 Symbol := SymbolTable.DateSymbol();
             Field.Type::Time:
@@ -378,6 +436,7 @@ table 69001 "Symbol FS"
         ResultSymbol: Record "Symbol FS";
     begin
         case ValueSymbol.Type of
+            ValueSymbol.Type::Code,
             ValueSymbol.Type::Text:
                 begin
                     if not Runtime.MatchTypesCoercible(

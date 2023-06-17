@@ -99,6 +99,7 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
         DecimalValue: Codeunit "Decimal Value FS";
         BooleanValue: Codeunit "Boolean Value FS";
         TextValue: Codeunit "Text Value FS";
+        CodeValue: Codeunit "Code Value FS";
         DateValue: Codeunit "Date Value FS";
         TimeValue: Codeunit "Time Value FS";
         DateTimeValue: Codeunit "DateTime Value FS";
@@ -122,11 +123,15 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
                     BooleanValue.SetValue(Variant);
                     exit(BooleanValue);
                 end;
-            Variant.IsCode(),
             Variant.IsText():
                 begin
                     TextValue.SetValue(Variant);
                     exit(TextValue);
+                end;
+            Variant.IsCode():
+                begin
+                    CodeValue.SetValue(Variant);
+                    exit(CodeValue);
                 end;
             Variant.IsDate():
                 begin

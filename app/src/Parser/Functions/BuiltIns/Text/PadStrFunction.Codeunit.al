@@ -1,19 +1,17 @@
-codeunit 69222 "Evaluate Function FS" implements "Function FS"
+codeunit 69231 "PadStr Function FS" implements "Function FS"
 {
     SingleInstance = true;
 
     procedure GetName(): Text[120];
     begin
-        exit('Evaluate');
+        exit('PadStr');
     end;
 
     procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     var
         SymbolTable: Codeunit "Symbol Table FS";
     begin
-        if TopLevel then
-            exit(SymbolTable.VoidSymbol());
-        exit(SymbolTable.BooleanSymbol());
+        exit(SymbolTable.TextSymbol());
     end;
 
     procedure ValidateCallArguments
@@ -25,10 +23,10 @@ codeunit 69222 "Evaluate Function FS" implements "Function FS"
     var
         ParameterSymbol: Record "Symbol FS";
     begin
-        ParameterSymbol.InsertVarAny('Any', 1);
-        ParameterSymbol.InsertText('Input', 2);
+        ParameterSymbol.InsertText('String', 1);
+        ParameterSymbol.InsertInteger('Length', 2);
         if Arguments.GetCount() > 2 then
-            ParameterSymbol.InsertInteger('FormatNumber', 3);
+            ParameterSymbol.InsertText('FillCharacter', 3);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
@@ -47,32 +45,34 @@ codeunit 69222 "Evaluate Function FS" implements "Function FS"
     ): Interface "Value FS"
     var
         Node: Codeunit "Value Linked List Node FS";
-        BooleanValue: Codeunit "Boolean Value FS";
-        VoidValue: Codeunit "Void Value FS";
-        Value, Input, Format : Interface "Value FS";
-        Result: Boolean;
+        TextValue: Codeunit "Text Value FS";
+        Input, Length, FillCharacter : Interface "Value FS";
+        Result: Text;
     begin
         Node := ValueLinkedList.First();
-        Value := Node.Value();
-
-        Node := Node.Next();
         Input := Node.Value();
 
+        Node := Node.Next();
+        Length := Node.Value();
+
         if not Node.HasNext() then begin
-            Result := Value.Evaluate(Input.GetValue(), TopLevel);
-            if TopLevel then
-                exit(VoidValue);
-            BooleanValue.SetValue(Result);
-            exit(BooleanValue);
+            Result := PadStr(
+                Input.GetValue(),
+                Length.GetValue()
+            );
+            TextValue.SetValue(Result);
+            exit(TextValue);
         end;
 
         Node := Node.Next();
-        Format := Node.Value();
+        FillCharacter := Node.Value();
 
-        Result := Value.Evaluate(Input.GetValue(), Format.GetValue(), TopLevel);
-        if TopLevel then
-            exit(VoidValue);
-        BooleanValue.SetValue(Result);
-        exit(BooleanValue);
+        Result := PadStr(
+            Input.GetValue(),
+            Length.GetValue(),
+            FillCharacter.GetValue()
+        );
+        TextValue.SetValue(Result);
+        exit(TextValue);
     end;
 }
