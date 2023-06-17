@@ -109,7 +109,7 @@ codeunit 69001 "Parser FS"
                     Pointer := true;
                 end;
 
-                ParameterSymbol := ParseVariableDefinition();
+                ParameterSymbol := ParseVariableDefinition(true);
                 SymbolTable.DefineParameter(ParameterSymbol, Pointer);
 
                 PeekedLexeme := PeekNextLexeme();
@@ -123,23 +123,8 @@ codeunit 69001 "Parser FS"
 
         ReturnTypeSymbol := SymbolTable.VoidSymbol();
         PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
-            Lexeme := AssertNextLexeme(PeekedLexeme);
-            if Lexeme.IsIdentifier() then begin
-                ReturnTypeSymbol.Name := Lexeme."Identifier Name";
-                AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::":"));
-            end;
-
-            // TODO parse length
-            Lexeme := AssertNextLexeme(Lexeme.Identifier());
-            ReturnTypeSymbol.Type := ParseType(Lexeme."Identifier Name");
-
-            PeekedLexeme := PeekNextLexeme();
-            if PeekedLexeme.IsIdentifier() then begin
-                Lexeme := AssertNextLexeme(PeekedLexeme);
-                ReturnTypeSymbol.Subtype := Lexeme."Identifier Name";
-            end;
-        end;
+        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then
+            ReturnTypeSymbol := ParseVariableDefinition(false);
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
 
@@ -153,16 +138,19 @@ codeunit 69001 "Parser FS"
         exit(UserFunction);
     end;
 
-    local procedure ParseVariableDefinition(): Record "Symbol FS"
+    local procedure ParseVariableDefinition(NameRequired: Boolean): Record "Symbol FS"
     var
         Symbol: Record "Symbol FS";
         Lexeme, PeekedLexeme, NameLexeme, TypeLexeme, SubtypeLexeme : Record "Lexeme FS";
     begin
-        NameLexeme := AssertNextLexeme(Lexeme.Identifier());
+        PeekedLexeme := PeekNextLexeme();
+        if NameRequired or PeekedLexeme.IsIdentifier() then begin
+            NameLexeme := AssertNextLexeme(Lexeme.Identifier());
+            Symbol.Name := NameLexeme."Identifier Name";
+        end;
+
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
         TypeLexeme := AssertNextLexeme(Lexeme.Identifier());
-
-        Symbol.Name := NameLexeme."Identifier Name";
         Symbol.Type := ParseType(TypeLexeme."Identifier Name");
 
         PeekedLexeme := PeekNextLexeme();
@@ -203,7 +191,7 @@ codeunit 69001 "Parser FS"
                 if not PeekedLexeme.IsIdentifier() then
                     break;
 
-                VariableSymbol := ParseVariableDefinition();
+                VariableSymbol := ParseVariableDefinition(true);
                 SymbolTable.DefineLocal(VariableSymbol);
 
                 AssertNextLexeme(
