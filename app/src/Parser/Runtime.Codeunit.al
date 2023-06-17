@@ -191,7 +191,7 @@ codeunit 69011 "Runtime FS"
     begin
         case Type of
             Type::Text,
-            Type::Code: // TODO is this going to work? // FIXME
+            Type::Code:
                 exit(LookupTextMethod(Name));
             Type::Record:
                 exit(LookupRecordMethod(Name));
