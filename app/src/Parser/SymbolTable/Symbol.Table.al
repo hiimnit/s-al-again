@@ -92,6 +92,20 @@ table 69001 "Symbol FS"
         );
     end;
 
+    procedure InsertChar
+    (
+        NewName: Text[120];
+        NewOrder: Integer
+    )
+    begin
+        InsertParameter(
+            NewName,
+            Rec.Type::Char,
+            NewOrder,
+            false
+        );
+    end;
+
     procedure InsertBoolean
     (
         NewName: Text[120];

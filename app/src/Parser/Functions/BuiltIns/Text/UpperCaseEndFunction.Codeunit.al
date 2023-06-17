@@ -1,10 +1,10 @@
-codeunit 69231 "PadStr Function FS" implements "Function FS"
+codeunit 69236 "UpperCaseEnd Function FS" implements "Function FS"
 {
     SingleInstance = true;
 
     procedure GetName(): Text[120];
     begin
-        exit('PadStr');
+        exit('UpperCase');
     end;
 
     procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
@@ -24,9 +24,6 @@ codeunit 69231 "PadStr Function FS" implements "Function FS"
         ParameterSymbol: Record "Symbol FS";
     begin
         ParameterSymbol.InsertText('String', 1);
-        ParameterSymbol.InsertInteger('Length', 2);
-        if Arguments.GetCount() > 2 then
-            ParameterSymbol.InsertText('FillCharacter', 3);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
@@ -46,31 +43,14 @@ codeunit 69231 "PadStr Function FS" implements "Function FS"
     var
         Node: Codeunit "Value Linked List Node FS";
         TextValue: Codeunit "Text Value FS";
-        Input, Length, FillCharacter : Interface "Value FS";
+        Input: Interface "Value FS";
         Result: Text;
     begin
         Node := ValueLinkedList.First();
         Input := Node.Value();
 
-        Node := Node.Next();
-        Length := Node.Value();
-
-        if not Node.HasNext() then begin
-            Result := PadStr(
-                Input.GetValue(),
-                Length.GetValue()
-            );
-            TextValue.SetValue(Result);
-            exit(TextValue);
-        end;
-
-        Node := Node.Next();
-        FillCharacter := Node.Value();
-
-        Result := PadStr(
-            Input.GetValue(),
-            Length.GetValue(),
-            FillCharacter.GetValue()
+        Result := UpperCase(
+            Input.GetValue()
         );
         TextValue.SetValue(Result);
         exit(TextValue);

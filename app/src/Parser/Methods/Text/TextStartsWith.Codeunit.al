@@ -1,4 +1,4 @@
-codeunit 69302 "Text Contains FS" implements "Method FS"
+codeunit 69345 "Text StartsWith FS" implements "Method FS"
 {
     SingleInstance = true;
 
@@ -21,13 +21,13 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
         Node := ValueLinkedList.First();
         Subtext := Node.Value().GetValue();
 
-        BooleanValue.SetValue(Text.Contains(Subtext));
+        BooleanValue.SetValue(Text.StartsWith(Subtext));
         exit(BooleanValue);
     end;
 
     procedure GetName(): Text[120];
     begin
-        exit('Contains');
+        exit('StartsWith');
     end;
 
     procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";

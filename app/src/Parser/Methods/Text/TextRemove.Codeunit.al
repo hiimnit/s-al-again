@@ -1,4 +1,4 @@
-codeunit 69302 "Text Contains FS" implements "Method FS"
+codeunit 69343 "Text Remove FS" implements "Method FS"
 {
     SingleInstance = true;
 
@@ -10,29 +10,43 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
         TopLevel: Boolean
     ): Interface "Value FS"
     var
-        BooleanValue: Codeunit "Boolean Value FS";
+        TextValue: Codeunit "Text Value FS";
         ValueLinkedList: Codeunit "Value Linked List FS";
         Node: Codeunit "Value Linked List Node FS";
-        Text, Subtext : Text;
+        StartIndex, Count : Interface "Value FS";
+        Text: Text;
     begin
         Text := Self.GetValue();
 
         ValueLinkedList := Runtime.EvaluateArguments(Runtime, Arguments);
         Node := ValueLinkedList.First();
-        Subtext := Node.Value().GetValue();
+        StartIndex := Node.Value();
 
-        BooleanValue.SetValue(Text.Contains(Subtext));
-        exit(BooleanValue);
+        if not Node.HasNext() then begin
+            TextValue.SetValue(Text.Remove(
+                StartIndex.GetValue()
+            ));
+            exit(TextValue);
+        end;
+
+        Node := Node.Next();
+        Count := Node.Value();
+
+        TextValue.SetValue(Text.Remove(
+            StartIndex.GetValue(),
+            Count.GetValue()
+        ));
+        exit(TextValue);
     end;
 
     procedure GetName(): Text[120];
     begin
-        exit('Contains');
+        exit('Remove');
     end;
 
     procedure GetReturnType(TopLevel: Boolean): Enum "Type FS";
     begin
-        exit(Enum::"Type FS"::Boolean);
+        exit(Enum::"Type FS"::Text);
     end;
 
     procedure ValidateCallArguments
@@ -45,7 +59,9 @@ codeunit 69302 "Text Contains FS" implements "Method FS"
     var
         ParameterSymbol: Record "Symbol FS";
     begin
-        ParameterSymbol.InsertText('Value', 1);
+        ParameterSymbol.InsertInteger('StartIndex', 1);
+        if Arguments.GetCount() > 1 then
+            ParameterSymbol.InsertInteger('Count', 2);
 
         Runtime.ValidateMethodCallArguments(
             Runtime,
