@@ -204,6 +204,64 @@ const registerLanguage = (monaco: Monaco) => {
     create: async (): Promise<languages.IMonarchLanguage> => language,
   });
   monaco.languages.setLanguageConfiguration(languageExtensionPoint.id, conf);
+
+  monaco.languages.registerCompletionItemProvider(languageExtensionPoint.id, {
+    provideCompletionItems: async (model, position, context, token) => {
+      console.log({ model, position, context, token });
+
+      // TODO
+      // suggestions are:
+      // - built-ins - static
+      // - keywords - static
+      // - snippets - procedure, trigger, loops, other?
+      // - user functions - from parser
+      // - local variables - from parser
+      // - methods - static - but depend on current position
+      // - records - "static" (send with ready event?) - but depend on current position
+      // - record fields - "static" - but depend on current position
+
+      // 1. parse code - all or only up to current position?
+      // 2. return symbol table(s)?
+      // this also might be the correct time to fix position handling in lexer?
+
+      // TODO - skipIfBusy
+      // Microsoft.Dynamics.NAV.InvokeExtensibilityMethod()
+      // invoke with a key - use it to identify the response
+
+      await new Promise((r) => setTimeout(r, 3000));
+
+      const value = model.getValueInRange({
+        startLineNumber: 0,
+        startColumn: 0,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column,
+      });
+      console.log({
+        value,
+        ...context,
+        what: model.getWordUntilPosition(position),
+      });
+
+      const word = model.getWordUntilPosition(position);
+      const range = {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
+      };
+
+      return {
+        suggestions: [
+          {
+            label: "simpleText",
+            kind: monaco.languages.CompletionItemKind.Text,
+            insertText: "simpleText",
+            range: range, // TODO not needed?
+          },
+        ],
+      };
+    },
+  });
 };
 
 export default registerLanguage;
