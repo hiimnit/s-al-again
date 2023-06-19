@@ -126,6 +126,7 @@ export const language = <languages.IMonarchLanguage>{
         /[a-zA-Z_][\w]*|"[^"]*"/,
         {
           cases: {
+            "@typeKeywords": "keyword.type",
             "@keywords": { token: "keyword.$0" },
             "@default": "identifier",
           },
