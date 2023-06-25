@@ -7,6 +7,8 @@ import { languages } from "monaco-editor";
 
 import { Monaco } from "@monaco-editor/react";
 
+import LSPMessenger from "../LSPMessenger";
+
 const conf: languages.LanguageConfiguration = {
   wordPattern:
     // eslint-disable-next-line no-useless-escape
@@ -208,8 +210,6 @@ const registerLanguage = (monaco: Monaco) => {
 
   monaco.languages.registerCompletionItemProvider(languageExtensionPoint.id, {
     provideCompletionItems: async (model, position, context, token) => {
-      console.log({ model, position, context, token });
-
       // TODO
       // suggestions are:
       // - built-ins - static
@@ -229,18 +229,30 @@ const registerLanguage = (monaco: Monaco) => {
       // Microsoft.Dynamics.NAV.InvokeExtensibilityMethod()
       // invoke with a key - use it to identify the response
 
-      await new Promise((r) => setTimeout(r, 3000));
+      // TODO - check if completions box is shown?
+
+      // Microsoft.Dynamics.NAV.InvokeExtensibilityMethod(
+      //   "whatever",
+      //   ["some", "args"],
+      //   true,
+      //   () => {}
+      // );
+
+      await new Promise((r) => setTimeout(r, 300));
+
+      const abortController = new AbortController();
+      token.onCancellationRequested(() => abortController.abort());
+
+      await LSPMessenger.instance.getSuggestions({
+        input: "TODO", // TODO
+        signal: abortController.signal,
+      });
 
       const value = model.getValueInRange({
         startLineNumber: 0,
         startColumn: 0,
         endLineNumber: position.lineNumber,
         endColumn: position.column,
-      });
-      console.log({
-        value,
-        ...context,
-        what: model.getWordUntilPosition(position),
       });
 
       const word = model.getWordUntilPosition(position);
@@ -257,7 +269,30 @@ const registerLanguage = (monaco: Monaco) => {
             label: "simpleText",
             kind: monaco.languages.CompletionItemKind.Text,
             insertText: "simpleText",
-            range: range, // TODO not needed?
+            range,
+          },
+          {
+            label: "Abs",
+            kind: monaco.languages.CompletionItemKind.Function,
+            insertText: "Abs(${1:Number})",
+            insertTextRules:
+              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            range,
+          },
+          {
+            label: "Function snippet (tprocedure)",
+            kind: monaco.languages.CompletionItemKind.Snippet,
+            insertText: [
+              "procedure $1()",
+              "var",
+              "\tmyInt: Integer;",
+              "begin",
+              "\t$0",
+              "end;",
+            ].join("\n"),
+            insertTextRules:
+              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            range,
           },
         ],
       };

@@ -9,23 +9,20 @@ codeunit 69001 "Parser FS"
         Lexer.Init(Input);
     end;
 
-    procedure Parse(MonacoEditor: ControlAddIn "Monaco Editor FS"): Interface "Node FS"
+    procedure Parse(Runtime: Codeunit "Runtime FS")
     var
         Lexeme: Record "Lexeme FS";
-        Runtime: Codeunit "Runtime FS";
-        EmptyValueLinkedList: Codeunit "Value Linked List FS";
-        Function: Interface "Function FS";
     begin
         ParseFunctions(Runtime);
 
         AssertNextLexeme(Lexeme.EOS());
+    end;
 
-        Runtime.Init(MonacoEditor);
-
-        Runtime.ValidateFunctionsSemantics(Runtime);
-
-        Function := Runtime.LookupEntryPoint();
-        Function.Evaluate(Runtime, EmptyValueLinkedList, true);
+    procedure Recover()
+    var
+        myInt: Integer;
+    begin
+        // TODO - try to find next procedure/trigger and start parsing again
     end;
 
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")

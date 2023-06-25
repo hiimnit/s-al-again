@@ -34,9 +34,26 @@ page 69000 "Editor FS"
                 trigger Parse(Input: Text)
                 var
                     Parser: Codeunit "Parser FS";
+                    Runtime: Codeunit "Runtime FS";
+                    Runner: Codeunit "Runner FS";
                 begin
+                    Runtime.Init(CurrPage.Editor);
+
                     Parser.Init(Input);
-                    Parser.Parse(CurrPage.Editor);
+                    Parser.Parse(Runtime);
+
+                    Runner.Execute(Runtime);
+                end;
+
+                trigger GetSuggestions("Key": Integer; Input: Text)
+                begin
+                    // TODO call parser - with recovery
+                    // we need:
+                    // 1. function definitions
+                    // 2. local symbol table - we need to identify the enclosing function
+                    // 3. context suggestions - we need to identify the enclosing function + current position - only send the current function to the cursor
+                    // >>>> for record definition - only in var definitions
+                    // >>>> field/method suggestions - only in function body
                 end;
 
                 trigger EditorReady()
