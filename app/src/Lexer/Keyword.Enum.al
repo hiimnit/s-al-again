@@ -7,7 +7,7 @@ enum 69002 "Keyword FS"
     value(2; "end") { }
     value(3; "procedure") { }
     value(4; "var") { } // partially implemented
-    value(11; "local") { } // unimplemented
+    value(11; "local") { } // unimplemented // TODO remove
     value(12; "if") { }
     value(13; "then") { }
     value(14; "else") { }

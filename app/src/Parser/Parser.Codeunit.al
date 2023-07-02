@@ -18,9 +18,16 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(Lexeme.EOS());
     end;
 
+    procedure ParseForIntellisense(Runtime: Codeunit "Runtime FS")
+    begin
+        // TODO expect error
+        ParseFunctions(Runtime);
+
+        // TODO use state
+        // TODO recover?
+    end;
+
     procedure Recover()
-    var
-        myInt: Integer;
     begin
         // TODO - try to find next procedure/trigger and start parsing again
     end;
@@ -179,6 +186,8 @@ codeunit 69001 "Parser FS"
         VariableSymbol: Record "Symbol FS";
         CompoundStatement: Interface "Node FS";
     begin
+        // TODO state change - parsing variable declarations
+
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
             AssertNextLexeme(PeekedLexeme);
@@ -196,6 +205,8 @@ codeunit 69001 "Parser FS"
                 );
             end;
         end;
+
+        // TODO state change - parsing code
 
         CompoundStatement := ParseCompoundStatement();
         AssertNextLexeme(
@@ -675,6 +686,9 @@ codeunit 69001 "Parser FS"
                     begin
                         AssertNextLexeme(PeekedLexeme);
 
+                        // TODO state - parsing prop/method of "call" - store call type? call can be either a literal, variable, function call, property or method call?
+                        State := State.PropsOf(Call);
+
                         Lexeme := AssertNextLexeme(Lexeme.Identifier());
 
                         PeekedLexeme := PeekNextLexeme();
@@ -743,7 +757,6 @@ codeunit 69001 "Parser FS"
 
         exit(Arguments);
     end;
-
 
     local procedure NextLexeme(): Record "Lexeme FS"
     var

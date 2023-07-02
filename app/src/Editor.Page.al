@@ -49,11 +49,13 @@ page 69000 "Editor FS"
                 begin
                     // TODO call parser - with recovery
                     // we need:
-                    // 1. function definitions
+                    // 1. function definitions - only name + params - store position
                     // 2. local symbol table - we need to identify the enclosing function
                     // 3. context suggestions - we need to identify the enclosing function + current position - only send the current function to the cursor
                     // >>>> for record definition - only in var definitions
                     // >>>> field/method suggestions - only in function body
+
+                    CurrPage.Editor.ResolveSuggestionsRequest("Key", '{"input":"' + Input + '"}');
                 end;
 
                 trigger EditorReady()

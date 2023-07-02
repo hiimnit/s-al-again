@@ -208,12 +208,15 @@ const registerLanguage = (monaco: Monaco) => {
   });
   monaco.languages.setLanguageConfiguration(languageExtensionPoint.id, conf);
 
+  monaco.languages.register;
+
   monaco.languages.registerCompletionItemProvider(languageExtensionPoint.id, {
-    provideCompletionItems: async (model, position, context, token) => {
+    provideCompletionItems: async (model, position, _, token) => {
       // TODO
       // suggestions are:
       // - built-ins - static
-      // - keywords - static
+      // - keywords - static - also depend on current position?
+      // - types - in parameter/var/return value declaration
       // - snippets - procedure, trigger, loops, other?
       // - user functions - from parser
       // - local variables - from parser
@@ -238,15 +241,10 @@ const registerLanguage = (monaco: Monaco) => {
       //   () => {}
       // );
 
-      await new Promise((r) => setTimeout(r, 300));
-
       const abortController = new AbortController();
-      token.onCancellationRequested(() => abortController.abort());
-
-      await LSPMessenger.instance.getSuggestions({
-        input: "TODO", // TODO
-        signal: abortController.signal,
-      });
+      token.onCancellationRequested(() =>
+        abortController.abort(new Error("AbortError"))
+      );
 
       const value = model.getValueInRange({
         startLineNumber: 0,
@@ -255,12 +253,46 @@ const registerLanguage = (monaco: Monaco) => {
         endColumn: position.column,
       });
 
+      const result = await LSPMessenger.instance.getSuggestions({
+        input: value, // TODO send whole value + position?
+        signal: abortController.signal,
+      });
+
+      console.log({ result });
+
       const word = model.getWordUntilPosition(position);
       const range = {
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
         startColumn: word.startColumn,
         endColumn: word.endColumn,
+      };
+
+      return {
+        suggestions: [
+          // TODO filter by context
+          ...staticSymbols.keywords.map((e) => ({
+            label: e,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            insertText: e,
+            range,
+          })),
+          ...staticSymbols.builtinFunctions.map((e) => ({
+            label: e,
+            kind: monaco.languages.CompletionItemKind.Function,
+            insertText: e, // TODO add snippet
+            insertTextRules:
+              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+            range,
+          })),
+          // TODO show in proper context
+          ...staticSymbols.types.map((e) => ({
+            label: e,
+            kind: monaco.languages.CompletionItemKind.TypeParameter, // TODO is this correct?
+            insertText: e,
+            range,
+          })),
+        ],
       };
 
       return {
@@ -299,5 +331,105 @@ const registerLanguage = (monaco: Monaco) => {
     },
   });
 };
+
+// TODO receive in initial symbol load?
+const staticSymbols = {
+  keywords: [
+    "begin",
+    "end",
+    "procedure",
+    "var",
+    "if",
+    "then",
+    "else",
+    "repeat",
+    "until",
+    "for",
+    "foreach",
+    "in",
+    "to",
+    "downto",
+    "do",
+    "while",
+    "break",
+    "exit",
+    "trigger",
+  ],
+  // TODO
+  types: [
+    "Boolean",
+    "Text",
+    "Code",
+    "Integer",
+    "Decimal",
+    "Char",
+    "Guid",
+    "Record",
+    "Date",
+    "Time",
+    "DateTime",
+    "DateFormula",
+  ],
+  // TODO add snippets and details?
+  builtinFunctions: [
+    "Abs",
+    "Power",
+    "Message",
+    "Error",
+    "Write",
+    "Format",
+    "CalcDate",
+    "ClosingDate",
+    "CreateDateTime",
+    "CurrentDateTime",
+    "NormalDate",
+    "Time",
+    "Today",
+    "WorkDate",
+    "Date2DMY",
+    "Date2DWY",
+    "DMY2Date",
+    "DWY2Date",
+    "DT2Date",
+    "DT2Time",
+    "CreateGuid",
+    "IsNullGuid",
+    "Evaluate",
+    "MaxStrLen",
+    "ConvertStr",
+    "CopyStr",
+    "DelChr",
+    "DelStr",
+    "IncStr",
+    "InsStr",
+    "LowerCase",
+    "PadStr",
+    "SelectStr",
+    "StrCheckSum",
+    "StrLen",
+    "StrPos",
+    "StrSubstNo",
+    "UpperCaseEnd",
+  ],
+  snippets: [
+    // TODO - function, trigger, other?
+  ],
+  records: {
+    Currency: {
+      fields: {
+        Code: {
+          type: "Code",
+          length: 10,
+        },
+      },
+    },
+  },
+};
+
+// TODO non-static symbols
+// // TODO received from LSP - variable + type
+// variables: [],
+// // TODO received from LSP - parameters + return type
+// functions: [],
 
 export default registerLanguage;

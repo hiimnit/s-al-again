@@ -40,6 +40,8 @@ export const resolveSuggestionsRequest = (key: number, suggestions: string) => {
 };
 window.ResolveSuggestionsRequest = resolveSuggestionsRequest;
 
+// TODO add a method to prepare symbols
+
 if (window.Microsoft !== undefined) {
   window.Microsoft.Dynamics.NAV.InvokeExtensibilityMethod("Ready", []);
 }

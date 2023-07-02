@@ -1,46 +1,5 @@
 type SuggestionPromiseResolver = (result: string) => void;
 
-type AlType =
-  | "boolean"
-  | "text"
-  | "code"
-  | "integer"
-  | "decimal"
-  | "char"
-  | "guid"
-  | "record"
-  | "date"
-  | "time"
-  | "datetime"
-  | "dateformula";
-
-type TypeProps = {
-  hasSubtypes?: boolean;
-};
-
-const alTypes: Record<string, TypeProps> = {
-  boolean: {},
-  text: {},
-  code: {},
-  integer: {},
-  decimal: {},
-  char: {},
-  guid: {},
-  record: {
-    hasSubtypes: true,
-    // TODO hasProperties
-    // TODO methods
-  },
-  date: {},
-  time: {},
-  datetime: {},
-  dateformula: {},
-};
-
-class SymbolCache {
-  //
-}
-
 class LSPMessenger {
   counter = 0;
   map = new Map<number, SuggestionPromiseResolver>();
@@ -53,8 +12,12 @@ class LSPMessenger {
   }: {
     input: string;
     signal: AbortSignal;
-  }): Promise<void> {
-    new Promise<string>((resolve, reject) => {
+  }): Promise<string> {
+    if (window.Microsoft === undefined) {
+      return "";
+    }
+
+    return new Promise<string>((resolve, reject) => {
       if (signal.aborted) {
         return reject(signal.reason);
       }
@@ -86,7 +49,7 @@ class LSPMessenger {
       return;
     }
 
-    resolver.call(this, "TODO"); // TODO
+    resolver.call(this, message); // TODO
 
     this.removeKey(key);
   }
