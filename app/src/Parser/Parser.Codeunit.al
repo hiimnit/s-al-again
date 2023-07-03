@@ -3,25 +3,28 @@ codeunit 69001 "Parser FS"
     var
         CachedLexeme: Record "Lexeme FS";
         Lexer: Codeunit "Lexer FS";
+        State: Codeunit "Parser State FS";
 
-    procedure Init(Input: Text)
-    begin
-        Lexer.Init(Input);
-    end;
-
-    procedure Parse(Runtime: Codeunit "Runtime FS")
+    procedure Parse(Input: Text; Runtime: Codeunit "Runtime FS")
     var
         Lexeme: Record "Lexeme FS";
     begin
+        Lexer.Init(Input);
+
         ParseFunctions(Runtime);
 
         AssertNextLexeme(Lexeme.EOS());
     end;
 
-    procedure ParseForIntellisense(Runtime: Codeunit "Runtime FS")
+    procedure ParseForIntellisense(Input: Text; Runtime: Codeunit "Runtime FS")
     begin
+        Lexer.Init(Input);
+
         // TODO expect error
-        ParseFunctions(Runtime);
+        if TryParseFunctions(Runtime) then begin
+            // TODO parsing went ok => full function?
+            exit;
+        end;
 
         // TODO use state
         // TODO recover?
@@ -32,12 +35,20 @@ codeunit 69001 "Parser FS"
         // TODO - try to find next procedure/trigger and start parsing again
     end;
 
+    [TryFunction]
+    local procedure TryParseFunctions(Runtime: Codeunit "Runtime FS")
+    begin
+        ParseFunctions(Runtime);
+    end;
+
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
     var
         PeekedLexeme: Record "Lexeme FS";
         UserFunction: Codeunit "User Function FS";
     begin
         while true do begin
+            State.ProcedureOrTrigger();
+
             PeekedLexeme := PeekNextLexeme();
             if PeekedLexeme.IsEOS() then
                 break;
@@ -98,6 +109,8 @@ codeunit 69001 "Parser FS"
     begin
         AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
 
+        State.Identifier();
+
         Lexeme := AssertNextLexeme(Lexeme.Identifier());
         Name := Lexeme."Identifier Name";
 
@@ -106,6 +119,8 @@ codeunit 69001 "Parser FS"
         PeekedLexeme := PeekNextLexeme();
         if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
             while true do begin
+                State.VarOrIdentifier();
+
                 Pointer := false;
                 PeekedLexeme := PeekNextLexeme();
                 if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
@@ -147,16 +162,20 @@ codeunit 69001 "Parser FS"
         Symbol: Record "Symbol FS";
         Lexeme, PeekedLexeme, NameLexeme, TypeLexeme, SubtypeLexeme : Record "Lexeme FS";
     begin
+        State.Identifier();
+
         PeekedLexeme := PeekNextLexeme();
         if NameRequired or PeekedLexeme.IsIdentifier() then begin
             NameLexeme := AssertNextLexeme(Lexeme.Identifier());
             Symbol.Name := NameLexeme."Identifier Name";
         end;
 
+        State.Type();
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
         TypeLexeme := AssertNextLexeme(Lexeme.Identifier());
         Symbol.Type := ParseType(TypeLexeme."Identifier Name");
 
+        State.Subtype();
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsIdentifier() then begin
             SubtypeLexeme := AssertNextLexeme(PeekedLexeme);
@@ -165,6 +184,7 @@ codeunit 69001 "Parser FS"
             PeekedLexeme := PeekNextLexeme();
         end;
 
+        State.TypeLength();
         if PeekedLexeme.IsOperator(Enum::"Operator FS"::"[") then begin
             AssertNextLexeme(PeekedLexeme);
 
@@ -186,7 +206,7 @@ codeunit 69001 "Parser FS"
         VariableSymbol: Record "Symbol FS";
         CompoundStatement: Interface "Node FS";
     begin
-        // TODO state change - parsing variable declarations
+        State.VarOrBegin();
 
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
@@ -205,8 +225,6 @@ codeunit 69001 "Parser FS"
                 );
             end;
         end;
-
-        // TODO state change - parsing code
 
         CompoundStatement := ParseCompoundStatement();
         AssertNextLexeme(
@@ -429,6 +447,8 @@ codeunit 69001 "Parser FS"
     begin
         Lexeme := PeekNextLexeme();
 
+        State.Statement();
+
         case true of
             Lexeme.IsKeyword(Enum::"Keyword FS"::"begin"):
                 exit(ParseCompoundStatement());
@@ -451,6 +471,8 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseExpression(): Interface "Node FS"
     begin
+        State.Expression();
+
         exit(ParseComparison());
     end;
 
@@ -664,6 +686,8 @@ codeunit 69001 "Parser FS"
         AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
         Call: Interface "Node FS";
     begin
+        State.Expression(); // resets PropsOf state // TODO in ParseUnary or in ParseGetExpression?
+
         Call := ParseCall();
 
         while true do begin
@@ -687,7 +711,7 @@ codeunit 69001 "Parser FS"
                         AssertNextLexeme(PeekedLexeme);
 
                         // TODO state - parsing prop/method of "call" - store call type? call can be either a literal, variable, function call, property or method call?
-                        State := State.PropsOf(Call);
+                        State.PropsOf(Call);
 
                         Lexeme := AssertNextLexeme(Lexeme.Identifier());
 
@@ -700,6 +724,7 @@ codeunit 69001 "Parser FS"
                                 ParseArguments()
                             );
 
+                            State.PropsOf(MethodCallNode); // TODO not necesary?
                             Call := MethodCallNode;
                         end else begin
                             Clear(PropertyAccessNode); // create new instance
@@ -708,6 +733,7 @@ codeunit 69001 "Parser FS"
                                 Lexeme."Identifier Name"
                             );
 
+                            State.PropsOf(PropertyAccessNode); // TODO not necesary?
                             Call := PropertyAccessNode;
                         end;
                     end;
@@ -845,4 +871,84 @@ codeunit 69001 "Parser FS"
                 Error('Unknown type %1.', Identifier);
         end;
     end;
+}
+
+codeunit 69003 "Parser State FS"
+{
+    var
+        State: Enum "Parser State FS";
+
+    procedure None()
+    begin
+        State := State::None;
+    end;
+
+    procedure VarOrIdentifier()
+    begin
+        State := State::VarOrIdentifier;
+    end;
+
+    procedure Identifier()
+    begin
+        State := State::Identifier;
+    end;
+
+    procedure Type()
+    begin
+        State := State::Type;
+    end;
+
+    procedure Subtype()
+    begin
+        State := State::Subtype;
+    end;
+
+    procedure TypeLength()
+    begin
+        State := State::TypeLength;
+    end;
+
+    procedure Statement()
+    begin
+        State := State::Statement;
+    end;
+
+    procedure Expression()
+    begin
+        State := State::Expression;
+    end;
+
+    procedure PropsOf(Call: Interface "Node FS")
+    begin
+        State := State::PropsOf;
+        // TODO store prop
+    end;
+
+    procedure PropsOf(MethodCallNode: Codeunit "Method Call Node FS")
+    begin
+        State := State::PropsOf;
+        // TODO store prop
+    end;
+
+    procedure PropsOf(PropertyAccessNode: Codeunit "Property Access Node FS")
+    begin
+        State := State::PropsOf;
+        // TODO store prop
+    end;
+}
+
+enum 69007 "Parser State FS"
+{
+    Caption = 'Parser State';
+    Extensible = false;
+
+    value(0; None) { Caption = 'None'; }
+    value(1; VarOrIdentifier) { Caption = 'VarOrIdentifier'; }
+    value(2; Identifier) { Caption = 'Identifier'; }
+    value(3; Type) { Caption = 'Type'; }
+    value(4; Subtype) { Caption = 'Subtype'; }
+    value(5; TypeLength) { Caption = 'TypeLength'; }
+    value(6; Statement) { Caption = 'Statement'; }
+    value(7; Expression) { Caption = 'Expression'; }
+    value(8; PropsOf) { Caption = 'PropsOf'; }
 }
