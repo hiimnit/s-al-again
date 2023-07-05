@@ -8,12 +8,18 @@ codeunit 69025 "User Function FS" implements "Function FS"
     procedure Init
     (
         NewName: Text[120];
-        NewSymbolTable: Codeunit "Symbol Table FS";
-        NewStatements: Interface "Node FS"
+        NewSymbolTable: Codeunit "Symbol Table FS"
     )
     begin
         Name := NewName;
         SymbolTable := NewSymbolTable;
+    end;
+
+    procedure SetStatements
+    (
+        NewStatements: Interface "Node FS"
+    )
+    begin
         Statements := NewStatements;
     end;
 
@@ -25,6 +31,11 @@ codeunit 69025 "User Function FS" implements "Function FS"
     procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     begin
         exit(SymbolTable.GetReturnType());
+    end;
+
+    procedure GetSymbolTable(): Codeunit "Symbol Table FS"
+    begin
+        exit(SymbolTable);
     end;
 
     procedure ValidateCallArguments

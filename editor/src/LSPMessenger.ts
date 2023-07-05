@@ -1,8 +1,11 @@
-type SuggestionPromiseResolver = (result: string) => void;
+import { AlParsingResult, StaticSymbols } from "./al/al";
+
+type SuggestionPromiseResolver = (result: AlParsingResult) => void;
 
 class LSPMessenger {
   counter = 0;
   map = new Map<number, SuggestionPromiseResolver>();
+  staticSymbols?: StaticSymbols;
 
   static instance: LSPMessenger = new LSPMessenger();
 
@@ -12,12 +15,12 @@ class LSPMessenger {
   }: {
     input: string;
     signal: AbortSignal;
-  }): Promise<string> {
+  }): Promise<AlParsingResult | undefined> {
     if (window.Microsoft === undefined) {
-      return "";
+      return undefined;
     }
 
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<AlParsingResult>((resolve, reject) => {
       if (signal.aborted) {
         return reject(signal.reason);
       }
@@ -38,18 +41,13 @@ class LSPMessenger {
     });
   }
 
-  receive(key: number, message: string) {
-    const object = parseIncomingMessage(message);
-    if (object === null) {
-      return;
-    }
-
+  receive(key: number, result: AlParsingResult) {
     const resolver = this.map.get(key);
     if (!resolver) {
       return;
     }
 
-    resolver.call(this, message); // TODO
+    resolver.call(this, result);
 
     this.removeKey(key);
   }
@@ -58,17 +56,5 @@ class LSPMessenger {
     return this.map.delete(key);
   }
 }
-
-const parseIncomingMessage = (message: string): object | null => {
-  try {
-    const parsed = JSON.parse(message);
-    if (typeof parsed !== "object") {
-      return null;
-    }
-    return parsed;
-  } catch (error) {
-    return null;
-  }
-};
 
 export default LSPMessenger;

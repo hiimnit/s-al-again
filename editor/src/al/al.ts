@@ -5,6 +5,7 @@
 
 import { languages } from "monaco-editor";
 
+// import { languages } from "monaco-editor/esm/vs/editor/editor.api";
 import { Monaco } from "@monaco-editor/react";
 
 import LSPMessenger from "../LSPMessenger";
@@ -232,14 +233,15 @@ const registerLanguage = (monaco: Monaco) => {
       // Microsoft.Dynamics.NAV.InvokeExtensibilityMethod()
       // invoke with a key - use it to identify the response
 
-      // TODO - check if completions box is shown?
+      const staticSymbols = LSPMessenger.instance.staticSymbols;
+      if (!staticSymbols) {
+        // TODO toasts?
+        console.error("Static symbols are not defined.");
 
-      // Microsoft.Dynamics.NAV.InvokeExtensibilityMethod(
-      //   "whatever",
-      //   ["some", "args"],
-      //   true,
-      //   () => {}
-      // );
+        return {
+          suggestions: [],
+        };
+      }
 
       const abortController = new AbortController();
       token.onCancellationRequested(() =>
@@ -253,10 +255,19 @@ const registerLanguage = (monaco: Monaco) => {
         endColumn: position.column,
       });
 
+      // TODO this can throw the abort error - catch
       const result = await LSPMessenger.instance.getSuggestions({
         input: value, // TODO send whole value + position?
         signal: abortController.signal,
       });
+
+      if (!result) {
+        console.error(`Unexpected parsing result: ${result}`);
+
+        return {
+          suggestions: [],
+        };
+      }
 
       console.log({ result });
 
@@ -270,7 +281,14 @@ const registerLanguage = (monaco: Monaco) => {
 
       return {
         suggestions: [
-          // TODO filter by context
+          ...result.localVariables.map((e) => ({
+            // TODO is it safe to include this info in label? filterText might have to be added?
+            label: `${e.name}: ${e.type}`, // TODO also include subtype and length?
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            insertText: e.name,
+            range,
+          })),
+          // TODO filter keywords by context - then only in if parsing,
           ...staticSymbols.keywords.map((e) => ({
             label: e,
             kind: monaco.languages.CompletionItemKind.Keyword,
@@ -286,13 +304,13 @@ const registerLanguage = (monaco: Monaco) => {
             range,
           })),
           // TODO show in proper context
-          ...staticSymbols.types.map((e) => ({
+          ...Object.keys(staticSymbols.types).map((e) => ({
             label: e,
-            kind: monaco.languages.CompletionItemKind.TypeParameter, // TODO is this correct?
+            kind: monaco.languages.CompletionItemKind.Class, // TODO is this correct?
             insertText: e,
             range,
           })),
-        ],
+        ] satisfies languages.CompletionItem[],
       };
 
       return {
@@ -332,104 +350,73 @@ const registerLanguage = (monaco: Monaco) => {
   });
 };
 
-// TODO receive in initial symbol load?
-const staticSymbols = {
-  keywords: [
-    "begin",
-    "end",
-    "procedure",
-    "var",
-    "if",
-    "then",
-    "else",
-    "repeat",
-    "until",
-    "for",
-    "foreach",
-    "in",
-    "to",
-    "downto",
-    "do",
-    "while",
-    "break",
-    "exit",
-    "trigger",
-  ],
-  // TODO
-  types: [
-    "Boolean",
-    "Text",
-    "Code",
-    "Integer",
-    "Decimal",
-    "Char",
-    "Guid",
-    "Record",
-    "Date",
-    "Time",
-    "DateTime",
-    "DateFormula",
-  ],
-  // TODO add snippets and details?
-  builtinFunctions: [
-    "Abs",
-    "Power",
-    "Message",
-    "Error",
-    "Write",
-    "Format",
-    "CalcDate",
-    "ClosingDate",
-    "CreateDateTime",
-    "CurrentDateTime",
-    "NormalDate",
-    "Time",
-    "Today",
-    "WorkDate",
-    "Date2DMY",
-    "Date2DWY",
-    "DMY2Date",
-    "DWY2Date",
-    "DT2Date",
-    "DT2Time",
-    "CreateGuid",
-    "IsNullGuid",
-    "Evaluate",
-    "MaxStrLen",
-    "ConvertStr",
-    "CopyStr",
-    "DelChr",
-    "DelStr",
-    "IncStr",
-    "InsStr",
-    "LowerCase",
-    "PadStr",
-    "SelectStr",
-    "StrCheckSum",
-    "StrLen",
-    "StrPos",
-    "StrSubstNo",
-    "UpperCaseEnd",
-  ],
-  snippets: [
-    // TODO - function, trigger, other?
-  ],
-  records: {
-    Currency: {
-      fields: {
-        Code: {
-          type: "Code",
-          length: 10,
-        },
-      },
-    },
-  },
-};
-
 // TODO non-static symbols
 // // TODO received from LSP - variable + type
 // variables: [],
 // // TODO received from LSP - parameters + return type
 // functions: [],
+
+export type StaticSymbols = {
+  tables: AlTables;
+  keywords: AlKeyword[];
+  types: AlTypes;
+  builtinFunctions: AlFunction[];
+};
+
+type AlTables = {
+  [k in number]: AlTable;
+};
+
+type AlTable = {
+  name: string;
+  fields: AlFields;
+};
+
+type AlFields = {
+  [k in number]: AlField;
+};
+
+type AlField = {
+  name: string;
+  type: string;
+  length?: number;
+  obsolete?: string; // TODO option!
+  class: string;
+};
+
+type AlKeyword = string;
+
+type AlTypes = {
+  [k in string]: AlTypeProperties;
+};
+
+type AlTypeProperties = {
+  methods: AlMethod[];
+};
+
+type AlMethod = string;
+
+type AlFunction = string;
+// TODO replace AlFunction
+type AlFunctionTODO = {
+  name: string; // TODO object - also include currently parsed statement for correct keyword suggestion?
+  parameters: AlVariable[];
+  returnType?: AlVariable; // TODO what if it is not named?
+};
+
+export type AlParsingResult = {
+  state: string; // TODO string union?
+  localVariables: AlVariable[];
+  functions: AlFunction[];
+};
+
+type AlVariable = {
+  name: string;
+  type: string;
+  sybtype?: string;
+  length?: number;
+  scope: string;
+  pointer: boolean;
+};
 
 export default registerLanguage;

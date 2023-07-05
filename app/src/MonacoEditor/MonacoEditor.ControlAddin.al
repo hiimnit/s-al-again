@@ -14,5 +14,8 @@ controladdin "Monaco Editor FS"
 
     procedure WriteLine(Line: Text)
     procedure SetEditorValue(Value: Text)
-    procedure ResolveSuggestionsRequest("Key": Integer; Suggestions: Text)
+    procedure SetStaticSymbols(Symbols: JsonObject)
+    procedure ResolveSuggestionsRequest("Key": Integer; Suggestions: JsonObject)
+
+    procedure SendObject(object: JsonObject)
 }

@@ -3,6 +3,7 @@ import "./index.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
+import { AlParsingResult, StaticSymbols } from "./al/al.ts";
 import App from "./App.tsx";
 import ConsoleManager from "./ConsoleManager.ts";
 import EditorManager from "./EditorManager.ts";
@@ -12,7 +13,11 @@ declare global {
   interface Window {
     WriteLine: (input: string) => void;
     SetEditorValue: (value: string) => void;
-    ResolveSuggestionsRequest: (key: number, suggestions: string) => void;
+    SetStaticSymbols: (symbols: StaticSymbols) => void;
+    ResolveSuggestionsRequest: (
+      key: number,
+      suggestions: AlParsingResult
+    ) => void;
   }
 }
 
@@ -35,12 +40,18 @@ export const setEditorValue = (value: string) => {
 };
 window.SetEditorValue = setEditorValue;
 
-export const resolveSuggestionsRequest = (key: number, suggestions: string) => {
+export const resolveSuggestionsRequest = (
+  key: number,
+  suggestions: AlParsingResult
+) => {
   LSPMessenger.instance.receive(key, suggestions);
 };
 window.ResolveSuggestionsRequest = resolveSuggestionsRequest;
 
-// TODO add a method to prepare symbols
+export const setStaticSymbols = (symbols: StaticSymbols) => {
+  LSPMessenger.instance.staticSymbols = symbols;
+};
+window.SetStaticSymbols = setStaticSymbols;
 
 if (window.Microsoft !== undefined) {
   window.Microsoft.Dynamics.NAV.InvokeExtensibilityMethod("Ready", []);

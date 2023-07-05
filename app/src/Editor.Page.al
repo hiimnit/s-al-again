@@ -39,14 +39,20 @@ page 69000 "Editor FS"
                 begin
                     Runtime.Init(CurrPage.Editor);
 
-                    Parser.Init(Input);
-                    Parser.Parse(Runtime);
+                    Parser.Parse(Input, Runtime);
 
                     Runner.Execute(Runtime);
                 end;
 
                 trigger GetSuggestions("Key": Integer; Input: Text)
+                var
+                    Parser: Codeunit "Parser FS";
+                    Runtime: Codeunit "Runtime FS";
+
+                    ParsingResult: JsonObject;
                 begin
+                    Runtime.Init(CurrPage.Editor);
+
                     // TODO call parser - with recovery
                     // we need:
                     // 1. function definitions - only name + params - store position
@@ -55,11 +61,14 @@ page 69000 "Editor FS"
                     // >>>> for record definition - only in var definitions
                     // >>>> field/method suggestions - only in function body
 
-                    CurrPage.Editor.ResolveSuggestionsRequest("Key", '{"input":"' + Input + '"}');
+                    ParsingResult := Parser.ParseForIntellisense(Input, Runtime);
+
+                    CurrPage.Editor.ResolveSuggestionsRequest("Key", ParsingResult);
                 end;
 
                 trigger EditorReady()
                 var
+                    Runtime: Codeunit "Runtime FS";
                     LF: Text[1];
                 begin
                     LF[1] := 13;
@@ -68,6 +77,10 @@ page 69000 "Editor FS"
                         'trigger OnRun()' + LF
                         + 'begin' + LF
                         + 'end;'
+                    );
+
+                    CurrPage.Editor.SetStaticSymbols(
+                        Runtime.PrepareStaticSymbols()
                     );
                 end;
             }

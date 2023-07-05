@@ -16,18 +16,58 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(Lexeme.EOS());
     end;
 
-    procedure ParseForIntellisense(Input: Text; Runtime: Codeunit "Runtime FS")
+    procedure ParseForIntellisense(Input: Text; Runtime: Codeunit "Runtime FS"): JsonObject
+    var
+        Symbol: Record "Symbol FS";
+        UserFunction: Codeunit "User Function FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ParsingResult: JsonObject;
+        LocalVariables: JsonArray;
     begin
         Lexer.Init(Input);
 
         // TODO expect error
         if TryParseFunctions(Runtime) then begin
             // TODO parsing went ok => full function?
+            // TODO expected state is ProcedureOrTrigger
+            // FIXME
             exit;
         end;
 
         // TODO use state
         // TODO recover?
+
+        UserFunction := Runtime.GetLastDefinedFunction(); // TODO this can also fail if the parsing ends before vars are parsed
+        SymbolTable := UserFunction.GetSymbolTable();
+
+        case State.GetState() of
+            Enum::"Parser State FS"::PropsOf:
+                begin
+                    // TODO this can fail
+                    Symbol := State.GetPropsOfSymbol(
+                        Runtime,
+                        UserFunction.GetSymbolTable()
+                    );
+                    // TODO expect Symbol.Type to be record?
+                end;
+        end;
+
+        // TODO return
+        // 1. state
+        // 2. defined functions
+        // 3. current function symbols
+        ParsingResult.Add('state', Format(State.GetState()));
+
+        if SymbolTable.FindSet(Symbol) then
+            repeat
+                LocalVariables.Add(Symbol.ToJson());
+            until not SymbolTable.Next(Symbol);
+        ParsingResult.Add('localVariables', LocalVariables);
+        ParsingResult.Add('functions', 'TODO'); // TODO
+
+        // TODO what is the result of Format(State) = formating a codeunit?
+
+        exit(ParsingResult);
     end;
 
     procedure Recover()
@@ -44,7 +84,6 @@ codeunit 69001 "Parser FS"
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
     var
         PeekedLexeme: Record "Lexeme FS";
-        UserFunction: Codeunit "User Function FS";
     begin
         while true do begin
             State.ProcedureOrTrigger();
@@ -55,25 +94,20 @@ codeunit 69001 "Parser FS"
 
             case true of
                 PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure"):
-                    UserFunction := ParseProcedure();
+                    ParseProcedure(Runtime);
                 PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger"):
-                    UserFunction := ParseOnRun();
+                    ParseOnRun(Runtime);
                 else
                     Error('Expected keyword ''procedure'' or ''trigger''');
             end;
-
-            Runtime.DefineFunction(
-                UserFunction
-            );
         end;
     end;
 
-    local procedure ParseOnRun(): Codeunit "User Function FS"
+    local procedure ParseOnRun(Runtime: Codeunit "Runtime FS")
     var
         Lexeme: Record "Lexeme FS";
         SymbolTable: Codeunit "Symbol Table FS";
         UserFunction: Codeunit "User Function FS";
-        Statements: Interface "Node FS";
         Name: Text[120];
     begin
         AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"trigger"));
@@ -87,23 +121,24 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
 
         SymbolTable.DefineReturnType(SymbolTable.VoidSymbol());
-        Statements := ParseProcedure(SymbolTable);
 
         UserFunction.Init(
             Name,
-            SymbolTable,
-            Statements
+            SymbolTable
         );
-        exit(UserFunction);
+        Runtime.DefineFunction(UserFunction);
+
+        UserFunction.SetStatements(
+            ParseProcedure(SymbolTable)
+        );
     end;
 
-    local procedure ParseProcedure(): Codeunit "User Function FS"
+    local procedure ParseProcedure(Runtime: Codeunit "Runtime FS")
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         ParameterSymbol, ReturnTypeSymbol : Record "Symbol FS";
         SymbolTable: Codeunit "Symbol Table FS";
         UserFunction: Codeunit "User Function FS";
-        Statements: Interface "Node FS";
         Pointer: Boolean;
         Name: Text[120];
     begin
@@ -147,14 +182,15 @@ codeunit 69001 "Parser FS"
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
 
-        Statements := ParseProcedure(SymbolTable);
-
         UserFunction.Init(
             Name,
-            SymbolTable,
-            Statements
+            SymbolTable
         );
-        exit(UserFunction);
+        Runtime.DefineFunction(UserFunction);
+
+        UserFunction.SetStatements(
+            ParseProcedure(SymbolTable)
+        );
     end;
 
     local procedure ParseVariableDefinition(NameRequired: Boolean): Record "Symbol FS"
@@ -724,7 +760,6 @@ codeunit 69001 "Parser FS"
                                 ParseArguments()
                             );
 
-                            State.PropsOf(MethodCallNode); // TODO not necesary?
                             Call := MethodCallNode;
                         end else begin
                             Clear(PropertyAccessNode); // create new instance
@@ -733,7 +768,6 @@ codeunit 69001 "Parser FS"
                                 Lexeme."Identifier Name"
                             );
 
-                            State.PropsOf(PropertyAccessNode); // TODO not necesary?
                             Call := PropertyAccessNode;
                         end;
                     end;
@@ -878,6 +912,26 @@ codeunit 69003 "Parser State FS"
     var
         State: Enum "Parser State FS";
 
+    procedure GetState(): Enum "Parser State FS"
+    begin
+        exit(State);
+    end;
+
+    var
+        Call: Interface "Node FS";
+
+    procedure GetPropsOfSymbol
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS"
+    ): Record "Symbol FS"
+    begin
+        exit(Call.ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
+    end;
+
     procedure None()
     begin
         State := State::None;
@@ -918,22 +972,20 @@ codeunit 69003 "Parser State FS"
         State := State::Expression;
     end;
 
-    procedure PropsOf(Call: Interface "Node FS")
+    procedure PropsOf(NewCall: Interface "Node FS")
     begin
         State := State::PropsOf;
-        // TODO store prop
+        Call := NewCall;
     end;
 
-    procedure PropsOf(MethodCallNode: Codeunit "Method Call Node FS")
+    procedure ProcedureOrTrigger()
     begin
-        State := State::PropsOf;
-        // TODO store prop
+        State := State::ProcedureOrTrigger;
     end;
 
-    procedure PropsOf(PropertyAccessNode: Codeunit "Property Access Node FS")
+    procedure VarOrBegin()
     begin
-        State := State::PropsOf;
-        // TODO store prop
+        State := State::VarOrBegin;
     end;
 }
 
@@ -951,4 +1003,6 @@ enum 69007 "Parser State FS"
     value(6; Statement) { Caption = 'Statement'; }
     value(7; Expression) { Caption = 'Expression'; }
     value(8; PropsOf) { Caption = 'PropsOf'; }
+    value(9; ProcedureOrTrigger) { Caption = 'ProcedureOrTrigger'; }
+    value(10; VarOrBegin) { Caption = 'VarOrBegin'; }
 }

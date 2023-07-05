@@ -46,6 +46,11 @@ codeunit 69011 "Runtime FS"
         exit(LookupBuiltInFunction(Name));
     end;
 
+    procedure GetLastDefinedFunction(): Codeunit "User Function FS"
+    begin
+        exit(Functions[FunctionCount]);
+    end;
+
     local procedure LookupBuiltInFunction(Name: Text[120]): Interface "Function FS"
     var
         AbsFunction: Codeunit "Abs Function FS";
@@ -578,5 +583,242 @@ codeunit 69011 "Runtime FS"
     begin
         Node := Node.Next();
         exit(Node.Value().GetValue());
+    end;
+
+    // TODO new codeunit?
+    procedure PrepareStaticSymbols(): JsonObject
+    var
+        Symbols: JsonObject;
+    begin
+        Symbols.Add(
+            'tables',
+            PrepareRecordSymbols()
+        );
+        Symbols.Add(
+            'keywords',
+            PrepareKeywordSymbols()
+        );
+        Symbols.Add(
+            'types',
+            PrepareTypesSymbols()
+        );
+        Symbols.Add(
+            'builtinFunctions',
+            PrepareBuiltInFunctionsSymbols()
+        );
+        // TODO snippets?
+        // TODO methods - add to types?
+    end;
+
+    local procedure PrepareRecordSymbols(): JsonObject
+    var
+        AllObj: Record AllObj;
+        Field: Record Field;
+        Table, Property, Tables, Properties : JsonObject;
+    begin
+        AllObj.SetRange("Object Type", AllObj."Object Type"::Table);
+        if not AllObj.FindSet() then
+            exit(Tables);
+
+        repeat
+            Clear(Table);
+            Clear(Properties);
+
+            // TODO add captions?
+
+            Table.Add('name', AllObj."Object Name");
+            Table.Add('fields', Properties);
+
+            Field.SetRange(TableNo, AllObj."Object ID");
+            Field.SetRange(Enabled, true);
+            if Field.FindSet() then
+                repeat
+                    Clear(Property);
+                    Property.Add('name', Field.FieldName);
+                    Property.Add('type', Field."Type Name");
+                    if Field.Len <> 0 then
+                        Property.Add('length', Field.Len);
+                    if Field.ObsoleteState <> Field.ObsoleteState::No then
+                        Property.Add('obsolete', Field.ObsoleteState);
+                    Property.Add('class', Format(Field.Class));
+
+                    Properties.Add(Format(Field."No."), Property);
+                until Field.Next() = 0;
+
+            Tables.Add(Format(AllObj."Object ID"), Table);
+        until AllObj.Next() = 0;
+
+        exit(Tables);
+    end;
+
+    local procedure PrepareKeywordSymbols(): JsonArray
+    var
+        Keywords: JsonArray;
+    begin
+        Keywords.Add('begin');
+        Keywords.Add('end');
+        Keywords.Add('procedure');
+        Keywords.Add('var');
+        Keywords.Add('if');
+        Keywords.Add('then');
+        Keywords.Add('else');
+        Keywords.Add('repeat');
+        Keywords.Add('until');
+        Keywords.Add('for');
+        Keywords.Add('foreach');
+        Keywords.Add('in');
+        Keywords.Add('to');
+        Keywords.Add('downto');
+        Keywords.Add('do');
+        Keywords.Add('while');
+        Keywords.Add('break');
+        Keywords.Add('exit');
+        Keywords.Add('trigger');
+
+        exit(Keywords);
+    end;
+
+    local procedure PrepareTypesSymbols(): JsonObject
+    var
+        Types: JsonObject;
+        EmptyObject: JsonObject;
+    begin
+        Types.Add('Boolean', EmptyObject);
+        Types.Add('Text', PrepareTextProperties());
+        Types.Add('Code', PrepareTextProperties());
+        Types.Add('Integer', EmptyObject);
+        Types.Add('Decimal', EmptyObject);
+        Types.Add('Char', EmptyObject);
+        Types.Add('Guid', EmptyObject);
+        Types.Add('Record', PrepareRecordProperties());
+        Types.Add('Date', EmptyObject);
+        Types.Add('Time', EmptyObject);
+        Types.Add('DateTime', EmptyObject);
+        Types.Add('DateFormula', EmptyObject);
+
+        exit(Types);
+    end;
+
+    local procedure PrepareTextProperties(): JsonObject
+    var
+        TextProperties: JsonObject;
+    begin
+        TextProperties.Add(
+            'methods',
+            PrepareTextMethods()
+        );
+
+        exit(TextProperties);
+    end;
+
+    local procedure PrepareTextMethods(): JsonArray
+    var
+        TextMethods: JsonArray;
+    begin
+        TextMethods.Add('ToUpper');
+        TextMethods.Add('ToLower');
+        TextMethods.Add('Contains');
+        TextMethods.Add('EndsWith');
+        TextMethods.Add('IndexOf');
+        TextMethods.Add('IndexOfAny');
+        TextMethods.Add('LastIndexOf');
+        TextMethods.Add('PadLeft');
+        TextMethods.Add('PadRight');
+        TextMethods.Add('Remove');
+        TextMethods.Add('Replace');
+        TextMethods.Add('StartsWith');
+        TextMethods.Add('Substring');
+        TextMethods.Add('Trim');
+        TextMethods.Add('TrimEnd');
+        TextMethods.Add('TrimStart');
+
+        exit(TextMethods);
+    end;
+
+    local procedure PrepareRecordProperties(): JsonObject
+    var
+        TextProperties: JsonObject;
+    begin
+        TextProperties.Add(
+            'methods',
+            PrepareRecordMethods()
+        );
+
+        exit(TextProperties);
+    end;
+
+    local procedure PrepareRecordMethods(): JsonArray
+    var
+        RecordMethods: JsonArray;
+    begin
+        RecordMethods.Add('FindFirst');
+        RecordMethods.Add('FindLast');
+        RecordMethods.Add('FindSet');
+        RecordMethods.Add('Next');
+        RecordMethods.Add('SetRange');
+        RecordMethods.Add('Insert');
+        RecordMethods.Add('Modify');
+        RecordMethods.Add('Delete');
+        RecordMethods.Add('Init');
+        RecordMethods.Add('Reset');
+        RecordMethods.Add('IsEmpty');
+        RecordMethods.Add('TableName');
+        RecordMethods.Add('TableCaption');
+        RecordMethods.Add('SetRecFilter');
+        RecordMethods.Add('GetFilters');
+        RecordMethods.Add('Count');
+        RecordMethods.Add('GetView');
+        RecordMethods.Add('SetView');
+        RecordMethods.Add('FieldNo');
+        RecordMethods.Add('Validate');
+        RecordMethods.Add('SetFilter');
+
+        exit(RecordMethods);
+    end;
+
+    local procedure PrepareBuiltInFunctionsSymbols(): JsonArray
+    var
+        BuiltInFunctions: JsonArray;
+    begin
+        BuiltInFunctions.Add('Abs');
+        BuiltInFunctions.Add('Power');
+        BuiltInFunctions.Add('Message');
+        BuiltInFunctions.Add('Error');
+        BuiltInFunctions.Add('Write');
+        BuiltInFunctions.Add('Format');
+        BuiltInFunctions.Add('CalcDate');
+        BuiltInFunctions.Add('ClosingDate');
+        BuiltInFunctions.Add('CreateDateTime');
+        BuiltInFunctions.Add('CurrentDateTime');
+        BuiltInFunctions.Add('NormalDate');
+        BuiltInFunctions.Add('Time');
+        BuiltInFunctions.Add('Today');
+        BuiltInFunctions.Add('WorkDate');
+        BuiltInFunctions.Add('Date2DMY');
+        BuiltInFunctions.Add('Date2DWY');
+        BuiltInFunctions.Add('DMY2Date');
+        BuiltInFunctions.Add('DWY2Date');
+        BuiltInFunctions.Add('DT2Date');
+        BuiltInFunctions.Add('DT2Time');
+        BuiltInFunctions.Add('CreateGuid');
+        BuiltInFunctions.Add('IsNullGuid');
+        BuiltInFunctions.Add('Evaluate');
+        BuiltInFunctions.Add('MaxStrLen');
+        BuiltInFunctions.Add('ConvertStr');
+        BuiltInFunctions.Add('CopyStr');
+        BuiltInFunctions.Add('DelChr');
+        BuiltInFunctions.Add('DelStr');
+        BuiltInFunctions.Add('IncStr');
+        BuiltInFunctions.Add('InsStr');
+        BuiltInFunctions.Add('LowerCase');
+        BuiltInFunctions.Add('PadStr');
+        BuiltInFunctions.Add('SelectStr');
+        BuiltInFunctions.Add('StrCheckSum');
+        BuiltInFunctions.Add('StrLen');
+        BuiltInFunctions.Add('StrPos');
+        BuiltInFunctions.Add('StrSubstNo');
+        BuiltInFunctions.Add('UpperCaseEnd');
+
+        exit(BuiltInFunctions);
     end;
 }

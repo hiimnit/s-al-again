@@ -457,6 +457,22 @@ table 69001 "Symbol FS"
 
         exit(ResultSymbol);
     end;
+
+    procedure ToJson(): JsonObject
+    var
+        Symbol: JsonObject;
+    begin
+        Symbol.Add('name', Rec.Name);
+        Symbol.Add('type', Format(Rec.Type));
+        if Rec.Subtype <> '' then
+            Symbol.Add('sybtype', Rec.Subtype);
+        if Rec."Length Defined" then
+            Symbol.Add('length', Format(Rec.Length));
+        Symbol.Add('scope', Format(Rec.Scope));
+        Symbol.Add('pointer', Rec."Pointer Parameter");
+
+        exit(Symbol);
+    end;
 }
 
 enum 69004 "Scope FS"
