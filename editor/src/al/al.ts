@@ -209,9 +209,6 @@ const registerLanguage = (monaco: Monaco) => {
     create: async (): Promise<languages.IMonarchLanguage> => language,
   });
   monaco.languages.setLanguageConfiguration(languageExtensionPoint.id, conf);
-
-  monaco.languages.register;
-
   monaco.languages.registerCompletionItemProvider(languageExtensionPoint.id, {
     provideCompletionItems: async (model, position, _, token) => {
       // TODO
@@ -270,8 +267,6 @@ const registerLanguage = (monaco: Monaco) => {
           suggestions: [],
         };
       }
-
-      console.log({ result });
 
       const word = model.getWordUntilPosition(position);
       const range = {
@@ -498,6 +493,9 @@ const addTablesToCompletionItems = ({
       label: table.name, // TODO show table number/caption?
       kind: monaco.languages.CompletionItemKind.Class, // TODO class?
       insertText: table.name,
+      tags: table.obsolete // TODO add reason?
+        ? [monaco.languages.CompletionItemTag.Deprecated]
+        : undefined,
       range,
     });
   }
@@ -543,6 +541,9 @@ const addFieldsToCompletionItems = ({
       label: field.name, // TODO show table number/caption?
       kind: monaco.languages.CompletionItemKind.Class, // TODO class?
       insertText: field.name,
+      tags: field.obsolete // TODO add reason?
+        ? [monaco.languages.CompletionItemTag.Deprecated]
+        : undefined,
       range,
     });
   }
@@ -562,6 +563,7 @@ type AlTables = {
 type AlTable = {
   name: string;
   fields: AlFields;
+  obsolete?: string; // TODO option!
 };
 
 type AlFields = {

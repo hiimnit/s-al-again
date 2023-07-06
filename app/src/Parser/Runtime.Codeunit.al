@@ -607,17 +607,15 @@ codeunit 69011 "Runtime FS"
             PrepareBuiltInFunctionsSymbols()
         );
         // TODO snippets?
-        // TODO methods - add to types?
     end;
 
     local procedure PrepareRecordSymbols(): JsonObject
     var
-        AllObj: Record AllObj;
+        TableMetadata: Record "Table Metadata";
         Field: Record Field;
         Table, Property, Tables, Properties : JsonObject;
     begin
-        AllObj.SetRange("Object Type", AllObj."Object Type"::Table);
-        if not AllObj.FindSet() then
+        if not TableMetadata.FindSet() then
             exit(Tables);
 
         repeat
@@ -626,10 +624,12 @@ codeunit 69011 "Runtime FS"
 
             // TODO add captions?
 
-            Table.Add('name', AllObj."Object Name");
+            Table.Add('name', TableMetadata.Name);
+            if TableMetadata.ObsoleteState <> TableMetadata.ObsoleteState::No then
+                Table.Add('obsolete', TableMetadata.ObsoleteState);
             Table.Add('fields', Properties);
 
-            Field.SetRange(TableNo, AllObj."Object ID");
+            Field.SetRange(TableNo, TableMetadata.ID);
             Field.SetRange(Enabled, true);
             if Field.FindSet() then
                 repeat
@@ -645,8 +645,8 @@ codeunit 69011 "Runtime FS"
                     Properties.Add(Format(Field."No."), Property);
                 until Field.Next() = 0;
 
-            Tables.Add(Format(AllObj."Object ID"), Table);
-        until AllObj.Next() = 0;
+            Tables.Add(Format(TableMetadata.ID), Table);
+        until TableMetadata.Next() = 0;
 
         exit(Tables);
     end;

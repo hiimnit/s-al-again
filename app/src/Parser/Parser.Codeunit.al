@@ -27,6 +27,9 @@ codeunit 69001 "Parser FS"
     begin
         Lexer.Init(Input);
 
+        // TODO two passes 
+        // > first only function headers
+        // > then detailed parsing of current function
         if TryParseFunctions(Runtime) then begin
             // TODO parsing went ok => full function?
             // TODO expected state is ProcedureOrTrigger
@@ -969,8 +972,6 @@ codeunit 69003 "Parser State FS"
     ): JsonObject
     var
         Symbol: Record "Symbol FS";
-        UserFunction: Codeunit "User Function FS";
-        SymbolTable: Codeunit "Symbol Table FS";
         Suggestions, PropsOfDetails : JsonObject;
     begin
         case State of
@@ -994,17 +995,16 @@ codeunit 69003 "Parser State FS"
                 end;
             Enum::"Parser State FS"::PropsOf:
                 begin
-                    // TODO this can also fail if the parsing ends before vars are parsed
-                    UserFunction := Runtime.GetLastDefinedFunction();
-                    SymbolTable := UserFunction.GetSymbolTable();
-                    // TODO this can also fail
-                    Symbol := GetPropsOfSymbol(
+                    if TryGetPropsOfSymbol(
                         Runtime,
-                        UserFunction.GetSymbolTable()
-                    );
-
-                    PropsOfDetails.Add('type', Format(Symbol.Type));
-                    PropsOfDetails.Add('subtype', Symbol.TryLookupSubtype());
+                        Symbol
+                    ) then begin
+                        PropsOfDetails.Add('type', Format(Symbol.Type));
+                        PropsOfDetails.Add('subtype', Symbol.TryLookupSubtype());
+                    end else begin
+                        PropsOfDetails.Add('type', 'Unknown');
+                        PropsOfDetails.Add('subtype', -1);
+                    end;
 
                     Suggestions.Add(
                         'propsOf',
@@ -1032,16 +1032,24 @@ codeunit 69003 "Parser State FS"
         exit(Suggestions);
     end;
 
-    local procedure GetPropsOfSymbol
+    [TryFunction]
+    local procedure TryGetPropsOfSymbol
     (
         Runtime: Codeunit "Runtime FS";
-        SymbolTable: Codeunit "Symbol Table FS"
-    ): Record "Symbol FS"
+        var Symbol: Record "Symbol FS"
+    )
+    var
+        UserFunction: Codeunit "User Function FS";
+        SymbolTable: Codeunit "Symbol Table FS";
     begin
-        exit(Call.ValidateSemantics(
+        // TODO this can also fail if the parsing ends before vars are parsed -> recovery for var declaration
+        UserFunction := Runtime.GetLastDefinedFunction();
+        SymbolTable := UserFunction.GetSymbolTable();
+
+        Symbol := Call.ValidateSemantics(
             Runtime,
             SymbolTable
-        ));
+        );
     end;
 }
 
