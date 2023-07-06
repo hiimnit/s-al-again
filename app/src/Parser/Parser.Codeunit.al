@@ -19,6 +19,7 @@ codeunit 69001 "Parser FS"
     procedure ParseForIntellisense(Input: Text; Runtime: Codeunit "Runtime FS"): JsonObject
     var
         Symbol: Record "Symbol FS";
+        UserFunction: Codeunit "User Function FS";
         SymbolTable: Codeunit "Symbol Table FS";
         ParsingResult: JsonObject;
         LocalVariables: JsonArray;
@@ -43,6 +44,10 @@ codeunit 69001 "Parser FS"
         // 3. statements recovery - use semicolons and begin/end pairs?
 
         ParsingResult.Add('suggestions', State.ToSuggestions(Runtime));
+
+        // TODO this can also fail if the parsing ends before vars are parsed -> recovery for var declaration
+        UserFunction := Runtime.GetLastDefinedFunction();
+        SymbolTable := UserFunction.GetSymbolTable();
 
         if SymbolTable.FindSet(Symbol) then
             repeat
@@ -206,8 +211,9 @@ codeunit 69001 "Parser FS"
             PeekedLexeme := PeekNextLexeme();
         end;
 
-        State.TypeLength();
         if PeekedLexeme.IsOperator(Enum::"Operator FS"::"[") then begin
+            State.TypeLength();
+
             AssertNextLexeme(PeekedLexeme);
 
             Lexeme := AssertNextLexeme(PeekedLexeme.Integer());
@@ -219,6 +225,7 @@ codeunit 69001 "Parser FS"
         exit(Symbol);
     end;
 
+    // TODO pass in user function instead
     local procedure ParseProcedure
     (
         SymbolTable: Codeunit "Symbol Table FS"

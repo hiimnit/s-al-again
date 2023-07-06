@@ -607,6 +607,7 @@ codeunit 69011 "Runtime FS"
             PrepareBuiltInFunctionsSymbols()
         );
         // TODO snippets?
+        exit(Symbols);
     end;
 
     local procedure PrepareRecordSymbols(): JsonObject

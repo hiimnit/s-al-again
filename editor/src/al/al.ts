@@ -93,6 +93,11 @@ export const language = <languages.IMonarchLanguage>{
     "integer",
     "decimal",
     "record",
+    "guid",
+    "date",
+    "time",
+    "datetime",
+    "dateformula",
   ],
 
   operators: [
@@ -268,6 +273,8 @@ const registerLanguage = (monaco: Monaco) => {
         };
       }
 
+      console.log({ result, staticSymbols });
+
       const word = model.getWordUntilPosition(position);
       const range = {
         startLineNumber: position.lineNumber,
@@ -318,7 +325,7 @@ const registerLanguage = (monaco: Monaco) => {
 
       if (result.suggestions.types === true) {
         addTypesToCompletionItems({
-          types: staticSymbols.keywords,
+          types: staticSymbols.types,
           completionItems,
           monaco,
           range,
@@ -467,10 +474,10 @@ const addTypesToCompletionItems = ({
   range,
   monaco,
 }: CompletionItemAdderCommonProps & {
-  types: AlType[];
+  types: AlTypes;
 }): void => {
   // TODO add keyword context filtering
-  for (const type of types) {
+  for (const type of Object.keys(types)) {
     completionItems.push({
       label: type,
       kind: monaco.languages.CompletionItemKind.Class, // TODO is this correct?
