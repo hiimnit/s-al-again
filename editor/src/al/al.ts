@@ -5,10 +5,11 @@
 
 import { languages } from "monaco-editor";
 
-// import { languages } from "monaco-editor/esm/vs/editor/editor.api";
 import { Monaco } from "@monaco-editor/react";
 
 import LSPMessenger from "../LSPMessenger";
+
+import type { IRange } from "monaco-editor";
 
 const conf: languages.LanguageConfiguration = {
   wordPattern:
@@ -236,6 +237,7 @@ const registerLanguage = (monaco: Monaco) => {
       const staticSymbols = LSPMessenger.instance.staticSymbols;
       if (!staticSymbols) {
         // TODO toasts?
+        // FIXME add a text suggestion with the error?
         console.error("Static symbols are not defined.");
 
         return {
@@ -279,40 +281,92 @@ const registerLanguage = (monaco: Monaco) => {
         endColumn: word.endColumn,
       };
 
+      const completionItems: languages.CompletionItem[] = [];
+
+      if (result.suggestions.variables === true) {
+        addVariablesToCompletionItems({
+          variables: result.localVariables,
+          completionItems,
+          monaco,
+          range,
+        });
+      }
+
+      if (result.suggestions.functions === true) {
+        addFunctionsToCompletionItems({
+          functions: result.functions,
+          completionItems,
+          monaco,
+          range,
+        });
+        addFunctionsToCompletionItems({
+          functions: staticSymbols.builtinFunctions,
+          completionItems,
+          monaco,
+          range,
+        });
+      }
+
+      if (result.suggestions.identifier === true) {
+        // TODO noop?
+        // TODO add selection from records with name autocomplete?
+      }
+
+      if (result.suggestions.keywords) {
+        addKeywordsToCompletionItems({
+          keywords: staticSymbols.keywords,
+          completionItems,
+          monaco,
+          range,
+        });
+      }
+
+      if (result.suggestions.types === true) {
+        addTypesToCompletionItems({
+          types: staticSymbols.keywords,
+          completionItems,
+          monaco,
+          range,
+        });
+      }
+
+      if (result.suggestions.propsOf) {
+        addMethodsToCompletionItems({
+          typePropeties: staticSymbols.types[result.suggestions.propsOf.type], // TODO test this - same keys?
+          completionItems,
+          monaco,
+          range,
+        });
+
+        if (result.suggestions.propsOf.type === "Record") {
+          addFieldsToCompletionItems({
+            fields:
+              staticSymbols.tables[result.suggestions.propsOf.subtype]?.fields,
+            completionItems,
+            monaco,
+            range,
+          });
+        }
+      }
+
+      if (result.suggestions.subtypesOf) {
+        if (result.suggestions.subtypesOf === "Record") {
+          addTablesToCompletionItems({
+            tables: staticSymbols.tables,
+            completionItems,
+            monaco,
+            range,
+          });
+        }
+      }
+
+      // TODO add snippets - at least for new function?
+
       return {
-        suggestions: [
-          ...result.localVariables.map((e) => ({
-            // TODO is it safe to include this info in label? filterText might have to be added?
-            label: `${e.name}: ${e.type}`, // TODO also include subtype and length?
-            kind: monaco.languages.CompletionItemKind.Keyword,
-            insertText: e.name,
-            range,
-          })),
-          // TODO filter keywords by context - then only in if parsing,
-          ...staticSymbols.keywords.map((e) => ({
-            label: e,
-            kind: monaco.languages.CompletionItemKind.Keyword,
-            insertText: e,
-            range,
-          })),
-          ...staticSymbols.builtinFunctions.map((e) => ({
-            label: e,
-            kind: monaco.languages.CompletionItemKind.Function,
-            insertText: e, // TODO add snippet
-            insertTextRules:
-              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            range,
-          })),
-          // TODO show in proper context
-          ...Object.keys(staticSymbols.types).map((e) => ({
-            label: e,
-            kind: monaco.languages.CompletionItemKind.Class, // TODO is this correct?
-            insertText: e,
-            range,
-          })),
-        ] satisfies languages.CompletionItem[],
+        suggestions: completionItems,
       };
 
+      // TODO remove
       return {
         suggestions: [
           {
@@ -350,11 +404,149 @@ const registerLanguage = (monaco: Monaco) => {
   });
 };
 
-// TODO non-static symbols
-// // TODO received from LSP - variable + type
-// variables: [],
-// // TODO received from LSP - parameters + return type
-// functions: [],
+type CompletionItemAdderCommonProps = {
+  completionItems: languages.CompletionItem[];
+  range: IRange;
+  monaco: Monaco;
+};
+
+const addVariablesToCompletionItems = ({
+  completionItems,
+  variables,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps & {
+  variables: AlVariable[];
+}): void => {
+  for (const variable of variables) {
+    completionItems.push({
+      // TODO is it safe to include this info in label? filterText might have to be added?
+      label: `${variable.name}: ${variable.type}`, // TODO also include subtype and length?
+      kind: monaco.languages.CompletionItemKind.Variable,
+      insertText: variable.name,
+      range,
+    });
+  }
+};
+
+const addFunctionsToCompletionItems = ({
+  completionItems,
+  functions,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps & {
+  functions: AlFunction[];
+}): void => {
+  for (const func of functions) {
+    completionItems.push({
+      label: func,
+      kind: monaco.languages.CompletionItemKind.Function,
+      insertText: func,
+      range,
+    });
+  }
+};
+
+const addKeywordsToCompletionItems = ({
+  completionItems,
+  keywords,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps & {
+  keywords: AlType[];
+}): void => {
+  // TODO add keyword context filtering
+  for (const keyword of keywords) {
+    completionItems.push({
+      label: keyword,
+      kind: monaco.languages.CompletionItemKind.Keyword,
+      insertText: keyword,
+      range,
+    });
+  }
+};
+
+const addTypesToCompletionItems = ({
+  completionItems,
+  types,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps & {
+  types: AlType[];
+}): void => {
+  // TODO add keyword context filtering
+  for (const type of types) {
+    completionItems.push({
+      label: type,
+      kind: monaco.languages.CompletionItemKind.Class, // TODO is this correct?
+      insertText: type,
+      range,
+    });
+  }
+};
+
+const addTablesToCompletionItems = ({
+  completionItems,
+  tables,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps & {
+  tables: AlTables;
+}): void => {
+  for (const table of Object.values(tables)) {
+    completionItems.push({
+      label: table.name, // TODO show table number/caption?
+      kind: monaco.languages.CompletionItemKind.Class, // TODO class?
+      insertText: table.name,
+      range,
+    });
+  }
+};
+
+const addMethodsToCompletionItems = ({
+  completionItems,
+  typePropeties,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps & {
+  typePropeties: AlTypeProperties | undefined;
+}): void => {
+  if (!typePropeties) {
+    return;
+  }
+
+  // TODO same as function?
+  for (const method of typePropeties.methods) {
+    completionItems.push({
+      label: method,
+      kind: monaco.languages.CompletionItemKind.Method,
+      insertText: method,
+      range,
+    });
+  }
+};
+
+const addFieldsToCompletionItems = ({
+  completionItems,
+  fields,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps & {
+  fields: AlFields | undefined;
+}): void => {
+  if (!fields) {
+    return;
+  }
+
+  for (const field of Object.values(fields)) {
+    completionItems.push({
+      label: field.name, // TODO show table number/caption?
+      kind: monaco.languages.CompletionItemKind.Class, // TODO class?
+      insertText: field.name,
+      range,
+    });
+  }
+};
 
 export type StaticSymbols = {
   tables: AlTables;
@@ -386,6 +578,8 @@ type AlField = {
 
 type AlKeyword = string;
 
+type AlType = string;
+
 type AlTypes = {
   [k in string]: AlTypeProperties;
 };
@@ -405,9 +599,24 @@ type AlFunctionTODO = {
 };
 
 export type AlParsingResult = {
-  state: string; // TODO string union?
+  suggestions: AlSuggestions;
   localVariables: AlVariable[];
   functions: AlFunction[];
+};
+
+type AlSuggestions = {
+  keywords?: []; // TODO bit mask?
+  identifier?: boolean;
+  variables?: boolean;
+  functions?: boolean;
+  types?: boolean;
+  propsOf?: AlPropsOf;
+  subtypesOf?: AlType;
+};
+
+type AlPropsOf = {
+  type: AlType;
+  subtype: number; // XXX
 };
 
 type AlVariable = {

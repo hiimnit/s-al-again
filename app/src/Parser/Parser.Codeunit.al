@@ -19,14 +19,14 @@ codeunit 69001 "Parser FS"
     procedure ParseForIntellisense(Input: Text; Runtime: Codeunit "Runtime FS"): JsonObject
     var
         Symbol: Record "Symbol FS";
-        UserFunction: Codeunit "User Function FS";
         SymbolTable: Codeunit "Symbol Table FS";
         ParsingResult: JsonObject;
         LocalVariables: JsonArray;
+
+        EmptyArray: JsonArray; // FIXME
     begin
         Lexer.Init(Input);
 
-        // TODO expect error
         if TryParseFunctions(Runtime) then begin
             // TODO parsing went ok => full function?
             // TODO expected state is ProcedureOrTrigger
@@ -34,38 +34,21 @@ codeunit 69001 "Parser FS"
             exit;
         end;
 
-        // TODO use state
-        // TODO recover?
+        // TODO recover? 
+        // 1. function recovery
+        // 2. variable declaration recovery
+        // 3. statements recovery - use semicolons and begin/end pairs?
 
-        UserFunction := Runtime.GetLastDefinedFunction(); // TODO this can also fail if the parsing ends before vars are parsed
-        SymbolTable := UserFunction.GetSymbolTable();
-
-        case State.GetState() of
-            Enum::"Parser State FS"::PropsOf:
-                begin
-                    // TODO this can fail
-                    Symbol := State.GetPropsOfSymbol(
-                        Runtime,
-                        UserFunction.GetSymbolTable()
-                    );
-                    // TODO expect Symbol.Type to be record?
-                end;
-        end;
-
-        // TODO return
-        // 1. state
-        // 2. defined functions
-        // 3. current function symbols
-        ParsingResult.Add('state', Format(State.GetState()));
+        ParsingResult.Add('suggestions', State.ToSuggestions(Runtime));
 
         if SymbolTable.FindSet(Symbol) then
             repeat
                 LocalVariables.Add(Symbol.ToJson());
             until not SymbolTable.Next(Symbol);
         ParsingResult.Add('localVariables', LocalVariables);
-        ParsingResult.Add('functions', 'TODO'); // TODO
+        ParsingResult.Add('functions', EmptyArray); // FIXME
 
-        // TODO what is the result of Format(State) = formating a codeunit?
+        // TODO unrelated - what is the result of Format(State) = formating a codeunit?
 
         exit(ParsingResult);
     end;
@@ -211,7 +194,7 @@ codeunit 69001 "Parser FS"
         TypeLexeme := AssertNextLexeme(Lexeme.Identifier());
         Symbol.Type := ParseType(TypeLexeme."Identifier Name");
 
-        State.Subtype();
+        State.SubtypeOf(Symbol.Type);
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsIdentifier() then begin
             SubtypeLexeme := AssertNextLexeme(PeekedLexeme);
@@ -917,21 +900,6 @@ codeunit 69003 "Parser State FS"
         exit(State);
     end;
 
-    var
-        Call: Interface "Node FS";
-
-    procedure GetPropsOfSymbol
-    (
-        Runtime: Codeunit "Runtime FS";
-        SymbolTable: Codeunit "Symbol Table FS"
-    ): Record "Symbol FS"
-    begin
-        exit(Call.ValidateSemantics(
-            Runtime,
-            SymbolTable
-        ));
-    end;
-
     procedure None()
     begin
         State := State::None;
@@ -952,9 +920,13 @@ codeunit 69003 "Parser State FS"
         State := State::Type;
     end;
 
-    procedure Subtype()
+    var
+        SubtypeOfType: Enum "Type FS";
+
+    procedure SubtypeOf(NewType: Enum "Type FS")
     begin
-        State := State::Subtype;
+        State := State::SubtypeOf;
+        SubtypeOfType := NewType;
     end;
 
     procedure TypeLength()
@@ -972,6 +944,9 @@ codeunit 69003 "Parser State FS"
         State := State::Expression;
     end;
 
+    var
+        Call: Interface "Node FS";
+
     procedure PropsOf(NewCall: Interface "Node FS")
     begin
         State := State::PropsOf;
@@ -987,6 +962,87 @@ codeunit 69003 "Parser State FS"
     begin
         State := State::VarOrBegin;
     end;
+
+    procedure ToSuggestions
+    (
+        Runtime: Codeunit "Runtime FS"
+    ): JsonObject
+    var
+        Symbol: Record "Symbol FS";
+        UserFunction: Codeunit "User Function FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        Suggestions, PropsOfDetails : JsonObject;
+    begin
+        case State of
+            Enum::"Parser State FS"::None:
+                ;
+            Enum::"Parser State FS"::Identifier:
+                Suggestions.Add('identifier', true);
+            Enum::"Parser State FS"::ProcedureOrTrigger:
+                Suggestions.Add('keywords', true); // TODO => select keywords + new function snippet
+            Enum::"Parser State FS"::Statement:
+                begin
+                    Suggestions.Add('keywords', true); // TODO => select keywords - statement start
+                    Suggestions.Add('variables', true);
+                    Suggestions.Add('functions', true);
+                end;
+            Enum::"Parser State FS"::Expression:
+                begin
+                    Suggestions.Add('keywords', true); // TODO => select keywords - statement end? depending on current statement
+                    Suggestions.Add('variables', true);
+                    Suggestions.Add('functions', true);
+                end;
+            Enum::"Parser State FS"::PropsOf:
+                begin
+                    // TODO this can also fail if the parsing ends before vars are parsed
+                    UserFunction := Runtime.GetLastDefinedFunction();
+                    SymbolTable := UserFunction.GetSymbolTable();
+                    // TODO this can also fail
+                    Symbol := GetPropsOfSymbol(
+                        Runtime,
+                        UserFunction.GetSymbolTable()
+                    );
+
+                    PropsOfDetails.Add('type', Format(Symbol.Type));
+                    PropsOfDetails.Add('subtype', Symbol.TryLookupSubtype());
+
+                    Suggestions.Add(
+                        'propsOf',
+                        PropsOfDetails
+                    );
+                end;
+            Enum::"Parser State FS"::SubtypeOf:
+                Suggestions.Add(
+                    'subtypesOf',
+                    Format(SubtypeOfType) // TODO test
+                );
+            Enum::"Parser State FS"::Type:
+                Suggestions.Add('types', true);
+            Enum::"Parser State FS"::TypeLength:
+                ; // TODO suggest common lengths? 20/10/50?
+            Enum::"Parser State FS"::VarOrBegin:
+                Suggestions.Add('keywords', true); // TODO select keywords
+            Enum::"Parser State FS"::VarOrIdentifier:
+                begin
+                    Suggestions.Add('keywords', true); // TODO select keywords
+                    Suggestions.Add('identifier', true);
+                end;
+        end;
+
+        exit(Suggestions);
+    end;
+
+    local procedure GetPropsOfSymbol
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS"
+    ): Record "Symbol FS"
+    begin
+        exit(Call.ValidateSemantics(
+            Runtime,
+            SymbolTable
+        ));
+    end;
 }
 
 enum 69007 "Parser State FS"
@@ -998,7 +1054,7 @@ enum 69007 "Parser State FS"
     value(1; VarOrIdentifier) { Caption = 'VarOrIdentifier'; }
     value(2; Identifier) { Caption = 'Identifier'; }
     value(3; Type) { Caption = 'Type'; }
-    value(4; Subtype) { Caption = 'Subtype'; }
+    value(4; SubtypeOf) { Caption = 'SubtypeOf'; }
     value(5; TypeLength) { Caption = 'TypeLength'; }
     value(6; Statement) { Caption = 'Statement'; }
     value(7; Expression) { Caption = 'Expression'; }

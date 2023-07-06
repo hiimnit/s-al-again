@@ -269,6 +269,26 @@ table 69001 "Symbol FS"
         end;
     end;
 
+    procedure TryLookupSubtype(): Integer
+    var
+        AllObj: Record AllObj;
+    begin
+        case Rec.Type of
+            Rec.Type::Record:
+                begin
+                    if Rec.Subtype = '' then
+                        exit(-1);
+                    AllObj.SetRange("Object Type", AllObj."Object Type"::Table);
+                    AllObj.SetRange("Object Name", Rec.Subtype);
+                    if not AllObj.FindFirst() then
+                        exit(-1);
+                    exit(AllObj."Object ID");
+                end;
+        end;
+
+        exit(-1);
+    end;
+
     procedure CompareExact(Other: Record "Symbol FS"): Boolean
     begin
         if Rec.Type <> Other.Type then
