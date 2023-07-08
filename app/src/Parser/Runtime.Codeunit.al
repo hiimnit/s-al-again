@@ -90,7 +90,7 @@ codeunit 69011 "Runtime FS"
         StrLenFunction: Codeunit "StrLen Function FS";
         StrPosFunction: Codeunit "StrPos Function FS";
         StrSubstNoFunction: Codeunit "StrSubstNo Function FS";
-        UpperCaseEndFunction: Codeunit "UpperCaseEnd Function FS";
+        UpperCaseFunction: Codeunit "UpperCase Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -167,8 +167,8 @@ codeunit 69011 "Runtime FS"
                 exit(StrPosFunction);
             StrSubstNoFunction.GetName().ToLower():
                 exit(StrSubstNoFunction);
-            UpperCaseEndFunction.GetName().ToLower():
-                exit(UpperCaseEndFunction);
+            UpperCaseFunction.GetName().ToLower():
+                exit(UpperCaseFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;
@@ -592,7 +592,7 @@ codeunit 69011 "Runtime FS"
     begin
         Symbols.Add(
             'tables',
-            PrepareRecordSymbols()
+            PrepareTablesSymbols()
         );
         Symbols.Add(
             'keywords',
@@ -610,46 +610,51 @@ codeunit 69011 "Runtime FS"
         exit(Symbols);
     end;
 
-    local procedure PrepareRecordSymbols(): JsonObject
+    local procedure PrepareTablesSymbols(): JsonObject
     var
         TableMetadata: Record "Table Metadata";
-        Field: Record Field;
-        Table, Property, Tables, Properties : JsonObject;
+        Tables: JsonObject;
     begin
         if not TableMetadata.FindSet() then
             exit(Tables);
 
         repeat
-            Clear(Table);
-            Clear(Properties);
-
-            // TODO add captions?
-
-            Table.Add('name', TableMetadata.Name);
-            if TableMetadata.ObsoleteState <> TableMetadata.ObsoleteState::No then
-                Table.Add('obsolete', TableMetadata.ObsoleteState);
-            Table.Add('fields', Properties);
-
-            Field.SetRange(TableNo, TableMetadata.ID);
-            Field.SetRange(Enabled, true);
-            if Field.FindSet() then
-                repeat
-                    Clear(Property);
-                    Property.Add('name', Field.FieldName);
-                    Property.Add('type', Field."Type Name");
-                    if Field.Len <> 0 then
-                        Property.Add('length', Field.Len);
-                    if Field.ObsoleteState <> Field.ObsoleteState::No then
-                        Property.Add('obsolete', Field.ObsoleteState);
-                    Property.Add('class', Format(Field.Class));
-
-                    Properties.Add(Format(Field."No."), Property);
-                until Field.Next() = 0;
-
-            Tables.Add(Format(TableMetadata.ID), Table);
+            Tables.Add(Format(TableMetadata.ID), PrepareTableSymbols(TableMetadata));
         until TableMetadata.Next() = 0;
 
         exit(Tables);
+    end;
+
+    local procedure PrepareTableSymbols(TableMetadata: Record "Table Metadata"): JsonObject
+    var
+        Field: Record Field;
+        Table, Property, Properties : JsonObject;
+    begin
+        Table.Add('name', TableMetadata.Name);
+        Table.Add('caption', TableMetadata.Caption);
+        Table.Add('type', Format(TableMetadata.TableType));
+        if TableMetadata.ObsoleteState <> TableMetadata.ObsoleteState::No then
+            Table.Add('obsolete', TableMetadata.ObsoleteState);
+        Table.Add('fields', Properties);
+
+        Field.SetRange(TableNo, TableMetadata.ID);
+        Field.SetRange(Enabled, true);
+        if Field.FindSet() then
+            repeat
+                Clear(Property);
+                Property.Add('name', Field.FieldName);
+                Property.Add('caption', Field."Field Caption");
+                Property.Add('type', Format(Field.Type));
+                if Field.Type in [Field.Type::Text, Field.Type::Code] then
+                    Property.Add('length', Field.Len);
+                if Field.ObsoleteState <> Field.ObsoleteState::No then
+                    Property.Add('obsolete', Field.ObsoleteState);
+                Property.Add('class', Format(Field.Class));
+
+                Properties.Add(Format(Field."No."), Property);
+            until Field.Next() = 0;
+
+        exit(Table);
     end;
 
     local procedure PrepareKeywordSymbols(): JsonArray
@@ -716,22 +721,22 @@ codeunit 69011 "Runtime FS"
     var
         TextMethods: JsonArray;
     begin
-        TextMethods.Add('ToUpper');
-        TextMethods.Add('ToLower');
-        TextMethods.Add('Contains');
-        TextMethods.Add('EndsWith');
-        TextMethods.Add('IndexOf');
-        TextMethods.Add('IndexOfAny');
-        TextMethods.Add('LastIndexOf');
-        TextMethods.Add('PadLeft');
-        TextMethods.Add('PadRight');
-        TextMethods.Add('Remove');
-        TextMethods.Add('Replace');
-        TextMethods.Add('StartsWith');
-        TextMethods.Add('Substring');
-        TextMethods.Add('Trim');
-        TextMethods.Add('TrimEnd');
-        TextMethods.Add('TrimStart');
+        TextMethods.Add(CreateFunctionSymbols('ToUpper', 'ToUpper(): Text'));
+        TextMethods.Add(CreateFunctionSymbols('ToLower', 'ToLower(): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Contains', 'Contains(Value: Text): Boolean'));
+        TextMethods.Add(CreateFunctionSymbols('EndsWith', 'EndsWith(Value: Text): Boolean'));
+        TextMethods.Add(CreateFunctionSymbols('IndexOf', 'IndexOf(Value: Text, [StartIndex: Integer]): Integer'));
+        TextMethods.Add(CreateFunctionSymbols('IndexOfAny', 'IndexOfAny(Values: Text, [StartIndex: Integer]): Integer'));
+        TextMethods.Add(CreateFunctionSymbols('LastIndexOf', 'LastIndexOf(Value: Text, [StartIndex: Integer]): Integer'));
+        TextMethods.Add(CreateFunctionSymbols('PadLeft', 'PadLeft(Count: Integer, [Char: Char]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('PadRight', 'PadRight(Count: Integer, [Char: Char]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Remove', 'Remove(StartIndex: Integer, [Count: Integer]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Replace', 'Replace(OldValue: Text, NewValue: Text): Text'));
+        TextMethods.Add(CreateFunctionSymbols('StartsWith', 'StartsWith(Value: Text): Boolean'));
+        TextMethods.Add(CreateFunctionSymbols('Substring', 'Substring(StartIndex: Integer, [Count: Integer]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Trim', 'Trim(): Text'));
+        TextMethods.Add(CreateFunctionSymbols('TrimEnd', 'TrimEnd([Chars: Text]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('TrimStart', 'TrimStart([Chars: Text]): Text'));
 
         exit(TextMethods);
     end;
@@ -752,27 +757,27 @@ codeunit 69011 "Runtime FS"
     var
         RecordMethods: JsonArray;
     begin
-        RecordMethods.Add('FindFirst');
-        RecordMethods.Add('FindLast');
-        RecordMethods.Add('FindSet');
-        RecordMethods.Add('Next');
-        RecordMethods.Add('SetRange');
-        RecordMethods.Add('Insert');
-        RecordMethods.Add('Modify');
-        RecordMethods.Add('Delete');
-        RecordMethods.Add('Init');
-        RecordMethods.Add('Reset');
-        RecordMethods.Add('IsEmpty');
-        RecordMethods.Add('TableName');
-        RecordMethods.Add('TableCaption');
-        RecordMethods.Add('SetRecFilter');
-        RecordMethods.Add('GetFilters');
-        RecordMethods.Add('Count');
-        RecordMethods.Add('GetView');
-        RecordMethods.Add('SetView');
-        RecordMethods.Add('FieldNo');
-        RecordMethods.Add('Validate');
-        RecordMethods.Add('SetFilter');
+        RecordMethods.Add(CreateFunctionSymbols('FindFirst', 'FindFirst(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('FindLast', 'FindLast(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('FindSet', 'FindSet(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Next', 'Next([Steps: Integer]): Integer'));
+        RecordMethods.Add(CreateFunctionSymbols('SetRange', 'SetRange(Field: Joker, [FromValue: Joker], [ToValue: Joker])'));
+        RecordMethods.Add(CreateFunctionSymbols('Insert', 'Insert(RunTrigger: Boolean): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Modify', 'Modify(RunTrigger: Boolean): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Delete', 'Delete(RunTrigger: Boolean): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Init', 'Init()'));
+        RecordMethods.Add(CreateFunctionSymbols('Reset', 'Reset()'));
+        RecordMethods.Add(CreateFunctionSymbols('IsEmpty', 'IsEmpty(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('TableName', 'TableName(): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('TableCaption', 'TableCaption(): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('SetRecFilter', 'SetRecFilter()'));
+        RecordMethods.Add(CreateFunctionSymbols('GetFilters', 'GetFilters(): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('Count', 'Count(): Integer'));
+        RecordMethods.Add(CreateFunctionSymbols('GetView', 'GetView([UseNames: Boolean]): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('SetView', 'SetView(String: Text)'));
+        RecordMethods.Add(CreateFunctionSymbols('FieldNo', 'FieldNo(Field: Joker): Integer'));
+        RecordMethods.Add(CreateFunctionSymbols('Validate', 'Validate(Field: Joker, [NewValue: Joker])'));
+        RecordMethods.Add(CreateFunctionSymbols('SetFilter', 'SetFilter(Field: Joker, String: Text, [Value: Joker, ...])', 'Up to 10 substitutions.'));
 
         exit(RecordMethods);
     end;
@@ -781,45 +786,77 @@ codeunit 69011 "Runtime FS"
     var
         BuiltInFunctions: JsonArray;
     begin
-        BuiltInFunctions.Add('Abs');
-        BuiltInFunctions.Add('Power');
-        BuiltInFunctions.Add('Message');
-        BuiltInFunctions.Add('Error');
-        BuiltInFunctions.Add('Write');
-        BuiltInFunctions.Add('Format');
-        BuiltInFunctions.Add('CalcDate');
-        BuiltInFunctions.Add('ClosingDate');
-        BuiltInFunctions.Add('CreateDateTime');
-        BuiltInFunctions.Add('CurrentDateTime');
-        BuiltInFunctions.Add('NormalDate');
-        BuiltInFunctions.Add('Time');
-        BuiltInFunctions.Add('Today');
-        BuiltInFunctions.Add('WorkDate');
-        BuiltInFunctions.Add('Date2DMY');
-        BuiltInFunctions.Add('Date2DWY');
-        BuiltInFunctions.Add('DMY2Date');
-        BuiltInFunctions.Add('DWY2Date');
-        BuiltInFunctions.Add('DT2Date');
-        BuiltInFunctions.Add('DT2Time');
-        BuiltInFunctions.Add('CreateGuid');
-        BuiltInFunctions.Add('IsNullGuid');
-        BuiltInFunctions.Add('Evaluate');
-        BuiltInFunctions.Add('MaxStrLen');
-        BuiltInFunctions.Add('ConvertStr');
-        BuiltInFunctions.Add('CopyStr');
-        BuiltInFunctions.Add('DelChr');
-        BuiltInFunctions.Add('DelStr');
-        BuiltInFunctions.Add('IncStr');
-        BuiltInFunctions.Add('InsStr');
-        BuiltInFunctions.Add('LowerCase');
-        BuiltInFunctions.Add('PadStr');
-        BuiltInFunctions.Add('SelectStr');
-        BuiltInFunctions.Add('StrCheckSum');
-        BuiltInFunctions.Add('StrLen');
-        BuiltInFunctions.Add('StrPos');
-        BuiltInFunctions.Add('StrSubstNo');
-        BuiltInFunctions.Add('UpperCaseEnd');
+        BuiltInFunctions.Add(CreateFunctionSymbols('Abs', 'Abs(Number: Decimal): Decimal'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Power', 'Power(Number: Decimal, Power: Decimal): Decimal'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Message', 'Message(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Error', 'Error(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('WriteLine', 'WriteLine(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Format', 'Format(Input: Any, [Length: Integer, [FormatNumber: Integer/FormatString: Text]]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CalcDate', 'CalcDate(Formula: Text/DateFormula, [Date: Date]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('ClosingDate', 'ClosingDate(Date: Date): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CreateDateTime', 'CreateDateTime(Date: Date, Time: Time): DateTime'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CurrentDateTime', 'CurrentDateTime(): DateTime'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('NormalDate', 'NormalDate(Date: Date): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Time', 'Time(): Time'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Today', 'Today(): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('WorkDate', 'WorkDate([WorkDate: Date]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Date2DMY', 'Date2DMY(Date: Date, Part: Integer): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Date2DWY', 'Date2DWY(Date: Date, Part: Integer): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DMY2Date', 'DMY2Date(Day: Integer, [Month: Integer, [Year: Integer]]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DWY2Date', 'DWY2Date(WeekDay: Integer, [Week: Integer, [Year: Integer]]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DT2Date', 'DT2Date(DateTime: DateTime): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DT2Time', 'DT2Time(DateTime: DateTime): Time'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CreateGuid', 'CreateGuid(): Guid'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('IsNullGuid', 'IsNullGuid(Guid: Guid): Boolean'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Evaluate', 'Evaluate(var Value: Any, Input: Text, [FormatNumber: Integer])[: Boolean]'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('MaxStrLen', 'MaxStrLen(Text: Text): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('ConvertStr', 'ConvertStr(String: Text, FromCharacters: Text, ToCharacters: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CopyStr', 'CopyStr(String: Text, Position: Integer, [Length: Integer]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DelChr', 'DelChr(String: Text, [Where: Text], [Which: Text]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DelStr', 'DelStr(String: Text, Position: Integer, [Length: Integer]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('IncStr', 'IncStr(String: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('InsStr', 'InsStr(String: Text, SubString: Text, Position: Integer): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('LowerCase', 'LowerCase(String: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('PadStr', 'PadStr(String: Text, Length: Integer, [FillCharacter: Text]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('SelectStr', 'SelectStr(Number: Integer, CommaString: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrCheckSum', 'StrCheckSum(String: Text, [WeightString: Text], [Modulus: Integer]): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrLen', 'StrLen(String: Text): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrPos', 'StrPos(String: Text, SubString: Text): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrSubstNo', 'StrSubstNo(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('UpperCase', 'UpperCase(String: Text): Text'));
 
         exit(BuiltInFunctions);
+    end;
+
+    procedure CreateFunctionSymbols
+    (
+        Name: Text;
+        Detail: Text
+    ): JsonObject
+    begin
+        exit(CreateFunctionSymbols(
+            Name,
+            Detail,
+            ''
+        ));
+    end;
+
+    procedure CreateFunctionSymbols
+    (
+        Name: Text;
+        Detail: Text;
+        Documentation: Text
+    ): JsonObject
+    var
+        Function: JsonObject;
+    begin
+        Function.Add('name', Name);
+
+        Function.Add('detail', Detail);
+
+        if Documentation <> '' then
+            Function.Add('documentation', Documentation);
+
+        exit(Function);
     end;
 }

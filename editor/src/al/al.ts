@@ -210,6 +210,8 @@ const registerLanguage = (monaco: Monaco) => {
 
   monaco.languages.register(languageExtensionPoint);
 
+  // TODO monaco.languages.registerSignatureHelpProvider for function parameters?
+
   monaco.languages.registerTokensProviderFactory(languageExtensionPoint.id, {
     create: async (): Promise<languages.IMonarchLanguage> => language,
   });
@@ -232,9 +234,7 @@ const registerLanguage = (monaco: Monaco) => {
       // 2. return symbol table(s)?
       // this also might be the correct time to fix position handling in lexer?
 
-      // TODO - skipIfBusy
-      // Microsoft.Dynamics.NAV.InvokeExtensibilityMethod()
-      // invoke with a key - use it to identify the response
+      // TODO record methods like setrange and validate need special treatment - suggest fields
 
       const staticSymbols = LSPMessenger.instance.staticSymbols;
       if (!staticSymbols) {
@@ -426,6 +426,7 @@ const addVariablesToCompletionItems = ({
       label: `${variable.name}: ${variable.type}`, // TODO also include subtype and length?
       kind: monaco.languages.CompletionItemKind.Variable,
       insertText: variable.name,
+      sortText: `01-${variable.name}`,
       range,
     });
   }
@@ -439,11 +440,14 @@ const addFunctionsToCompletionItems = ({
 }: CompletionItemAdderCommonProps & {
   functions: AlFunction[];
 }): void => {
-  for (const func of functions) {
+  for (const { name, detail, documentation } of functions) {
     completionItems.push({
-      label: func,
+      label: name,
       kind: monaco.languages.CompletionItemKind.Function,
-      insertText: func,
+      insertText: name,
+      detail,
+      documentation,
+      sortText: `03-${name}`,
       range,
     });
   }
@@ -463,6 +467,7 @@ const addKeywordsToCompletionItems = ({
       label: keyword,
       kind: monaco.languages.CompletionItemKind.Keyword,
       insertText: keyword,
+      sortText: `05-${keyword}`,
       range,
     });
   }
@@ -480,7 +485,7 @@ const addTypesToCompletionItems = ({
   for (const type of Object.keys(types)) {
     completionItems.push({
       label: type,
-      kind: monaco.languages.CompletionItemKind.Class, // TODO is this correct?
+      kind: monaco.languages.CompletionItemKind.Class,
       insertText: type,
       range,
     });
@@ -495,12 +500,18 @@ const addTablesToCompletionItems = ({
 }: CompletionItemAdderCommonProps & {
   tables: AlTables;
 }): void => {
-  for (const table of Object.values(tables)) {
+  for (const [number, { name, caption, type, obsolete }] of Object.entries(
+    tables
+  )) {
+    const quotedName = name.includes(" ") ? `"${name}"` : name;
+    // FIXME correctly replace current text - partial field name/orphaned quote
     completionItems.push({
-      label: table.name, // TODO show table number/caption?
-      kind: monaco.languages.CompletionItemKind.Class, // TODO class?
-      insertText: table.name,
-      tags: table.obsolete // TODO add reason?
+      label: quotedName,
+      kind: monaco.languages.CompletionItemKind.Class,
+      insertText: quotedName,
+      detail: type,
+      documentation: `${caption} (${number})`,
+      tags: obsolete // TODO add reason?
         ? [monaco.languages.CompletionItemTag.Deprecated]
         : undefined,
       range,
@@ -520,12 +531,14 @@ const addMethodsToCompletionItems = ({
     return;
   }
 
-  // TODO same as function?
-  for (const method of typePropeties.methods) {
+  for (const { name, detail, documentation } of typePropeties.methods) {
     completionItems.push({
-      label: method,
+      label: name,
       kind: monaco.languages.CompletionItemKind.Method,
-      insertText: method,
+      insertText: name,
+      detail,
+      documentation,
+      sortText: `01-${name}`,
       range,
     });
   }
@@ -543,12 +556,24 @@ const addFieldsToCompletionItems = ({
     return;
   }
 
-  for (const field of Object.values(fields)) {
+  for (const [
+    number,
+    { name, caption, type, length, obsolete, class: fieldClass },
+  ] of Object.entries(fields)) {
+    const quotedName = name.includes(" ") ? `"${name}"` : name;
+    const label = length
+      ? `${quotedName}: ${type}[${length}]`
+      : `${quotedName}: ${type}`;
+
+    // FIXME correctly replace current text - partial field name/orphaned quote
     completionItems.push({
-      label: field.name, // TODO show table number/caption?
-      kind: monaco.languages.CompletionItemKind.Class, // TODO class?
-      insertText: field.name,
-      tags: field.obsolete // TODO add reason?
+      label: label,
+      kind: monaco.languages.CompletionItemKind.Property,
+      insertText: quotedName,
+      detail: fieldClass,
+      documentation: `${caption} (${number})`,
+      sortText: `00-${name}`,
+      tags: obsolete // TODO add reason?
         ? [monaco.languages.CompletionItemTag.Deprecated]
         : undefined,
       range,
@@ -569,6 +594,8 @@ type AlTables = {
 
 type AlTable = {
   name: string;
+  caption: string;
+  type: string;
   fields: AlFields;
   obsolete?: string; // TODO option!
 };
@@ -579,6 +606,7 @@ type AlFields = {
 
 type AlField = {
   name: string;
+  caption: string;
   type: string;
   length?: number;
   obsolete?: string; // TODO option!
@@ -594,18 +622,20 @@ type AlTypes = {
 };
 
 type AlTypeProperties = {
-  methods: AlMethod[];
+  methods: AlFunction[];
 };
 
-type AlMethod = string;
-
-type AlFunction = string;
-// TODO replace AlFunction
-type AlFunctionTODO = {
-  name: string; // TODO object - also include currently parsed statement for correct keyword suggestion?
-  parameters: AlVariable[];
-  returnType?: AlVariable; // TODO what if it is not named?
+type AlFunction = {
+  name: string;
+  detail: string;
+  documentation?: string;
 };
+// TODO replace AlFunction - implement parameter hints
+// type AlFunctionTODO = {
+//   name: string;
+//   parameters: AlVariable[];
+//   returnType?: AlVariable;
+// };
 
 export type AlParsingResult = {
   suggestions: AlSuggestions;

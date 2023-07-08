@@ -197,8 +197,9 @@ codeunit 69001 "Parser FS"
             Symbol.Name := NameLexeme."Identifier Name";
         end;
 
-        State.Type();
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
+
+        State.Type();
         TypeLexeme := AssertNextLexeme(Lexeme.Identifier());
         Symbol.Type := ParseType(TypeLexeme."Identifier Name");
 
