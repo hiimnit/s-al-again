@@ -1,3 +1,4 @@
+import type { Position } from "monaco-editor";
 import { AlParsingResult, StaticSymbols } from "./al/al";
 
 type SuggestionPromiseResolver = (result: AlParsingResult) => void;
@@ -11,9 +12,11 @@ class LSPMessenger {
 
   async getSuggestions({
     input,
+    position,
     signal,
   }: {
     input: string;
+    position: Position;
     signal: AbortSignal;
   }): Promise<AlParsingResult | undefined> {
     if (window.Microsoft === undefined) {
@@ -36,7 +39,8 @@ class LSPMessenger {
       Microsoft.Dynamics.NAV.InvokeExtensibilityMethod("GetSuggestions", [
         key,
         input,
-        // TODO add position so that we can send the whole input? for parsing functions defined later (and globals in the future?)
+        position.lineNumber,
+        position.column,
       ]);
     });
   }

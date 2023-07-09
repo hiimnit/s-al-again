@@ -9,7 +9,7 @@ controladdin "Monaco Editor FS"
     event Tokenize(Input: Text)
     event Parse(Input: Text)
     event Ready()
-    event GetSuggestions("Key": Integer; Input: Text)
+    event GetSuggestions("Key": Integer; Input: Text; Line: Integer; Column: Integer)
     event EditorReady()
 
     procedure WriteLine(Line: Text)

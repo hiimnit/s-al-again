@@ -86,4 +86,29 @@ codeunit 69025 "User Function FS" implements "Function FS"
         SymbolTable.Validate();
         Statements.ValidateSemantics(Runtime, SymbolTable);
     end;
+
+    procedure GetSignature(): Text
+    var
+        ParameterSymbol, ReturnTypeSymbol : Record "Symbol FS";
+        SignatureBuilder: TextBuilder;
+    begin
+        SignatureBuilder.Append(GetName());
+
+        SignatureBuilder.Append('(');
+        SymbolTable.GetParameters(ParameterSymbol);
+        ParameterSymbol.SetCurrentKey(Order);
+        if ParameterSymbol.FindSet() then
+            repeat
+                if SignatureBuilder.Length <> 0 then
+                    SignatureBuilder.Append('; ');
+                SignatureBuilder.Append(ParameterSymbol.ToText());
+            until ParameterSymbol.Next() = 0;
+        SignatureBuilder.Append(')');
+
+        ReturnTypeSymbol := GetReturnType(false);
+        if ReturnTypeSymbol.Type <> ReturnTypeSymbol.Type::Void then
+            SignatureBuilder.Append(ReturnTypeSymbol.ToText());
+
+        exit(SignatureBuilder.ToText());
+    end;
 }

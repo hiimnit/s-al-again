@@ -320,11 +320,23 @@ table 69001 "Symbol FS"
 
     procedure TypeToText(): Text
     var
-        FormatTok: Label '%1 "%2"', Locked = true;
+        TypeBuilder: TextBuilder;
     begin
-        if Rec.Subtype = '' then
-            exit(Format(Rec.Type));
-        exit(StrSubstNo(FormatTok, Rec.Type, Rec.Subtype));
+        TypeBuilder.Append(Format(Rec.Type));
+
+        if Rec.Subtype <> '' then begin
+            TypeBuilder.Append('"');
+            TypeBuilder.Append(Rec.Subtype);
+            TypeBuilder.Append('"');
+        end;
+
+        if Rec."Length Defined" then begin
+            TypeBuilder.Append('[');
+            TypeBuilder.Append(Format(Rec.Length));
+            TypeBuilder.Append(']');
+        end;
+
+        exit(TypeBuilder.ToText());
     end;
 
     procedure LookupProperty
@@ -492,6 +504,19 @@ table 69001 "Symbol FS"
         Symbol.Add('pointer', Rec."Pointer Parameter");
 
         exit(Symbol);
+    end;
+
+    procedure ToText(): Text
+    var
+        SignatureBuilder: TextBuilder;
+    begin
+        if "Pointer Parameter" then
+            SignatureBuilder.Append('var ');
+        SignatureBuilder.Append(Rec.Name);
+        SignatureBuilder.Append(': ');
+        SignatureBuilder.Append(Rec.TypeToText());
+
+        exit(SignatureBuilder.ToText());
     end;
 }
 

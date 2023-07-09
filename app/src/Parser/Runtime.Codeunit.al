@@ -51,6 +51,25 @@ codeunit 69011 "Runtime FS"
         exit(Functions[FunctionCount]);
     end;
 
+    procedure GetLastDefinedFunction(var UserFunction: Codeunit "User Function FS"): Boolean
+    begin
+        if FunctionCount = 0 then
+            exit(false);
+
+        UserFunction := GetLastDefinedFunction();
+        exit(true);
+    end;
+
+    procedure GetFunctionCount(): Integer
+    begin
+        exit(FunctionCount);
+    end;
+
+    procedure GetFunction(i: Integer): Codeunit "User Function FS"
+    begin
+        exit(Functions[i]);
+    end;
+
     local procedure LookupBuiltInFunction(Name: Text[120]): Interface "Function FS"
     var
         AbsFunction: Codeunit "Abs Function FS";

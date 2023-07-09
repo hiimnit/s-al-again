@@ -16,21 +16,37 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(Lexeme.EOS());
     end;
 
-    procedure ParseForIntellisense(Input: Text; Runtime: Codeunit "Runtime FS"): JsonObject
+    procedure ParseForIntellisense
+    (
+        Input: Text;
+        Line: Integer;
+        Column: Integer;
+        Runtime: Codeunit "Runtime FS"
+    ): JsonObject
     var
         Symbol: Record "Symbol FS";
         UserFunction: Codeunit "User Function FS";
         SymbolTable: Codeunit "Symbol Table FS";
         ParsingResult: JsonObject;
-        LocalVariables: JsonArray;
-
-        EmptyArray: JsonArray; // FIXME
+        LocalVariables, Functions : JsonArray;
+        i: Integer;
     begin
         Lexer.Init(Input);
 
         // TODO two passes 
-        // > first only function headers
-        // > then detailed parsing of current function
+        // > first: only function headers
+        ParseFunctionSignatures(Runtime, Line, Column);
+
+        // > second: detailed parsing of current function - just continue parsing after the signature
+        // > 1. go through defined signatures (not sorted!) to find the closest signature
+        // > > this replaces `GetLastDefinedFunction`
+        // > > what if there is another trigger/procedure that was not parsed in `ParseFunctionSignatures` that is closer? check if eos after parsing?
+        UserFunction := 'TODO';
+        // > 2. continue parsing after the signature up to current position
+        Lexer.Init('TODO substring from position'); // TODO substring from position
+
+        ParseProcedure(UserFunction); // TODO try // TODO replaces TryParseFunctions
+
         if TryParseFunctions(Runtime) then begin
             // TODO parsing went ok => full function?
             // TODO expected state is ProcedureOrTrigger
@@ -46,19 +62,56 @@ codeunit 69001 "Parser FS"
         ParsingResult.Add('suggestions', State.ToSuggestions(Runtime));
 
         // TODO this can also fail if the parsing ends before vars are parsed -> recovery for var declaration
-        UserFunction := Runtime.GetLastDefinedFunction();
-        SymbolTable := UserFunction.GetSymbolTable();
-
-        if SymbolTable.FindSet(Symbol) then
-            repeat
-                LocalVariables.Add(Symbol.ToJson());
-            until not SymbolTable.Next(Symbol);
+        if Runtime.GetLastDefinedFunction(UserFunction) then begin // TODO remove, use current UserFunction - if set
+            SymbolTable := UserFunction.GetSymbolTable();
+            if SymbolTable.FindSet(Symbol) then
+                repeat
+                    LocalVariables.Add(Symbol.ToJson());
+                until not SymbolTable.Next(Symbol);
+        end;
         ParsingResult.Add('localVariables', LocalVariables);
-        ParsingResult.Add('functions', EmptyArray); // FIXME
+
+        for i := 1 to Runtime.GetFunctionCount() do begin
+            UserFunction := Runtime.GetFunction(i);
+            Functions.Add(Runtime.CreateFunctionSymbols(
+                UserFunction.GetName(),
+                UserFunction.GetSignature()
+            ));
+        end;
+        ParsingResult.Add('functions', Functions);
 
         // TODO unrelated - what is the result of Format(State) = formating a codeunit?
 
         exit(ParsingResult);
+    end;
+
+    local procedure ParseFunctionSignatures
+    (
+        Runtime: Codeunit "Runtime FS";
+        Line: Integer;
+        Column: Integer
+    )
+    var
+        PeekedLexeme: Record "Lexeme FS";
+        UserFunction: Codeunit "User Function FS";
+    begin
+        while true do begin
+            PeekedLexeme := PeekNextLexeme();
+            if PeekedLexeme.IsEOS() then
+                break;
+
+            // TODO find the closest definition here!
+            case true of
+                PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure"):
+                    if TryParseProcedureSignature(UserFunction) then
+                        Runtime.DefineFunction(UserFunction);
+                PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger"):
+                    if TryParseOnRunSignature(UserFunction) then
+                        Runtime.DefineFunction(UserFunction);
+                else
+                    ;
+            end;
+        end;
     end;
 
     procedure Recover()
@@ -66,18 +119,12 @@ codeunit 69001 "Parser FS"
         // TODO - try to find next procedure/trigger and start parsing again
     end;
 
-    [TryFunction]
-    local procedure TryParseFunctions(Runtime: Codeunit "Runtime FS")
-    begin
-        ParseFunctions(Runtime);
-    end;
-
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
     var
         PeekedLexeme: Record "Lexeme FS";
     begin
         while true do begin
-            State.ProcedureOrTrigger();
+            State.ProcedureOrTrigger(); // TODO also call in new function
 
             PeekedLexeme := PeekNextLexeme();
             if PeekedLexeme.IsEOS() then
@@ -96,12 +143,32 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseOnRun(Runtime: Codeunit "Runtime FS")
     var
+        UserFunction: Codeunit "User Function FS";
+    begin
+        UserFunction := ParseOnRunSignature();
+
+        Runtime.DefineFunction(UserFunction);
+
+        ParseProcedure(UserFunction);
+    end;
+
+    [TryFunction]
+    local procedure TryParseOnRunSignature(var UserFunction: Codeunit "User Function FS")
+    begin
+        UserFunction := ParseOnRunSignature();
+    end;
+
+    local procedure ParseOnRunSignature(): Codeunit "User Function FS"
+    var
         Lexeme: Record "Lexeme FS";
         SymbolTable: Codeunit "Symbol Table FS";
         UserFunction: Codeunit "User Function FS";
         Name: Text[120];
     begin
-        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"trigger"));
+        Lexeme := AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"trigger"));
+        // TODO set start position
+
+        State.Identifier(); // XXX OnRun is the only allowed name, suggest?
 
         Lexeme := AssertNextLexeme(Lexeme.Identifier());
         if Lexeme."Identifier Name".ToLower() <> 'onrun' then
@@ -113,18 +180,33 @@ codeunit 69001 "Parser FS"
 
         SymbolTable.DefineReturnType(SymbolTable.VoidSymbol());
 
+        // TODO set end position - use Lexer.GetPosition?
+
         UserFunction.Init(
             Name,
             SymbolTable
         );
-        Runtime.DefineFunction(UserFunction);
-
-        UserFunction.SetStatements(
-            ParseProcedure(SymbolTable)
-        );
+        exit(UserFunction);
     end;
 
     local procedure ParseProcedure(Runtime: Codeunit "Runtime FS")
+    var
+        UserFunction: Codeunit "User Function FS";
+    begin
+        UserFunction := ParseProcedureSignature();
+
+        Runtime.DefineFunction(UserFunction);
+
+        ParseProcedure(UserFunction);
+    end;
+
+    [TryFunction]
+    local procedure TryParseProcedureSignature(var UserFunction: Codeunit "User Function FS")
+    begin
+        UserFunction := ParseProcedureSignature();
+    end;
+
+    local procedure ParseProcedureSignature(): Codeunit "User Function FS"
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         ParameterSymbol, ReturnTypeSymbol : Record "Symbol FS";
@@ -133,7 +215,8 @@ codeunit 69001 "Parser FS"
         Pointer: Boolean;
         Name: Text[120];
     begin
-        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
+        Lexeme := AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
+        // TODO set start position
 
         State.Identifier();
 
@@ -173,15 +256,13 @@ codeunit 69001 "Parser FS"
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
 
+        // TODO set end position - use Lexer.GetPosition?
+
         UserFunction.Init(
             Name,
             SymbolTable
         );
-        Runtime.DefineFunction(UserFunction);
-
-        UserFunction.SetStatements(
-            ParseProcedure(SymbolTable)
-        );
+        exit(UserFunction);
     end;
 
     local procedure ParseVariableDefinition(NameRequired: Boolean): Record "Symbol FS"
@@ -226,17 +307,19 @@ codeunit 69001 "Parser FS"
         exit(Symbol);
     end;
 
-    // TODO pass in user function instead
     local procedure ParseProcedure
     (
-        SymbolTable: Codeunit "Symbol Table FS"
-    ): Interface "Node FS"
+        UserFunction: Codeunit "User Function FS"
+    )
     var
         Lexeme, PeekedLexeme : Record "Lexeme FS";
         VariableSymbol: Record "Symbol FS";
+        SymbolTable: Codeunit "Symbol Table FS";
         CompoundStatement: Interface "Node FS";
     begin
         State.VarOrBegin();
+
+        SymbolTable := UserFunction.GetSymbolTable();
 
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
@@ -261,7 +344,7 @@ codeunit 69001 "Parser FS"
             Lexeme.Operator(Enum::"Operator FS"::";")
         );
 
-        exit(CompoundStatement);
+        UserFunction.SetStatements(CompoundStatement);
     end;
 
     local procedure ParseCompoundStatement(): Interface "Node FS"
@@ -793,6 +876,8 @@ codeunit 69001 "Parser FS"
         PeekedLexeme: Record "Lexeme FS";
         Arguments: Codeunit "Node Linked List FS";
     begin
+        // TODO suggest fields in methdos like setrage, setfilter, validate
+
         AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"("));
 
         PeekedLexeme := PeekNextLexeme();

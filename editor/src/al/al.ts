@@ -236,6 +236,7 @@ const registerLanguage = (monaco: Monaco) => {
 
       // TODO record methods like setrange and validate need special treatment - suggest fields
 
+      // TODO do not show editor before symbols are loaded?
       const staticSymbols = LSPMessenger.instance.staticSymbols;
       if (!staticSymbols) {
         // TODO toasts?
@@ -252,16 +253,10 @@ const registerLanguage = (monaco: Monaco) => {
         abortController.abort(new Error("AbortError"))
       );
 
-      const value = model.getValueInRange({
-        startLineNumber: 0,
-        startColumn: 0,
-        endLineNumber: position.lineNumber,
-        endColumn: position.column,
-      });
-
       // TODO this can throw the abort error - catch
       const result = await LSPMessenger.instance.getSuggestions({
-        input: value, // TODO send whole value + position?
+        input: model.getValue(),
+        position,
         signal: abortController.signal,
       });
 
