@@ -543,4 +543,14 @@ codeunit 69000 "Lexer FS"
         if Char <> ExpectedChar then
             Error('Unexpected character %3, expected %4 at line %1, character %2.', CurrentLine, CurrentChar, Char, ExpectedChar);
     end;
+
+    procedure GetCurrentLine(): Integer
+    begin
+        exit(CurrentLine);
+    end;
+
+    procedure GetCurrentColumn(): Integer
+    begin
+        exit(CurrentChar);
+    end;
 }

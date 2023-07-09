@@ -23,6 +23,66 @@ codeunit 69025 "User Function FS" implements "Function FS"
         Statements := NewStatements;
     end;
 
+    var
+        StartLine, StartColumn : Integer;
+        EndLine, EndColumn : Integer; // TODO not needed?
+
+    procedure SetPositionStart
+    (
+        NewStartLine: Integer;
+        NewStartColumn: Integer
+    )
+    begin
+        StartLine := NewStartLine;
+        StartColumn := NewStartColumn;
+    end;
+
+    procedure GetStartLine(): Integer
+    begin
+        exit(StartLine);
+    end;
+
+    procedure GetStartColumn(): Integer
+    begin
+        exit(StartColumn);
+    end;
+
+    procedure SetPositionEnd
+    (
+        NewEndLine: Integer;
+        NewEndColumn: Integer
+    )
+    begin
+        EndLine := NewEndLine;
+        EndColumn := NewEndColumn;
+    end;
+
+    procedure StartsBefore
+    (
+        Line: Integer;
+        Column: Integer
+    ): Boolean
+    begin
+        if StartLine < Line then
+            exit(true);
+        if StartLine > Line then
+            exit(false);
+        exit(StartColumn <= Column);
+    end;
+
+    procedure EndsAfter // TODO unused
+    (
+        Line: Integer;
+        Column: Integer
+    ): Boolean
+    begin
+        if EndLine > Line then
+            exit(true);
+        if EndLine < Line then
+            exit(false);
+        exit(EndColumn > Column);
+    end;
+
     procedure GetName(): Text[120];
     begin
         exit(Name);

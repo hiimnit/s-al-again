@@ -44,7 +44,7 @@ page 69000 "Editor FS"
                     Runner.Execute(Runtime);
                 end;
 
-                trigger GetSuggestions("Key": Integer; Input: Text; Line: Integer; Column: Integer)
+                trigger GetSuggestions("Key": Integer; Input: Text; Line: Integer; "Column": Integer)
                 var
                     Parser: Codeunit "Parser FS";
                     Runtime: Codeunit "Runtime FS";
@@ -61,7 +61,7 @@ page 69000 "Editor FS"
                     // >>>> for record definition - only in var definitions
                     // >>>> field/method suggestions - only in function body
 
-                    ParsingResult := Parser.ParseForIntellisense(Input, Line, Column, Runtime);
+                    ParsingResult := Parser.ParseForIntellisense(Input, Line, "Column", Runtime);
 
                     CurrPage.Editor.ResolveSuggestionsRequest("Key", ParsingResult);
                 end;

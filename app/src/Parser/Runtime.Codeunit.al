@@ -26,12 +26,28 @@ codeunit 69011 "Runtime FS"
         UserFunction: Codeunit "User Function FS"
     )
     begin
-        if FunctionCount = ArrayLen(Functions) then
+        if FunctionCount >= ArrayLen(Functions) then
             Error('Reached maximum allowed number of local functions %1.', ArrayLen(Functions));
 
         FunctionCount += 1;
         FunctionMap.Add(UserFunction.GetName().ToLower(), FunctionCount);
         Functions[FunctionCount] := UserFunction;
+    end;
+
+    procedure TryDefineFunction
+    (
+        UserFunction: Codeunit "User Function FS"
+    ): Boolean
+    begin
+        if FunctionCount >= ArrayLen(Functions) then
+            exit(false);
+
+        if FunctionMap.ContainsKey(UserFunction.GetName().ToLower()) then
+            exit(false);
+
+        DefineFunction(UserFunction);
+
+        exit(true);
     end;
 
     procedure LookupFunction(Name: Text[120]): Interface "Function FS"
