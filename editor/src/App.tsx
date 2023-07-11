@@ -3,11 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import Editor from "@monaco-editor/react";
 
+import registerLanguage from "./al/al";
 import ConsoleManager, { ConsoleLine } from "./ConsoleManager";
 import EditorManager from "./EditorManager";
 
 function App() {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const [language, setLanguage] = useState("");
 
   const setValue = useCallback((value: string) => {
     editorRef.current?.setValue(value);
@@ -67,8 +69,11 @@ function App() {
       <div className="flex-1 overflow-y-auto">
         <div className="grid h-full grid-cols-1 grid-rows-2 gap-1 md:grid-cols-2 md:grid-rows-1">
           <Editor
-            language="al"
-            onMount={(editor) => {
+            language={language}
+            onMount={(editor, monaco) => {
+              registerLanguage(monaco);
+              setLanguage("al"); // hack to refresh model handled by Editor
+
               editorRef.current = editor;
 
               if (window.Microsoft !== undefined) {
@@ -101,9 +106,15 @@ function Console() {
   }, [consoleRef, lines]);
 
   return (
-    <div ref={consoleRef} className="overflow-y-auto font-monaco text-xs">
+    <div
+      ref={consoleRef}
+      className="overflow-y-auto bg-gray-50 px-2 font-monaco text-xs"
+    >
       {lines.map((e) => (
-        <div key={e.entryNo} className="whitespace-pre-wrap break-all">
+        <div
+          key={e.entryNo}
+          className="min-h-[1rem] whitespace-pre-wrap break-all"
+        >
           {e.content}
         </div>
       ))}

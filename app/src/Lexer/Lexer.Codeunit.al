@@ -16,7 +16,7 @@ codeunit 69000 "Lexer FS"
         Lines := Input.Split(TypeHelper.LFSeparator());
 
         CurrentLine := 1;
-        CurrentChar := 1;
+        CurrentChar := 0;
 
         InitOperatorMap();
         InitKeywordOperatorMap();
@@ -76,7 +76,7 @@ codeunit 69000 "Lexer FS"
         KeywordMap.Add('repeat', Enum::"Keyword FS"::"repeat");
         KeywordMap.Add('until', Enum::"Keyword FS"::"until");
         KeywordMap.Add('for', Enum::"Keyword FS"::"for");
-        KeywordMap.Add('foreach', Enum::"Keyword FS"::"foreach");
+        // TODO not implemented KeywordMap.Add('foreach', Enum::"Keyword FS"::"foreach");
         KeywordMap.Add('in', Enum::"Keyword FS"::"in");
         KeywordMap.Add('to', Enum::"Keyword FS"::"to");
         KeywordMap.Add('downto', Enum::"Keyword FS"::"downto");
@@ -90,6 +90,7 @@ codeunit 69000 "Lexer FS"
     procedure Next(): Record "Lexeme FS"
     var
         Lexeme: Record "Lexeme FS";
+        StartLine, StartColumn : Integer;
         Char: Char;
     begin
         repeat
@@ -98,9 +99,12 @@ codeunit 69000 "Lexer FS"
                 exit(Lexeme.EOS());
         until not IsWhiteSpace(Char);
 
+        StartLine := CurrentLine;
+        StartColumn := CurrentChar;
+
         case true of
             IsDigit(Char):
-                exit(ParseNumber(Char));
+                Lexeme := ParseNumber(Char);
             (Char = '/') and (PeekNextChar() in ['/', '*']):
                 begin
                     case NextChar() of
@@ -121,10 +125,19 @@ codeunit 69000 "Lexer FS"
                     exit(Next());
                 end;
             IsOperator(Char):
-                exit(ParseOperator(Char));
+                Lexeme := ParseOperator(Char);
             else
-                exit(ParseOther(Char));
+                Lexeme := ParseOther(Char);
         end;
+
+        Lexeme.SetPosition(
+            StartLine,
+            StartColumn,
+            CurrentLine, // TODO this might be moved to the start of next line?
+            CurrentChar // TODO this might be moved to the start of next line?
+        );
+
+        exit(Lexeme);
     end;
 
     local procedure ConsumeUntil(Stop: Char)
@@ -178,8 +191,8 @@ codeunit 69000 "Lexer FS"
         if EOS() then
             exit(0);
 
-        if CurrentChar > StrLen(Lines.Get(CurrentLine)) then begin
-            CurrentChar := 1;
+        if CurrentChar >= StrLen(Lines.Get(CurrentLine)) then begin
+            CurrentChar := 0;
             CurrentLine += 1;
 
             if EOS() then
@@ -188,8 +201,8 @@ codeunit 69000 "Lexer FS"
             exit(10);
         end;
 
-        Result := Lines.Get(CurrentLine) [CurrentChar];
         CurrentChar += 1;
+        Result := Lines.Get(CurrentLine) [CurrentChar];
 
         exit(Result);
     end;
@@ -237,6 +250,7 @@ codeunit 69000 "Lexer FS"
         exit(false);
     end;
 
+    // TODO split into parse integer and parse decimal?
     local procedure ParseNumber(Char: Char): Record "Lexeme FS"
     var
         Lexeme, NextLexeme : Record "Lexeme FS";
@@ -528,5 +542,15 @@ codeunit 69000 "Lexer FS"
     begin
         if Char <> ExpectedChar then
             Error('Unexpected character %3, expected %4 at line %1, character %2.', CurrentLine, CurrentChar, Char, ExpectedChar);
+    end;
+
+    procedure GetCurrentLine(): Integer
+    begin
+        exit(CurrentLine);
+    end;
+
+    procedure GetCurrentColumn(): Integer
+    begin
+        exit(CurrentChar);
     end;
 }

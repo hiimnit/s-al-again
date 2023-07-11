@@ -1,4 +1,4 @@
-codeunit 69236 "UpperCaseEnd Function FS" implements "Function FS"
+codeunit 69236 "UpperCase Function FS" implements "Function FS"
 {
     SingleInstance = true;
 

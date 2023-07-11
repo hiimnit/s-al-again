@@ -269,6 +269,26 @@ table 69001 "Symbol FS"
         end;
     end;
 
+    procedure TryLookupSubtype(): Integer
+    var
+        AllObj: Record AllObj;
+    begin
+        case Rec.Type of
+            Rec.Type::Record:
+                begin
+                    if Rec.Subtype = '' then
+                        exit(-1);
+                    AllObj.SetRange("Object Type", AllObj."Object Type"::Table);
+                    AllObj.SetRange("Object Name", Rec.Subtype);
+                    if not AllObj.FindFirst() then
+                        exit(-1);
+                    exit(AllObj."Object ID");
+                end;
+        end;
+
+        exit(-1);
+    end;
+
     procedure CompareExact(Other: Record "Symbol FS"): Boolean
     begin
         if Rec.Type <> Other.Type then
@@ -300,11 +320,23 @@ table 69001 "Symbol FS"
 
     procedure TypeToText(): Text
     var
-        FormatTok: Label '%1 "%2"', Locked = true;
+        TypeBuilder: TextBuilder;
     begin
-        if Rec.Subtype = '' then
-            exit(Format(Rec.Type));
-        exit(StrSubstNo(FormatTok, Rec.Type, Rec.Subtype));
+        TypeBuilder.Append(Format(Rec.Type));
+
+        if Rec.Subtype <> '' then begin
+            TypeBuilder.Append('"');
+            TypeBuilder.Append(Rec.Subtype);
+            TypeBuilder.Append('"');
+        end;
+
+        if Rec."Length Defined" then begin
+            TypeBuilder.Append('[');
+            TypeBuilder.Append(Format(Rec.Length));
+            TypeBuilder.Append(']');
+        end;
+
+        exit(TypeBuilder.ToText());
     end;
 
     procedure LookupProperty
@@ -456,6 +488,35 @@ table 69001 "Symbol FS"
         end;
 
         exit(ResultSymbol);
+    end;
+
+    procedure ToJson(): JsonObject
+    var
+        Symbol: JsonObject;
+    begin
+        Symbol.Add('name', Rec.Name);
+        Symbol.Add('type', Format(Rec.Type));
+        if Rec.Subtype <> '' then
+            Symbol.Add('sybtype', Rec.Subtype);
+        if Rec."Length Defined" then
+            Symbol.Add('length', Format(Rec.Length));
+        Symbol.Add('scope', Format(Rec.Scope));
+        Symbol.Add('pointer', Rec."Pointer Parameter");
+
+        exit(Symbol);
+    end;
+
+    procedure ToText(): Text
+    var
+        SignatureBuilder: TextBuilder;
+    begin
+        if "Pointer Parameter" then
+            SignatureBuilder.Append('var ');
+        SignatureBuilder.Append(Rec.Name);
+        SignatureBuilder.Append(': ');
+        SignatureBuilder.Append(Rec.TypeToText());
+
+        exit(SignatureBuilder.ToText());
     end;
 }
 

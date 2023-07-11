@@ -26,12 +26,28 @@ codeunit 69011 "Runtime FS"
         UserFunction: Codeunit "User Function FS"
     )
     begin
-        if FunctionCount = ArrayLen(Functions) then
+        if FunctionCount >= ArrayLen(Functions) then
             Error('Reached maximum allowed number of local functions %1.', ArrayLen(Functions));
 
         FunctionCount += 1;
         FunctionMap.Add(UserFunction.GetName().ToLower(), FunctionCount);
         Functions[FunctionCount] := UserFunction;
+    end;
+
+    procedure TryDefineFunction
+    (
+        UserFunction: Codeunit "User Function FS"
+    ): Boolean
+    begin
+        if FunctionCount >= ArrayLen(Functions) then
+            exit(false);
+
+        if FunctionMap.ContainsKey(UserFunction.GetName().ToLower()) then
+            exit(false);
+
+        DefineFunction(UserFunction);
+
+        exit(true);
     end;
 
     procedure LookupFunction(Name: Text[120]): Interface "Function FS"
@@ -44,6 +60,16 @@ codeunit 69011 "Runtime FS"
         end;
 
         exit(LookupBuiltInFunction(Name));
+    end;
+
+    procedure GetFunctionCount(): Integer
+    begin
+        exit(FunctionCount);
+    end;
+
+    procedure GetFunction(i: Integer): Codeunit "User Function FS"
+    begin
+        exit(Functions[i]);
     end;
 
     local procedure LookupBuiltInFunction(Name: Text[120]): Interface "Function FS"
@@ -85,7 +111,7 @@ codeunit 69011 "Runtime FS"
         StrLenFunction: Codeunit "StrLen Function FS";
         StrPosFunction: Codeunit "StrPos Function FS";
         StrSubstNoFunction: Codeunit "StrSubstNo Function FS";
-        UpperCaseEndFunction: Codeunit "UpperCaseEnd Function FS";
+        UpperCaseFunction: Codeunit "UpperCase Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -162,8 +188,8 @@ codeunit 69011 "Runtime FS"
                 exit(StrPosFunction);
             StrSubstNoFunction.GetName().ToLower():
                 exit(StrSubstNoFunction);
-            UpperCaseEndFunction.GetName().ToLower():
-                exit(UpperCaseEndFunction);
+            UpperCaseFunction.GetName().ToLower():
+                exit(UpperCaseFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;
@@ -578,5 +604,280 @@ codeunit 69011 "Runtime FS"
     begin
         Node := Node.Next();
         exit(Node.Value().GetValue());
+    end;
+
+    // TODO new codeunit?
+    procedure PrepareStaticSymbols(): JsonObject
+    var
+        Symbols: JsonObject;
+    begin
+        Symbols.Add(
+            'tables',
+            PrepareTablesSymbols()
+        );
+        Symbols.Add(
+            'keywords',
+            PrepareKeywordSymbols()
+        );
+        Symbols.Add(
+            'types',
+            PrepareTypesSymbols()
+        );
+        Symbols.Add(
+            'builtinFunctions',
+            PrepareBuiltInFunctionsSymbols()
+        );
+        // TODO snippets?
+        exit(Symbols);
+    end;
+
+    local procedure PrepareTablesSymbols(): JsonObject
+    var
+        TableMetadata: Record "Table Metadata";
+        Tables: JsonObject;
+    begin
+        if not TableMetadata.FindSet() then
+            exit(Tables);
+
+        repeat
+            Tables.Add(Format(TableMetadata.ID), PrepareTableSymbols(TableMetadata));
+        until TableMetadata.Next() = 0;
+
+        exit(Tables);
+    end;
+
+    local procedure PrepareTableSymbols(TableMetadata: Record "Table Metadata"): JsonObject
+    var
+        Field: Record Field;
+        Table, Property, Properties : JsonObject;
+    begin
+        Table.Add('name', TableMetadata.Name);
+        Table.Add('caption', TableMetadata.Caption);
+        Table.Add('type', Format(TableMetadata.TableType));
+        if TableMetadata.ObsoleteState <> TableMetadata.ObsoleteState::No then
+            Table.Add('obsolete', TableMetadata.ObsoleteState);
+        Table.Add('fields', Properties);
+
+        Field.SetRange(TableNo, TableMetadata.ID);
+        Field.SetRange(Enabled, true);
+        if Field.FindSet() then
+            repeat
+                Clear(Property);
+                Property.Add('name', Field.FieldName);
+                Property.Add('caption', Field."Field Caption");
+                Property.Add('type', Format(Field.Type));
+                if Field.Type in [Field.Type::Text, Field.Type::Code] then
+                    Property.Add('length', Field.Len);
+                if Field.ObsoleteState <> Field.ObsoleteState::No then
+                    Property.Add('obsolete', Field.ObsoleteState);
+                Property.Add('class', Format(Field.Class));
+
+                Properties.Add(Format(Field."No."), Property);
+            until Field.Next() = 0;
+
+        exit(Table);
+    end;
+
+    local procedure PrepareKeywordSymbols(): JsonArray
+    var
+        Keywords: JsonArray;
+    begin
+        Keywords.Add('begin');
+        Keywords.Add('end');
+        Keywords.Add('procedure');
+        Keywords.Add('var');
+        Keywords.Add('if');
+        Keywords.Add('then');
+        Keywords.Add('else');
+        Keywords.Add('repeat');
+        Keywords.Add('until');
+        Keywords.Add('for');
+        // TODO not implemented Keywords.Add('foreach');
+        Keywords.Add('in');
+        Keywords.Add('to');
+        Keywords.Add('downto');
+        Keywords.Add('do');
+        Keywords.Add('while');
+        Keywords.Add('break');
+        Keywords.Add('exit');
+        Keywords.Add('trigger');
+
+        exit(Keywords);
+    end;
+
+    local procedure PrepareTypesSymbols(): JsonObject
+    var
+        Types: JsonObject;
+        EmptyObject: JsonObject;
+    begin
+        Types.Add('Boolean', EmptyObject);
+        Types.Add('Text', PrepareTextProperties());
+        Types.Add('Code', PrepareTextProperties());
+        Types.Add('Integer', EmptyObject);
+        Types.Add('Decimal', EmptyObject);
+        Types.Add('Char', EmptyObject);
+        Types.Add('Guid', EmptyObject);
+        Types.Add('Record', PrepareRecordProperties());
+        Types.Add('Date', EmptyObject);
+        Types.Add('Time', EmptyObject);
+        Types.Add('DateTime', EmptyObject);
+        Types.Add('DateFormula', EmptyObject);
+
+        exit(Types);
+    end;
+
+    local procedure PrepareTextProperties(): JsonObject
+    var
+        TextProperties: JsonObject;
+    begin
+        TextProperties.Add(
+            'methods',
+            PrepareTextMethods()
+        );
+
+        exit(TextProperties);
+    end;
+
+    local procedure PrepareTextMethods(): JsonArray
+    var
+        TextMethods: JsonArray;
+    begin
+        TextMethods.Add(CreateFunctionSymbols('ToUpper', 'ToUpper(): Text'));
+        TextMethods.Add(CreateFunctionSymbols('ToLower', 'ToLower(): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Contains', 'Contains(Value: Text): Boolean'));
+        TextMethods.Add(CreateFunctionSymbols('EndsWith', 'EndsWith(Value: Text): Boolean'));
+        TextMethods.Add(CreateFunctionSymbols('IndexOf', 'IndexOf(Value: Text, [StartIndex: Integer]): Integer'));
+        TextMethods.Add(CreateFunctionSymbols('IndexOfAny', 'IndexOfAny(Values: Text, [StartIndex: Integer]): Integer'));
+        TextMethods.Add(CreateFunctionSymbols('LastIndexOf', 'LastIndexOf(Value: Text, [StartIndex: Integer]): Integer'));
+        TextMethods.Add(CreateFunctionSymbols('PadLeft', 'PadLeft(Count: Integer, [Char: Char]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('PadRight', 'PadRight(Count: Integer, [Char: Char]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Remove', 'Remove(StartIndex: Integer, [Count: Integer]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Replace', 'Replace(OldValue: Text, NewValue: Text): Text'));
+        TextMethods.Add(CreateFunctionSymbols('StartsWith', 'StartsWith(Value: Text): Boolean'));
+        TextMethods.Add(CreateFunctionSymbols('Substring', 'Substring(StartIndex: Integer, [Count: Integer]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('Trim', 'Trim(): Text'));
+        TextMethods.Add(CreateFunctionSymbols('TrimEnd', 'TrimEnd([Chars: Text]): Text'));
+        TextMethods.Add(CreateFunctionSymbols('TrimStart', 'TrimStart([Chars: Text]): Text'));
+
+        exit(TextMethods);
+    end;
+
+    local procedure PrepareRecordProperties(): JsonObject
+    var
+        TextProperties: JsonObject;
+    begin
+        TextProperties.Add(
+            'methods',
+            PrepareRecordMethods()
+        );
+
+        exit(TextProperties);
+    end;
+
+    local procedure PrepareRecordMethods(): JsonArray
+    var
+        RecordMethods: JsonArray;
+    begin
+        RecordMethods.Add(CreateFunctionSymbols('FindFirst', 'FindFirst(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('FindLast', 'FindLast(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('FindSet', 'FindSet(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Next', 'Next([Steps: Integer]): Integer'));
+        RecordMethods.Add(CreateFunctionSymbols('SetRange', 'SetRange(Field: Joker, [FromValue: Joker], [ToValue: Joker])'));
+        RecordMethods.Add(CreateFunctionSymbols('Insert', 'Insert(RunTrigger: Boolean): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Modify', 'Modify(RunTrigger: Boolean): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Delete', 'Delete(RunTrigger: Boolean): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('Init', 'Init()'));
+        RecordMethods.Add(CreateFunctionSymbols('Reset', 'Reset()'));
+        RecordMethods.Add(CreateFunctionSymbols('IsEmpty', 'IsEmpty(): Boolean'));
+        RecordMethods.Add(CreateFunctionSymbols('TableName', 'TableName(): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('TableCaption', 'TableCaption(): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('SetRecFilter', 'SetRecFilter()'));
+        RecordMethods.Add(CreateFunctionSymbols('GetFilters', 'GetFilters(): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('Count', 'Count(): Integer'));
+        RecordMethods.Add(CreateFunctionSymbols('GetView', 'GetView([UseNames: Boolean]): Text'));
+        RecordMethods.Add(CreateFunctionSymbols('SetView', 'SetView(String: Text)'));
+        RecordMethods.Add(CreateFunctionSymbols('FieldNo', 'FieldNo(Field: Joker): Integer'));
+        RecordMethods.Add(CreateFunctionSymbols('Validate', 'Validate(Field: Joker, [NewValue: Joker])'));
+        RecordMethods.Add(CreateFunctionSymbols('SetFilter', 'SetFilter(Field: Joker, String: Text, [Value: Joker, ...])', 'Up to 10 substitutions.'));
+
+        exit(RecordMethods);
+    end;
+
+    local procedure PrepareBuiltInFunctionsSymbols(): JsonArray
+    var
+        BuiltInFunctions: JsonArray;
+    begin
+        BuiltInFunctions.Add(CreateFunctionSymbols('Abs', 'Abs(Number: Decimal): Decimal'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Power', 'Power(Number: Decimal, Power: Decimal): Decimal'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Message', 'Message(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Error', 'Error(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('WriteLine', 'WriteLine(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Format', 'Format(Input: Any, [Length: Integer, [FormatNumber: Integer/FormatString: Text]]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CalcDate', 'CalcDate(Formula: Text/DateFormula, [Date: Date]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('ClosingDate', 'ClosingDate(Date: Date): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CreateDateTime', 'CreateDateTime(Date: Date, Time: Time): DateTime'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CurrentDateTime', 'CurrentDateTime(): DateTime'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('NormalDate', 'NormalDate(Date: Date): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Time', 'Time(): Time'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Today', 'Today(): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('WorkDate', 'WorkDate([WorkDate: Date]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Date2DMY', 'Date2DMY(Date: Date, Part: Integer): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Date2DWY', 'Date2DWY(Date: Date, Part: Integer): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DMY2Date', 'DMY2Date(Day: Integer, [Month: Integer, [Year: Integer]]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DWY2Date', 'DWY2Date(WeekDay: Integer, [Week: Integer, [Year: Integer]]): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DT2Date', 'DT2Date(DateTime: DateTime): Date'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DT2Time', 'DT2Time(DateTime: DateTime): Time'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CreateGuid', 'CreateGuid(): Guid'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('IsNullGuid', 'IsNullGuid(Guid: Guid): Boolean'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('Evaluate', 'Evaluate(var Value: Any, Input: Text, [FormatNumber: Integer])[: Boolean]'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('MaxStrLen', 'MaxStrLen(Text: Text): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('ConvertStr', 'ConvertStr(String: Text, FromCharacters: Text, ToCharacters: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('CopyStr', 'CopyStr(String: Text, Position: Integer, [Length: Integer]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DelChr', 'DelChr(String: Text, [Where: Text], [Which: Text]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('DelStr', 'DelStr(String: Text, Position: Integer, [Length: Integer]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('IncStr', 'IncStr(String: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('InsStr', 'InsStr(String: Text, SubString: Text, Position: Integer): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('LowerCase', 'LowerCase(String: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('PadStr', 'PadStr(String: Text, Length: Integer, [FillCharacter: Text]): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('SelectStr', 'SelectStr(Number: Integer, CommaString: Text): Text'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrCheckSum', 'StrCheckSum(String: Text, [WeightString: Text], [Modulus: Integer]): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrLen', 'StrLen(String: Text): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrPos', 'StrPos(String: Text, SubString: Text): Integer'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('StrSubstNo', 'StrSubstNo(Text: Text, [Substitution: Any, ...])', 'Up to 10 substitutions.'));
+        BuiltInFunctions.Add(CreateFunctionSymbols('UpperCase', 'UpperCase(String: Text): Text'));
+
+        exit(BuiltInFunctions);
+    end;
+
+    procedure CreateFunctionSymbols
+    (
+        Name: Text;
+        Detail: Text
+    ): JsonObject
+    begin
+        exit(CreateFunctionSymbols(
+            Name,
+            Detail,
+            ''
+        ));
+    end;
+
+    procedure CreateFunctionSymbols
+    (
+        Name: Text;
+        Detail: Text;
+        Documentation: Text
+    ): JsonObject
+    var
+        Function: JsonObject;
+    begin
+        Function.Add('name', Name);
+
+        Function.Add('detail', Detail);
+
+        if Documentation <> '' then
+            Function.Add('documentation', Documentation);
+
+        exit(Function);
     end;
 }
