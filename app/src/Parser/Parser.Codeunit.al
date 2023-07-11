@@ -25,48 +25,43 @@ codeunit 69001 "Parser FS"
     ): JsonObject
     var
         Symbol: Record "Symbol FS";
-        UserFunction: Codeunit "User Function FS";
+        ClosestUserFunctionSignature, UserFunction : Codeunit "User Function FS";
         SymbolTable: Codeunit "Symbol Table FS";
         ParsingResult: JsonObject;
         LocalVariables, Functions : JsonArray;
         i: Integer;
-        UserFunctionFound: Boolean;
+        ClosestUserFunctionFound: Boolean;
     begin
-        Lexer.Init(Input);
-
         // first - parse function signatures and find the enclosing function
-        UserFunctionFound := ParseFunctionSignatures(Runtime, Line, Column, UserFunction);
+        Lexer.Init(Input);
+        ClosestUserFunctionFound := ParseFunctionSignatures(Runtime, Line, Column, ClosestUserFunctionSignature);
 
-        // > second: detailed parsing of current function - just continue parsing after the signature? no, that would mean no autocomplete in signature?
-        // > ~~1. go through defined signatures (not sorted!) to find the closest signature~~
-        // > > ~~this replaces `GetLastDefinedFunction`~~
-        // > > ~~what if there is another trigger/procedure that was not parsed in `ParseFunctionSignatures` that is closer?~~
-        // > > // TODO check if eos after parsing? if not then something went wrong // FIXME
-        // > ~~2. continue parsing after the signature up to current position~~
         // second - detailed parsing of the enclosing function
-        if UserFunctionFound then begin
-            Clear(Lexer); // TODO eh
-            Clear(CachedLexeme); // TODO eh
+        if ClosestUserFunctionFound then begin
+            Clear(Lexer);
+            Clear(CachedLexeme);
             Lexer.Init(TextRange(
                 Input,
-                UserFunction.GetStartLine(),
-                UserFunction.GetStartColumn(),
+                ClosestUserFunctionSignature.GetStartLine(),
+                ClosestUserFunctionSignature.GetStartColumn(),
                 Line,
                 Column
             ));
-            Clear(UserFunction); // TODO eh
 
-            if TryParseFunction(UserFunction) then // TODO parse with recovery
-                State.ProcedureOrTrigger(); // parsing went ok, function is complete
-        end else begin
-            Clear(UserFunction);
+            if TryParseFunction(UserFunction) then
+                // parsing went ok, function is complete
+                State.ProcedureOrTrigger();
+
+            // TODO parse with recovery
+            // 1. function recovery
+            // 2. variable declaration recovery
+            // 3. statements recovery - use semicolons and begin/end pairs?
+
+            if not PeekNextLexeme().IsEOS() then
+                State.Unfinished();
+        end else
             State.ProcedureOrTrigger();
-        end;
 
-        // TODO recover? 
-        // 1. function recovery
-        // 2. variable declaration recovery
-        // 3. statements recovery - use semicolons and begin/end pairs?
 
         ParsingResult.Add('suggestions', State.ToSuggestions(Runtime, UserFunction));
         // TODO identifier suggestion lead to empty list => defaults to suggesting words?
@@ -177,11 +172,6 @@ codeunit 69001 "Parser FS"
         end;
 
         exit(FunctionFound);
-    end;
-
-    procedure Recover()
-    begin
-        // TODO - try to find next procedure/trigger and start parsing again
     end;
 
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
@@ -1170,6 +1160,11 @@ codeunit 69003 "Parser State FS"
         State := State::VarOrBegin;
     end;
 
+    procedure Unfinished()
+    begin
+        State := State::Unfinished;
+    end;
+
     procedure ToSuggestions
     (
         Runtime: Codeunit "Runtime FS";
@@ -1182,6 +1177,8 @@ codeunit 69003 "Parser State FS"
         case State of
             Enum::"Parser State FS"::None:
                 ;
+            Enum::"Parser State FS"::Unfinished:
+                Suggestions.Add('unfinished', true);
             Enum::"Parser State FS"::Identifier:
                 Suggestions.Add('identifier', true);
             Enum::"Parser State FS"::ProcedureOrTrigger:
@@ -1274,4 +1271,5 @@ enum 69007 "Parser State FS"
     value(8; PropsOf) { Caption = 'PropsOf'; }
     value(9; ProcedureOrTrigger) { Caption = 'ProcedureOrTrigger'; }
     value(10; VarOrBegin) { Caption = 'VarOrBegin'; }
+    value(11; Unfinished) { Caption = 'Unfinished'; }
 }

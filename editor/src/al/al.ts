@@ -280,6 +280,14 @@ const registerLanguage = (monaco: Monaco) => {
 
       const completionItems: languages.CompletionItem[] = [];
 
+      if (result.suggestions.unfinished === true) {
+        addUnfinishedParsingWarningToCompletionItems({
+          completionItems,
+          monaco,
+          range,
+        });
+      }
+
       if (result.suggestions.variables === true) {
         addVariablesToCompletionItems({
           variables: result.localVariables,
@@ -407,6 +415,20 @@ type CompletionItemAdderCommonProps = {
   monaco: Monaco;
 };
 
+const addUnfinishedParsingWarningToCompletionItems = ({
+  completionItems,
+  range,
+  monaco,
+}: CompletionItemAdderCommonProps) => {
+  completionItems.push({
+    label: "Could not parse the input :(",
+    kind: monaco.languages.CompletionItemKind.Issue,
+    insertText: "",
+    sortText: `00-unfinished`,
+    range,
+  });
+};
+
 const addVariablesToCompletionItems = ({
   completionItems,
   variables,
@@ -417,7 +439,6 @@ const addVariablesToCompletionItems = ({
 }): void => {
   for (const variable of variables) {
     completionItems.push({
-      // TODO is it safe to include this info in label? filterText might have to be added?
       label: `${variable.name}: ${variable.type}`, // TODO also include subtype and length?
       kind: monaco.languages.CompletionItemKind.Variable,
       insertText: variable.name,
@@ -641,6 +662,7 @@ export type AlParsingResult = {
 type AlSuggestions = {
   keywords?: []; // TODO bit mask?
   identifier?: boolean;
+  unfinished?: boolean;
   variables?: boolean;
   functions?: boolean;
   types?: boolean;
