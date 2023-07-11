@@ -76,7 +76,7 @@ codeunit 69000 "Lexer FS"
         KeywordMap.Add('repeat', Enum::"Keyword FS"::"repeat");
         KeywordMap.Add('until', Enum::"Keyword FS"::"until");
         KeywordMap.Add('for', Enum::"Keyword FS"::"for");
-        KeywordMap.Add('foreach', Enum::"Keyword FS"::"foreach");
+        // TODO not implemented KeywordMap.Add('foreach', Enum::"Keyword FS"::"foreach");
         KeywordMap.Add('in', Enum::"Keyword FS"::"in");
         KeywordMap.Add('to', Enum::"Keyword FS"::"to");
         KeywordMap.Add('downto', Enum::"Keyword FS"::"downto");

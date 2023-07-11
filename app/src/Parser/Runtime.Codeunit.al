@@ -62,20 +62,6 @@ codeunit 69011 "Runtime FS"
         exit(LookupBuiltInFunction(Name));
     end;
 
-    procedure GetLastDefinedFunction(): Codeunit "User Function FS"
-    begin
-        exit(Functions[FunctionCount]);
-    end;
-
-    procedure GetLastDefinedFunction(var UserFunction: Codeunit "User Function FS"): Boolean
-    begin
-        if FunctionCount = 0 then
-            exit(false);
-
-        UserFunction := GetLastDefinedFunction();
-        exit(true);
-    end;
-
     procedure GetFunctionCount(): Integer
     begin
         exit(FunctionCount);
@@ -706,7 +692,7 @@ codeunit 69011 "Runtime FS"
         Keywords.Add('repeat');
         Keywords.Add('until');
         Keywords.Add('for');
-        Keywords.Add('foreach');
+        // TODO not implemented Keywords.Add('foreach');
         Keywords.Add('in');
         Keywords.Add('to');
         Keywords.Add('downto');
