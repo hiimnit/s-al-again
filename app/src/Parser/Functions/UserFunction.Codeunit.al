@@ -147,6 +147,13 @@ codeunit 69025 "User Function FS" implements "Function FS"
         Statements.ValidateSemantics(Runtime, SymbolTable);
     end;
 
+    procedure GetInsertText(): Text
+    begin
+        if SymbolTable.GetParameterCount() = 0 then
+            exit(GetName() + '()');
+        exit(GetName() + '($0)');
+    end;
+
     procedure GetSignature(): Text
     var
         ParameterSymbol, ReturnTypeSymbol : Record "Symbol FS";

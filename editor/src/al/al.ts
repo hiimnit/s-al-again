@@ -319,7 +319,7 @@ const registerLanguage = (monaco: Monaco) => {
 
       if (result.suggestions.keywords) {
         addKeywordsToCompletionItems({
-          keywords: staticSymbols.keywords,
+          keywords: result.suggestions.keywords,
           completionItems,
           monaco,
           range,
@@ -337,7 +337,7 @@ const registerLanguage = (monaco: Monaco) => {
 
       if (result.suggestions.propsOf) {
         addMethodsToCompletionItems({
-          typePropeties: staticSymbols.types[result.suggestions.propsOf.type], // TODO test this - same keys?
+          typePropeties: staticSymbols.types[result.suggestions.propsOf.type],
           completionItems,
           monaco,
           range,
@@ -369,41 +369,6 @@ const registerLanguage = (monaco: Monaco) => {
 
       return {
         suggestions: completionItems,
-      };
-
-      // TODO remove
-      return {
-        suggestions: [
-          {
-            label: "simpleText",
-            kind: monaco.languages.CompletionItemKind.Text,
-            insertText: "simpleText",
-            range,
-          },
-          {
-            label: "Abs",
-            kind: monaco.languages.CompletionItemKind.Function,
-            insertText: "Abs(${1:Number})",
-            insertTextRules:
-              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            range,
-          },
-          {
-            label: "Function snippet (tprocedure)",
-            kind: monaco.languages.CompletionItemKind.Snippet,
-            insertText: [
-              "procedure $1()",
-              "var",
-              "\tmyInt: Integer;",
-              "begin",
-              "\t$0",
-              "end;",
-            ].join("\n"),
-            insertTextRules:
-              monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            range,
-          },
-        ],
       };
     },
   });
@@ -456,11 +421,13 @@ const addFunctionsToCompletionItems = ({
 }: CompletionItemAdderCommonProps & {
   functions: AlFunction[];
 }): void => {
-  for (const { name, detail, documentation } of functions) {
+  for (const { name, detail, insertText, documentation } of functions) {
     completionItems.push({
       label: name,
       kind: monaco.languages.CompletionItemKind.Function,
-      insertText: name,
+      insertText: insertText,
+      insertTextRules:
+        monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       detail,
       documentation,
       sortText: `03-${name}`,
@@ -599,7 +566,6 @@ const addFieldsToCompletionItems = ({
 
 export type StaticSymbols = {
   tables: AlTables;
-  keywords: AlKeyword[];
   types: AlTypes;
   builtinFunctions: AlFunction[];
 };
@@ -643,6 +609,7 @@ type AlTypeProperties = {
 
 type AlFunction = {
   name: string;
+  insertText: string;
   detail: string;
   documentation?: string;
 };
@@ -660,7 +627,7 @@ export type AlParsingResult = {
 };
 
 type AlSuggestions = {
-  keywords?: []; // TODO bit mask?
+  keywords?: AlKeyword[];
   identifier?: boolean;
   unfinished?: boolean;
   variables?: boolean;

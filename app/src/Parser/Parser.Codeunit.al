@@ -63,6 +63,18 @@ codeunit 69001 "Parser FS"
             State.ProcedureOrTrigger();
 
 
+        // TODO keywords
+        // - begin -> end
+        // - break
+        // - exit
+        // - if -> then
+        // - else
+        // - for -> to/downto -> do
+        // - while -> do
+        // - repeat -> until
+        // > save state of the current statement?
+
+
         ParsingResult.Add('suggestions', State.ToSuggestions(Runtime, UserFunction));
         // TODO identifier suggestion lead to empty list => defaults to suggesting words?
 
@@ -78,6 +90,7 @@ codeunit 69001 "Parser FS"
             UserFunction := Runtime.GetFunction(i);
             Functions.Add(Runtime.CreateFunctionSymbols(
                 UserFunction.GetName(),
+                UserFunction.GetInsertText(),
                 UserFunction.GetSignature()
             ));
         end;
@@ -208,10 +221,8 @@ codeunit 69001 "Parser FS"
     end;
 
     local procedure ParseOnRun(var UserFunction: Codeunit "User Function FS")
-
     begin
         UserFunction := ParseOnRunSignature();
-
         ParseProcedureBody(UserFunction);
     end;
 
@@ -293,6 +304,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseProcedure(var UserFunction: Codeunit "User Function FS")
     begin
         ParseProcedureSignature(UserFunction);
+        // FIXME
         ParseProcedureBody(UserFunction);
     end;
 
@@ -326,13 +338,15 @@ codeunit 69001 "Parser FS"
         PeekedLexeme := PeekNextLexeme();
         if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
             while true do begin
-                State.VarOrIdentifier(); // FIXME replaced in ParseVariableDefinition => never used?
+                State.VarOrIdentifier();
 
                 Pointer := false;
                 PeekedLexeme := PeekNextLexeme();
                 if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
                     NextLexeme();
                     Pointer := true;
+
+                    State.Identifier();
                 end;
 
                 ParameterSymbol := ParseVariableDefinition(true);
@@ -349,8 +363,10 @@ codeunit 69001 "Parser FS"
 
         ReturnTypeSymbol := SymbolTable.VoidSymbol();
         PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then
+        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
+            State.Identifier();
             ReturnTypeSymbol := ParseVariableDefinition(false); // FIXME subtype is not suggested - instead keywords are shown!
+        end;
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
 
@@ -359,7 +375,6 @@ codeunit 69001 "Parser FS"
             Lexer.GetCurrentColumn()
         );
 
-        // TODO define name before parsing arguments?
         UserFunction.Init(
             Name,
             SymbolTable
@@ -371,8 +386,6 @@ codeunit 69001 "Parser FS"
         Symbol: Record "Symbol FS";
         Lexeme, PeekedLexeme, NameLexeme, TypeLexeme, SubtypeLexeme : Record "Lexeme FS";
     begin
-        State.Identifier();
-
         PeekedLexeme := PeekNextLexeme();
         if NameRequired or PeekedLexeme.IsIdentifier() then begin
             NameLexeme := AssertNextLexeme(Lexeme.Identifier());
@@ -385,15 +398,13 @@ codeunit 69001 "Parser FS"
         TypeLexeme := AssertNextLexeme(Lexeme.Identifier());
         Symbol.Type := ParseType(TypeLexeme."Identifier Name");
 
-        State.SubtypeOf(Symbol.Type);
-        PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsIdentifier() then begin
-            SubtypeLexeme := AssertNextLexeme(PeekedLexeme);
+        if IsSubtypeMandatory(Symbol.Type) then begin
+            State.SubtypeOf(Symbol.Type);
+            SubtypeLexeme := AssertNextLexeme(PeekedLexeme.Identifier());
             Symbol.Subtype := SubtypeLexeme."Identifier Name";
-
-            PeekedLexeme := PeekNextLexeme();
         end;
 
+        PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsOperator(Enum::"Operator FS"::"[") then begin
             State.TypeLength();
 
@@ -427,6 +438,8 @@ codeunit 69001 "Parser FS"
             AssertNextLexeme(PeekedLexeme);
 
             while true do begin
+                State.IdentifierOrBegin();
+
                 PeekedLexeme := PeekNextLexeme();
                 if not PeekedLexeme.IsIdentifier() then
                     break;
@@ -467,7 +480,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseCompoundStatement
     (
         OpeningKeyword: Enum "Keyword FS";
-                            ClosingKeyword: Enum "Keyword FS"
+        ClosingKeyword: Enum "Keyword FS"
     ): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
@@ -476,12 +489,14 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(
             Lexeme.Keyword(OpeningKeyword)
         );
+        State.PushKeyword(OpeningKeyword);
 
         StatementList := ParseStatementList();
 
         AssertNextLexeme(
             Lexeme.Keyword(ClosingKeyword)
         );
+        State.PopKeyword(OpeningKeyword);
 
         exit(StatementList);
     end;
@@ -495,12 +510,14 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"if")
         );
+        State.PushKeyword(Enum::"Keyword FS"::"if");
 
         Expression := ParseExpression();
 
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"then")
         );
+        State.PopKeyword(Enum::"Keyword FS"::"if");
 
         Statement := ParseStatement();
 
@@ -534,6 +551,7 @@ codeunit 69001 "Parser FS"
         DownToLoop: Boolean;
     begin
         AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"for"));
+        State.PushKeyword(Enum::"Keyword FS"::"for");
 
         VariableExpression := ParseGetExpression(false);
 
@@ -554,12 +572,15 @@ codeunit 69001 "Parser FS"
                     Enum::"Keyword FS"::"downto"
                 );
         end;
+        State.PopKeyword(Enum::"Keyword FS"::"for");
+        State.PushKeyword(Enum::"Keyword FS"::"do");
 
         FinalValueExpression := ParseExpression();
 
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"do")
         );
+        State.PopKeyword(Enum::"Keyword FS"::"do");
 
         Statement := ParseStatement();
 
@@ -583,12 +604,14 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"while")
         );
+        State.PushKeyword(Enum::"Keyword FS"::"while");
 
         Expression := ParseExpression();
 
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"do")
         );
+        State.PopKeyword(Enum::"Keyword FS"::"while");
 
         Statement := ParseStatement();
 
@@ -1085,6 +1108,11 @@ codeunit 69001 "Parser FS"
                 Error('Unknown type %1.', Identifier);
         end;
     end;
+
+    local procedure IsSubtypeMandatory(Type: Enum "Type FS"): Boolean
+    begin
+        exit(Type = Enum::"Type FS"::Record);
+    end;
 }
 
 codeunit 69003 "Parser State FS"
@@ -1160,9 +1188,44 @@ codeunit 69003 "Parser State FS"
         State := State::VarOrBegin;
     end;
 
+    procedure IdentifierOrBegin()
+    begin
+        State := State::IdentifierOrBegin;
+    end;
+
     procedure Unfinished()
     begin
         State := State::Unfinished;
+    end;
+
+    var
+        KeywordCounter: Dictionary of [Enum "Keyword FS", Integer];
+
+    procedure PushKeyword(Keyword: Enum "Keyword FS")
+    var
+        Count: Integer;
+    begin
+        if not KeywordCounter.Get(Keyword, Count) then
+            Count := 0;
+
+        KeywordCounter.Set(Keyword, Count + 1);
+    end;
+
+    procedure PopKeyword(Keyword: Enum "Keyword FS")
+    var
+        Count: Integer;
+    begin
+        if not KeywordCounter.Get(Keyword, Count) then
+            Count := 0;
+
+        Count -= 1;
+
+        if Count <= 0 then begin
+            KeywordCounter.Remove(Keyword);
+            exit;
+        end;
+
+        KeywordCounter.Set(Keyword, Count);
     end;
 
     procedure ToSuggestions
@@ -1182,16 +1245,16 @@ codeunit 69003 "Parser State FS"
             Enum::"Parser State FS"::Identifier:
                 Suggestions.Add('identifier', true);
             Enum::"Parser State FS"::ProcedureOrTrigger:
-                Suggestions.Add('keywords', true); // TODO => select keywords + new function snippet
+                Suggestions.Add('keywords', KeywordsSuggestions());
             Enum::"Parser State FS"::Statement:
                 begin
-                    Suggestions.Add('keywords', true); // TODO => select keywords - statement start
+                    Suggestions.Add('keywords', KeywordsSuggestions());
                     Suggestions.Add('variables', true);
                     Suggestions.Add('functions', true);
                 end;
             Enum::"Parser State FS"::Expression:
                 begin
-                    Suggestions.Add('keywords', true); // TODO => select keywords - statement end? depending on current statement
+                    Suggestions.Add('keywords', KeywordsSuggestions());
                     Suggestions.Add('variables', true);
                     Suggestions.Add('functions', true);
                 end;
@@ -1217,22 +1280,85 @@ codeunit 69003 "Parser State FS"
             Enum::"Parser State FS"::SubtypeOf:
                 Suggestions.Add(
                     'subtypesOf',
-                    Format(SubtypeOfType) // TODO test
+                    Format(SubtypeOfType)
                 );
             Enum::"Parser State FS"::Type:
                 Suggestions.Add('types', true);
             Enum::"Parser State FS"::TypeLength:
                 ; // TODO suggest common lengths? 20/10/50?
             Enum::"Parser State FS"::VarOrBegin:
-                Suggestions.Add('keywords', true); // TODO select keywords
+                Suggestions.Add('keywords', KeywordsSuggestions());
+            Enum::"Parser State FS"::IdentifierOrBegin:
+                Suggestions.Add('keywords', KeywordsSuggestions());
             Enum::"Parser State FS"::VarOrIdentifier:
                 begin
-                    Suggestions.Add('keywords', true); // TODO select keywords
+                    Suggestions.Add('keywords', KeywordsSuggestions());
                     Suggestions.Add('identifier', true);
                 end;
         end;
 
         exit(Suggestions);
+    end;
+
+    local procedure KeywordsSuggestions(): JsonArray
+    var
+        Keywords: JsonArray;
+    begin
+        case State of
+            Enum::"Parser State FS"::ProcedureOrTrigger:
+                begin
+                    Keywords.Add('procedure');
+                    Keywords.Add('trigger');
+                    exit(Keywords);
+                end;
+            Enum::"Parser State FS"::VarOrBegin:
+                begin
+                    Keywords.Add('var');
+                    Keywords.Add('begin');
+                    exit(Keywords);
+                end;
+            Enum::"Parser State FS"::IdentifierOrBegin:
+                begin
+                    Keywords.Add('begin');
+                    exit(Keywords);
+                end;
+            Enum::"Parser State FS"::VarOrIdentifier:
+                begin
+                    Keywords.Add('var');
+                    exit(Keywords);
+                end;
+        end;
+
+        Keywords.Add('begin');
+        Keywords.Add('if');
+        Keywords.Add('else');
+        Keywords.Add('repeat');
+        Keywords.Add('for');
+        Keywords.Add('while');
+        Keywords.Add('not');
+        Keywords.Add('break');
+        Keywords.Add('exit');
+
+        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"begin") then
+            Keywords.Add('end');
+
+        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"if") then
+            Keywords.Add('then');
+
+        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"repeat") then
+            Keywords.Add('until');
+
+        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"for") then begin
+            Keywords.Add('to');
+            Keywords.Add('downto');
+        end;
+
+        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"do")
+            or KeywordCounter.ContainsKey(Enum::"Keyword FS"::"while")
+        then
+            Keywords.Add('do');
+
+        exit(Keywords);
     end;
 
     [TryFunction]
@@ -1271,5 +1397,6 @@ enum 69007 "Parser State FS"
     value(8; PropsOf) { Caption = 'PropsOf'; }
     value(9; ProcedureOrTrigger) { Caption = 'ProcedureOrTrigger'; }
     value(10; VarOrBegin) { Caption = 'VarOrBegin'; }
-    value(11; Unfinished) { Caption = 'Unfinished'; }
+    value(11; IdentifierOrBegin) { Caption = 'IdentifierOrBegin'; }
+    value(99; Unfinished) { Caption = 'Unfinished'; }
 }
