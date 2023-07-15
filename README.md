@@ -6,7 +6,9 @@ Scripting in AL - attempt #2.
 
 Business Central extension adding a code editor for running scripts.
 
-![Editor](img/editor.png)
+![Editor](img/sal2.gif)
+
+*Now with code highlighting and intellisense!*
 
 ### What does it do?
 
@@ -283,9 +285,12 @@ end;
 ### Planned
 
 1. editor improvements
-    - ui improvements (render empty lines)
-    - highlighting
+    - ui improvements ~~(render empty lines)~~
+    - ~~highlighting~~
     - intellisense
+1. remaining record methods
+1. blobs + streams + file management
+1. case, continue
 1. more built-in functions and methods
 1. `option`, `enum`, others
 1. allow `Record.SetRange(Record.Field, ...);`
