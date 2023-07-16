@@ -218,22 +218,6 @@ const registerLanguage = (monaco: Monaco) => {
   monaco.languages.setLanguageConfiguration(languageExtensionPoint.id, conf);
   monaco.languages.registerCompletionItemProvider(languageExtensionPoint.id, {
     provideCompletionItems: async (model, position, _, token) => {
-      // TODO
-      // suggestions are:
-      // - built-ins - static
-      // - keywords - static - also depend on current position?
-      // - types - in parameter/var/return value declaration
-      // - snippets - procedure, trigger, loops, other?
-      // - user functions - from parser
-      // - local variables - from parser
-      // - methods - static - but depend on current position
-      // - records - "static" (send with ready event?) - but depend on current position
-      // - record fields - "static" - but depend on current position
-
-      // 1. parse code - all or only up to current position?
-      // 2. return symbol table(s)?
-      // this also might be the correct time to fix position handling in lexer?
-
       // TODO record methods like setrange and validate need special treatment - suggest fields
 
       // TODO do not show editor before symbols are loaded?
@@ -313,7 +297,6 @@ const registerLanguage = (monaco: Monaco) => {
       }
 
       if (result.suggestions.identifier === true) {
-        // TODO noop?
         // TODO add selection from records with name autocomplete?
       }
 
@@ -425,7 +408,7 @@ const addFunctionsToCompletionItems = ({
     completionItems.push({
       label: name,
       kind: monaco.languages.CompletionItemKind.Function,
-      insertText: insertText,
+      insertText,
       insertTextRules:
         monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       detail,
@@ -444,7 +427,6 @@ const addKeywordsToCompletionItems = ({
 }: CompletionItemAdderCommonProps & {
   keywords: AlType[];
 }): void => {
-  // TODO add keyword context filtering
   for (const keyword of keywords) {
     completionItems.push({
       label: keyword,
@@ -464,7 +446,6 @@ const addTypesToCompletionItems = ({
 }: CompletionItemAdderCommonProps & {
   types: AlTypes;
 }): void => {
-  // TODO add keyword context filtering
   for (const type of Object.keys(types)) {
     completionItems.push({
       label: type,
@@ -514,11 +495,18 @@ const addMethodsToCompletionItems = ({
     return;
   }
 
-  for (const { name, detail, documentation } of typePropeties.methods) {
+  for (const {
+    name,
+    insertText,
+    detail,
+    documentation,
+  } of typePropeties.methods) {
     completionItems.push({
       label: name,
       kind: monaco.languages.CompletionItemKind.Method,
-      insertText: name,
+      insertText,
+      insertTextRules:
+        monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       detail,
       documentation,
       sortText: `01-${name}`,
@@ -607,18 +595,13 @@ type AlTypeProperties = {
   methods: AlFunction[];
 };
 
+// TODO implement parameter hints
 type AlFunction = {
   name: string;
   insertText: string;
   detail: string;
   documentation?: string;
 };
-// TODO replace AlFunction - implement parameter hints
-// type AlFunctionTODO = {
-//   name: string;
-//   parameters: AlVariable[];
-//   returnType?: AlVariable;
-// };
 
 export type AlParsingResult = {
   suggestions: AlSuggestions;
