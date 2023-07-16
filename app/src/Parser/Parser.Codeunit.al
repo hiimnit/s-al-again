@@ -205,11 +205,6 @@ codeunit 69001 "Parser FS"
 
         SymbolTable.DefineReturnType(SymbolTable.VoidSymbol());
 
-        UserFunction.SetPositionEnd(
-            Lexer.GetCurrentLine(),
-            Lexer.GetCurrentColumn()
-        );
-
         UserFunction.Init(
             Name,
             SymbolTable
@@ -316,11 +311,6 @@ codeunit 69001 "Parser FS"
         end;
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
-
-        UserFunction.SetPositionEnd(
-            Lexer.GetCurrentLine(),
-            Lexer.GetCurrentColumn()
-        );
 
         UserFunction.Init(
             Name,
