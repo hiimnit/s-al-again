@@ -28,6 +28,7 @@ codeunit 69001 "Parser FS"
         ClosestUserFunctionSignature, UserFunction : Codeunit "User Function FS";
         SymbolTable: Codeunit "Symbol Table FS";
         TextUtils: Codeunit "Text Utils FS";
+        StaticSymbols: Codeunit "Static Symbols FS";
         ParsingResult: JsonObject;
         LocalVariables, Functions : JsonArray;
         i: Integer;
@@ -76,7 +77,7 @@ codeunit 69001 "Parser FS"
         for i := 1 to Runtime.GetFunctionCount() do begin
             // TODO skip triggers
             UserFunction := Runtime.GetFunction(i);
-            Functions.Add(Runtime.CreateFunctionSymbols(
+            Functions.Add(StaticSymbols.CreateFunctionSymbols(
                 UserFunction.GetName(),
                 UserFunction.GetInsertText(),
                 UserFunction.GetSignature()
@@ -251,7 +252,6 @@ codeunit 69001 "Parser FS"
     local procedure ParseProcedure(var UserFunction: Codeunit "User Function FS")
     begin
         ParseProcedureSignature(UserFunction);
-        // FIXME
         ParseProcedureBody(UserFunction);
     end;
 
@@ -312,7 +312,7 @@ codeunit 69001 "Parser FS"
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
             State.Identifier();
-            ReturnTypeSymbol := ParseVariableDefinition(false); // FIXME subtype is not suggested - instead keywords are shown!
+            ReturnTypeSymbol := ParseVariableDefinition(false);
         end;
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
@@ -946,7 +946,7 @@ codeunit 69001 "Parser FS"
         PeekedLexeme: Record "Lexeme FS";
         Arguments: Codeunit "Node Linked List FS";
     begin
-        // TODO suggest fields in methdos like setrage, setfilter, validate
+        // TODO suggest fields in methdos like setrange, setfilter, validate
 
         AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"("));
 

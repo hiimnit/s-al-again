@@ -68,7 +68,7 @@ page 69000 "Editor FS"
 
                 trigger EditorReady()
                 var
-                    Runtime: Codeunit "Runtime FS";
+                    StaticSymbols: Codeunit "Static Symbols FS";
                     LF: Text[1];
                 begin
                     LF[1] := 13;
@@ -76,11 +76,12 @@ page 69000 "Editor FS"
                     CurrPage.Editor.SetEditorValue(
                         'trigger OnRun()' + LF
                         + 'begin' + LF
+                        + '    ' + LF
                         + 'end;'
                     );
 
                     CurrPage.Editor.SetStaticSymbols(
-                        Runtime.PrepareStaticSymbols()
+                        StaticSymbols.Prepare()
                     );
                 end;
             }

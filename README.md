@@ -8,7 +8,14 @@ Business Central extension adding a code editor for running scripts.
 
 ![Editor](img/sal2.gif)
 
-*Now with code highlighting and intellisense!*
+*Now with code highlighting and IntelliSense!*
+
+IntelliSense is implemented naively - the main unresolved issues are:
+
+- no autocomplete if the code preceding the current position is broken
+- field name suggestions do not work in record methods like `SetRange`
+  - for now you can use the  `Record.SetRange(Record.FieldName, ...)` syntax
+- no suggestions for function arguments
 
 ### What does it do?
 
@@ -285,9 +292,8 @@ end;
 ### Planned
 
 1. editor improvements
-    - ui improvements ~~(render empty lines)~~
-    - ~~highlighting~~
-    - intellisense
+    - *better* intellisense
+    - ui - hide editor before symbols are received
 1. remaining record methods
 1. blobs + streams + file management
 1. case, continue
