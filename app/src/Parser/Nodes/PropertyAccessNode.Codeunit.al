@@ -61,7 +61,19 @@ codeunit 69028 "Property Access Node FS" implements "Node FS"
         SymbolTable: Codeunit "Symbol Table FS";
         ContextSymbol: Record "Symbol FS"
     ): Record "Symbol FS";
+    var
+        AccessorSymbol, Symbol : Record "Symbol FS";
     begin
+        AccessorSymbol := AccessorExpression.ValidateSemantics(Runtime, SymbolTable);
+        if (AccessorSymbol.Type = ContextSymbol.Type)
+            and (AccessorSymbol.Name.ToLower() = ContextSymbol.Name.ToLower())
+        then
+            if ContextSymbol.TryLookupProperty(SymbolTable, Name, Symbol) then begin
+                Symbol.Name := Name;
+                Symbol.Property := true;
+                exit(Symbol);
+            end;
+
         exit(ValidateSemantics(
             Runtime,
             SymbolTable

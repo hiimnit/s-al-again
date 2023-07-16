@@ -126,7 +126,7 @@ codeunit 69323 "Record SetFilter FS" implements "Method FS"
         ArgumentNode := Arguments.First();
         ParameterSymbol := ArgumentNode.Value().ValidateSemanticsWithContext(Runtime, SymbolTable, Self);
         if not ParameterSymbol.Property then
-            Error('Expected the first argument to be a property.');
+            Error('Expected the first argument to be a property of %1.', Self.Name);
 
         FilterFieldName := ParameterSymbol.Name; // TODO bit of a hack
 

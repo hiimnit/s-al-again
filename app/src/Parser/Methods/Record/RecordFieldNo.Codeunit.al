@@ -60,7 +60,7 @@ codeunit 69321 "Record FieldNo FS" implements "Method FS"
         ArgumentNode := Arguments.First();
         ParameterSymbol := ArgumentNode.Value().ValidateSemanticsWithContext(Runtime, SymbolTable, Self);
         if not ParameterSymbol.Property then
-            Error('Expected the first argument to be a property.');
+            Error('Expected the first argument to be a property of %1.', Self.Name);
 
         FieldName := ParameterSymbol.Name; // TODO bit of a hack
     end;
