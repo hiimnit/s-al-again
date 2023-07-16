@@ -27,6 +27,7 @@ codeunit 69001 "Parser FS"
         Symbol: Record "Symbol FS";
         ClosestUserFunctionSignature, UserFunction : Codeunit "User Function FS";
         SymbolTable: Codeunit "Symbol Table FS";
+        TextUtils: Codeunit "Text Utils FS";
         ParsingResult: JsonObject;
         LocalVariables, Functions : JsonArray;
         i: Integer;
@@ -40,7 +41,7 @@ codeunit 69001 "Parser FS"
         if ClosestUserFunctionFound then begin
             Clear(Lexer);
             Clear(CachedLexeme);
-            Lexer.Init(TextRange(
+            Lexer.Init(TextUtils.Range(
                 Input,
                 ClosestUserFunctionSignature.GetStartLine(),
                 ClosestUserFunctionSignature.GetStartColumn(),
@@ -61,19 +62,6 @@ codeunit 69001 "Parser FS"
                 State.Unfinished();
         end else
             State.ProcedureOrTrigger();
-
-
-        // TODO keywords
-        // - begin -> end
-        // - break
-        // - exit
-        // - if -> then
-        // - else
-        // - for -> to/downto -> do
-        // - while -> do
-        // - repeat -> until
-        // > save state of the current statement?
-
 
         ParsingResult.Add('suggestions', State.ToSuggestions(Runtime, UserFunction));
         // TODO identifier suggestion lead to empty list => defaults to suggesting words?
@@ -99,47 +87,6 @@ codeunit 69001 "Parser FS"
         // TODO unrelated - what is the result of Format(State) = formating a codeunit?
 
         exit(ParsingResult);
-    end;
-
-    // TODO move somewhere else?
-    procedure TextRange
-    (
-        Input: Text;
-        StartLine: Integer;
-        StartColumn: Integer;
-        EndLine: Integer;
-        EndColumn: Integer
-    ): Text
-    var
-        TypeHelper: Codeunit "Type Helper";
-        TextLines: List of [Text];
-        RangeBuilder: TextBuilder;
-        i: Integer;
-    begin
-        if StartLine > EndLine then
-            Error('Invalid arguments: StartLine must be lower or equal to EndLine.');
-
-        TextLines := Input.Split(TypeHelper.LFSeparator());
-
-        if StartLine = EndLine then begin
-            if StartColumn > EndColumn then
-                Error('Invalid arguments: StartColumn must be lower or equal to EndColumn.');
-
-            exit(TextLines.Get(StartLine).Substring(StartColumn, EndColumn - StartColumn));
-        end;
-
-        RangeBuilder.Append(TextLines.Get(StartLine).Substring(StartColumn));
-        RangeBuilder.Append(TypeHelper.LFSeparator());
-
-        for i := StartLine + 1 to EndLine - 1 do begin
-            RangeBuilder.Append(TextLines.Get(i));
-            RangeBuilder.Append(TypeHelper.LFSeparator());
-        end;
-
-        RangeBuilder.Append(TextLines.Get(EndLine).Substring(1, EndColumn - 1));
-        RangeBuilder.Append(TypeHelper.LFSeparator());
-
-        exit(RangeBuilder.ToText());
     end;
 
     local procedure ParseFunctionSignatures
@@ -923,7 +870,7 @@ codeunit 69001 "Parser FS"
         AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
         Call: Interface "Node FS";
     begin
-        State.Expression(); // resets PropsOf state // TODO in ParseUnary or in ParseGetExpression?
+        State.Expression(); // resets PropsOf state
 
         Call := ParseCall();
 
@@ -947,7 +894,6 @@ codeunit 69001 "Parser FS"
                     begin
                         AssertNextLexeme(PeekedLexeme);
 
-                        // TODO state - parsing prop/method of "call" - store call type? call can be either a literal, variable, function call, property or method call?
                         State.PropsOf(Call);
 
                         Lexeme := AssertNextLexeme(Lexeme.Identifier());
@@ -1113,290 +1059,4 @@ codeunit 69001 "Parser FS"
     begin
         exit(Type = Enum::"Type FS"::Record);
     end;
-}
-
-codeunit 69003 "Parser State FS"
-{
-    var
-        State: Enum "Parser State FS";
-
-    procedure GetState(): Enum "Parser State FS"
-    begin
-        exit(State);
-    end;
-
-    procedure None()
-    begin
-        State := State::None;
-    end;
-
-    procedure VarOrIdentifier()
-    begin
-        State := State::VarOrIdentifier;
-    end;
-
-    procedure Identifier()
-    begin
-        State := State::Identifier;
-    end;
-
-    procedure Type()
-    begin
-        State := State::Type;
-    end;
-
-    var
-        SubtypeOfType: Enum "Type FS";
-
-    procedure SubtypeOf(NewType: Enum "Type FS")
-    begin
-        State := State::SubtypeOf;
-        SubtypeOfType := NewType;
-    end;
-
-    procedure TypeLength()
-    begin
-        State := State::TypeLength;
-    end;
-
-    procedure Statement()
-    begin
-        State := State::Statement;
-    end;
-
-    procedure Expression()
-    begin
-        State := State::Expression;
-    end;
-
-    var
-        Call: Interface "Node FS";
-
-    procedure PropsOf(NewCall: Interface "Node FS")
-    begin
-        State := State::PropsOf;
-        Call := NewCall;
-    end;
-
-    procedure ProcedureOrTrigger()
-    begin
-        State := State::ProcedureOrTrigger;
-    end;
-
-    procedure VarOrBegin()
-    begin
-        State := State::VarOrBegin;
-    end;
-
-    procedure IdentifierOrBegin()
-    begin
-        State := State::IdentifierOrBegin;
-    end;
-
-    procedure Unfinished()
-    begin
-        State := State::Unfinished;
-    end;
-
-    var
-        KeywordCounter: Dictionary of [Enum "Keyword FS", Integer];
-
-    procedure PushKeyword(Keyword: Enum "Keyword FS")
-    var
-        Count: Integer;
-    begin
-        if not KeywordCounter.Get(Keyword, Count) then
-            Count := 0;
-
-        KeywordCounter.Set(Keyword, Count + 1);
-    end;
-
-    procedure PopKeyword(Keyword: Enum "Keyword FS")
-    var
-        Count: Integer;
-    begin
-        if not KeywordCounter.Get(Keyword, Count) then
-            Count := 0;
-
-        Count -= 1;
-
-        if Count <= 0 then begin
-            KeywordCounter.Remove(Keyword);
-            exit;
-        end;
-
-        KeywordCounter.Set(Keyword, Count);
-    end;
-
-    procedure ToSuggestions
-    (
-        Runtime: Codeunit "Runtime FS";
-        CurrentUserFunction: Codeunit "User Function FS"
-    ): JsonObject
-    var
-        Symbol: Record "Symbol FS";
-        Suggestions, PropsOfDetails : JsonObject;
-    begin
-        case State of
-            Enum::"Parser State FS"::None:
-                ;
-            Enum::"Parser State FS"::Unfinished:
-                Suggestions.Add('unfinished', true);
-            Enum::"Parser State FS"::Identifier:
-                Suggestions.Add('identifier', true);
-            Enum::"Parser State FS"::ProcedureOrTrigger:
-                Suggestions.Add('keywords', KeywordsSuggestions());
-            Enum::"Parser State FS"::Statement:
-                begin
-                    Suggestions.Add('keywords', KeywordsSuggestions());
-                    Suggestions.Add('variables', true);
-                    Suggestions.Add('functions', true);
-                end;
-            Enum::"Parser State FS"::Expression:
-                begin
-                    Suggestions.Add('keywords', KeywordsSuggestions());
-                    Suggestions.Add('variables', true);
-                    Suggestions.Add('functions', true);
-                end;
-            Enum::"Parser State FS"::PropsOf:
-                begin
-                    if TryGetPropsOfSymbol(
-                        Runtime,
-                        CurrentUserFunction,
-                        Symbol
-                    ) then begin
-                        PropsOfDetails.Add('type', Format(Symbol.Type));
-                        PropsOfDetails.Add('subtype', Symbol.TryLookupSubtype());
-                    end else begin
-                        PropsOfDetails.Add('type', 'Unknown');
-                        PropsOfDetails.Add('subtype', -1);
-                    end;
-
-                    Suggestions.Add(
-                        'propsOf',
-                        PropsOfDetails
-                    );
-                end;
-            Enum::"Parser State FS"::SubtypeOf:
-                Suggestions.Add(
-                    'subtypesOf',
-                    Format(SubtypeOfType)
-                );
-            Enum::"Parser State FS"::Type:
-                Suggestions.Add('types', true);
-            Enum::"Parser State FS"::TypeLength:
-                ; // TODO suggest common lengths? 20/10/50?
-            Enum::"Parser State FS"::VarOrBegin:
-                Suggestions.Add('keywords', KeywordsSuggestions());
-            Enum::"Parser State FS"::IdentifierOrBegin:
-                Suggestions.Add('keywords', KeywordsSuggestions());
-            Enum::"Parser State FS"::VarOrIdentifier:
-                begin
-                    Suggestions.Add('keywords', KeywordsSuggestions());
-                    Suggestions.Add('identifier', true);
-                end;
-        end;
-
-        exit(Suggestions);
-    end;
-
-    local procedure KeywordsSuggestions(): JsonArray
-    var
-        Keywords: JsonArray;
-    begin
-        case State of
-            Enum::"Parser State FS"::ProcedureOrTrigger:
-                begin
-                    Keywords.Add('procedure');
-                    Keywords.Add('trigger');
-                    exit(Keywords);
-                end;
-            Enum::"Parser State FS"::VarOrBegin:
-                begin
-                    Keywords.Add('var');
-                    Keywords.Add('begin');
-                    exit(Keywords);
-                end;
-            Enum::"Parser State FS"::IdentifierOrBegin:
-                begin
-                    Keywords.Add('begin');
-                    exit(Keywords);
-                end;
-            Enum::"Parser State FS"::VarOrIdentifier:
-                begin
-                    Keywords.Add('var');
-                    exit(Keywords);
-                end;
-        end;
-
-        Keywords.Add('begin');
-        Keywords.Add('if');
-        Keywords.Add('else');
-        Keywords.Add('repeat');
-        Keywords.Add('for');
-        Keywords.Add('while');
-        Keywords.Add('not');
-        Keywords.Add('break');
-        Keywords.Add('exit');
-
-        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"begin") then
-            Keywords.Add('end');
-
-        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"if") then
-            Keywords.Add('then');
-
-        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"repeat") then
-            Keywords.Add('until');
-
-        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"for") then begin
-            Keywords.Add('to');
-            Keywords.Add('downto');
-        end;
-
-        if KeywordCounter.ContainsKey(Enum::"Keyword FS"::"do")
-            or KeywordCounter.ContainsKey(Enum::"Keyword FS"::"while")
-        then
-            Keywords.Add('do');
-
-        exit(Keywords);
-    end;
-
-    [TryFunction]
-    local procedure TryGetPropsOfSymbol
-    (
-        Runtime: Codeunit "Runtime FS";
-        CurrentUserFunction: Codeunit "User Function FS";
-        var Symbol: Record "Symbol FS"
-    )
-    var
-        SymbolTable: Codeunit "Symbol Table FS";
-    begin
-        // TODO this can also fail if the parsing ends before vars are parsed -> recovery for var declaration
-        SymbolTable := CurrentUserFunction.GetSymbolTable();
-
-        Symbol := Call.ValidateSemantics(
-            Runtime,
-            SymbolTable
-        );
-    end;
-}
-
-enum 69007 "Parser State FS"
-{
-    Caption = 'Parser State';
-    Extensible = false;
-
-    value(0; None) { Caption = 'None'; }
-    value(1; VarOrIdentifier) { Caption = 'VarOrIdentifier'; }
-    value(2; Identifier) { Caption = 'Identifier'; }
-    value(3; Type) { Caption = 'Type'; }
-    value(4; SubtypeOf) { Caption = 'SubtypeOf'; }
-    value(5; TypeLength) { Caption = 'TypeLength'; }
-    value(6; Statement) { Caption = 'Statement'; }
-    value(7; Expression) { Caption = 'Expression'; }
-    value(8; PropsOf) { Caption = 'PropsOf'; }
-    value(9; ProcedureOrTrigger) { Caption = 'ProcedureOrTrigger'; }
-    value(10; VarOrBegin) { Caption = 'VarOrBegin'; }
-    value(11; IdentifierOrBegin) { Caption = 'IdentifierOrBegin'; }
-    value(99; Unfinished) { Caption = 'Unfinished'; }
 }
