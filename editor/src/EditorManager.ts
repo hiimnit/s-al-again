@@ -1,26 +1,47 @@
-type EditorSubscriptionCallback = (value: string) => void;
+type ReplaceEditorTextSubscriptionCallback = (value: string) => void;
+type SymbolsReadyCallback = () => void;
 type UnsubscribeFunction = () => void;
 
 export default class EditorManager {
-  subscriptions: EditorSubscriptionCallback[];
+  replaceTextSubscriptions: ReplaceEditorTextSubscriptionCallback[];
+  symbolsReadySubscriptions: SymbolsReadyCallback[];
 
   constructor() {
-    this.subscriptions = [];
+    this.replaceTextSubscriptions = [];
+    this.symbolsReadySubscriptions = [];
   }
 
   static instance = new EditorManager();
 
-  subscribe(callback: EditorSubscriptionCallback): UnsubscribeFunction {
-    this.subscriptions.push(callback);
+  subscribe({
+    replaceTextCallback,
+    symbolsLoadedCallback: symbolsReadyCallback,
+  }: {
+    replaceTextCallback: ReplaceEditorTextSubscriptionCallback;
+    symbolsLoadedCallback: SymbolsReadyCallback;
+  }): UnsubscribeFunction {
+    this.replaceTextSubscriptions.push(replaceTextCallback);
+    this.symbolsReadySubscriptions.push(symbolsReadyCallback);
 
     return () => {
-      this.subscriptions = this.subscriptions.filter((e) => e !== callback);
+      this.replaceTextSubscriptions = this.replaceTextSubscriptions.filter(
+        (e) => e !== replaceTextCallback
+      );
+      this.symbolsReadySubscriptions = this.symbolsReadySubscriptions.filter(
+        (e) => e != symbolsReadyCallback
+      );
     };
   }
 
-  setValue(value: string) {
-    for (const subscription of this.subscriptions) {
+  replaceEditorText(value: string) {
+    for (const subscription of this.replaceTextSubscriptions) {
       subscription(value);
+    }
+  }
+
+  notifySymbolsReady() {
+    for (const subscription of this.symbolsReadySubscriptions) {
+      subscription();
     }
   }
 }

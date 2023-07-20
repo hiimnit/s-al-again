@@ -36,7 +36,7 @@ export const writeLine = (input: string) => {
 window.WriteLine = writeLine;
 
 export const setEditorValue = (value: string) => {
-  EditorManager.instance.setValue(value);
+  EditorManager.instance.replaceEditorText(value);
 };
 window.SetEditorValue = setEditorValue;
 
@@ -50,6 +50,7 @@ window.ResolveSuggestionsRequest = resolveSuggestionsRequest;
 
 export const setStaticSymbols = (symbols: StaticSymbols) => {
   LSPMessenger.instance.staticSymbols = symbols;
+  EditorManager.instance.notifySymbolsReady();
 };
 window.SetStaticSymbols = setStaticSymbols;
 
