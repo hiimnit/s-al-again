@@ -250,44 +250,35 @@ codeunit 69000 "Lexer FS"
         exit(false);
     end;
 
-    // TODO split into parse integer and parse decimal?
     local procedure ParseNumber(Char: Char): Record "Lexeme FS"
     var
         Lexeme, NextLexeme : Record "Lexeme FS";
         Digit, Digits : Integer;
-        Number: Decimal;
+        Number: Integer;
         PeekedChar: Char;
-        DecimalSeparatorFound: Boolean;
-        DecimalPlaces: Integer;
     begin
         Number := 0;
-        DecimalPlaces := 0;
         Digits := 0;
 
         repeat
             Evaluate(Digit, Char);
-            if not DecimalSeparatorFound then begin
-                Digits += 1;
-                Number *= 10;
-                Number += Digit;
-            end else begin
-                DecimalPlaces += 1;
-                Number += Power(10, -DecimalPlaces) * Digit;
-            end;
+            Digits += 1;
+            Number *= 10;
+            Number += Digit;
 
             PeekedChar := PeekNextChar();
             case true of
                 IsDigit(PeekedChar):
                     Char := NextChar();
-                (PeekedChar = '.') and not DecimalSeparatorFound:
+                PeekedChar = '.':
                     begin
-                        DecimalSeparatorFound := true;
                         NextChar();
-                        Char := NextChar();
-                        if not IsDigit(Char) then
-                            Error('Unexpected character, expected a digit at line %1, character %2.', CurrentLine, CurrentChar);
+                        exit(ParseDecimalPart(
+                            Number,
+                            Digits
+                        ));
                     end;
-                (PeekedChar = 'D') and not DecimalSeparatorFound:
+                PeekedChar = 'D':
                     begin
                         NextChar();
                         PeekedChar := PeekNextChar();
@@ -324,12 +315,50 @@ codeunit 69000 "Lexer FS"
                 PeekedChar = 'T':
                     begin
                         NextChar();
+                        exit(Lexeme.Time(ParseTime(Number, Digits, 0)));
+                    end;
+                else
+                    exit(Lexeme.Integer(Number));
+            end;
+        until false;
+    end;
+
+    local procedure ParseDecimalPart
+    (
+        IntegerPart: Integer;
+        Digits: Integer
+    ): Record "Lexeme FS"
+    var
+        Lexeme: Record "Lexeme FS";
+        Digit: Integer;
+        Number: Decimal;
+        Char, PeekedChar : Char;
+        DecimalPlaces: Integer;
+    begin
+        Number := IntegerPart;
+        DecimalPlaces := 0;
+        Digits := 0;
+
+        Char := NextChar();
+        if not IsDigit(Char) then
+            Error('Unexpected character, expected a digit at line %1, character %2.', CurrentLine, CurrentChar);
+
+        repeat
+            Evaluate(Digit, Char);
+            DecimalPlaces += 1;
+            Number += Power(10, -DecimalPlaces) * Digit;
+
+            PeekedChar := PeekNextChar();
+            case true of
+                IsDigit(PeekedChar):
+                    Char := NextChar();
+                PeekedChar = 'T':
+                    begin
+                        NextChar();
                         exit(Lexeme.Time(ParseTime(Number, Digits, DecimalPlaces)));
                     end;
                 else
-                    if DecimalSeparatorFound then
-                        exit(Lexeme.Decimal(Number));
-                    exit(Lexeme.Integer(Number));
+                    exit(Lexeme.Decimal(Number));
             end;
         until false;
     end;
