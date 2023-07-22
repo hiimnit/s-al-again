@@ -3,29 +3,137 @@ codeunit 69001 "Parser FS"
     var
         CachedLexeme: Record "Lexeme FS";
         Lexer: Codeunit "Lexer FS";
+        State: Codeunit "Parser State FS";
 
-    procedure Init(Input: Text)
-    begin
-        Lexer.Init(Input);
-    end;
-
-    procedure Parse(MonacoEditor: ControlAddIn "Monaco Editor FS"): Interface "Node FS"
+    procedure Parse(Input: Text; Runtime: Codeunit "Runtime FS")
     var
         Lexeme: Record "Lexeme FS";
-        Runtime: Codeunit "Runtime FS";
-        EmptyValueLinkedList: Codeunit "Value Linked List FS";
-        Function: Interface "Function FS";
     begin
+        Lexer.Init(Input);
+
         ParseFunctions(Runtime);
 
         AssertNextLexeme(Lexeme.EOS());
+    end;
 
-        Runtime.Init(MonacoEditor);
+    procedure ParseForIntellisense
+    (
+        Input: Text;
+        Line: Integer;
+        Column: Integer;
+        Runtime: Codeunit "Runtime FS"
+    ): JsonObject
+    var
+        Symbol: Record "Symbol FS";
+        ClosestUserFunctionSignature, UserFunction : Codeunit "User Function FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        TextUtils: Codeunit "Text Utils FS";
+        StaticSymbols: Codeunit "Static Symbols FS";
+        ParsingResult: JsonObject;
+        LocalVariables, Functions : JsonArray;
+        i: Integer;
+        ClosestUserFunctionFound: Boolean;
+    begin
+        // first - parse function signatures and find the enclosing function
+        Lexer.Init(Input);
+        ClosestUserFunctionFound := ParseFunctionSignatures(Runtime, Line, Column, ClosestUserFunctionSignature);
 
-        Runtime.ValidateFunctionsSemantics(Runtime);
+        // second - detailed parsing of the enclosing function
+        if ClosestUserFunctionFound then begin
+            Clear(Lexer);
+            Clear(CachedLexeme);
+            Lexer.Init(TextUtils.Range(
+                Input,
+                ClosestUserFunctionSignature.GetStartLine(),
+                ClosestUserFunctionSignature.GetStartColumn(),
+                Line,
+                Column
+            ));
 
-        Function := Runtime.LookupEntryPoint();
-        Function.Evaluate(Runtime, EmptyValueLinkedList, true);
+            if TryParseFunction(UserFunction) then
+                // parsing went ok, function is complete
+                State.ProcedureOrTrigger();
+
+            // TODO parse with recovery
+            // 1. function recovery
+            // 2. variable declaration recovery
+            // 3. statements recovery - use semicolons and begin/end pairs?
+
+            if not PeekNextLexeme().IsEOS() then
+                State.Unfinished();
+        end else
+            State.ProcedureOrTrigger();
+
+        ParsingResult.Add('suggestions', State.ToSuggestions(Runtime, UserFunction));
+        // TODO identifier suggestion lead to empty list => defaults to suggesting words?
+
+        SymbolTable := UserFunction.GetSymbolTable();
+        if SymbolTable.FindSet(Symbol) then
+            repeat
+                LocalVariables.Add(Symbol.ToJson());
+            until not SymbolTable.Next(Symbol);
+        ParsingResult.Add('localVariables', LocalVariables);
+
+        for i := 1 to Runtime.GetFunctionCount() do begin
+            // TODO skip triggers
+            UserFunction := Runtime.GetFunction(i);
+            Functions.Add(StaticSymbols.CreateFunctionSymbols(
+                UserFunction.GetName(),
+                UserFunction.GetInsertText(),
+                UserFunction.GetSignature()
+            ));
+        end;
+        ParsingResult.Add('functions', Functions);
+
+        // TODO unrelated - what is the result of Format(State) = formating a codeunit?
+
+        exit(ParsingResult);
+    end;
+
+    local procedure ParseFunctionSignatures
+    (
+        Runtime: Codeunit "Runtime FS";
+        Line: Integer;
+        Column: Integer;
+        var ClosestUserFunction: Codeunit "User Function FS"
+    ): Boolean
+    var
+        PeekedLexeme: Record "Lexeme FS";
+        UserFunction: Codeunit "User Function FS";
+        Parsed, FunctionFound : Boolean;
+    begin
+        while true do begin
+            Clear(PeekedLexeme);
+            if TryPeekNextLexeme(PeekedLexeme) then
+                if PeekedLexeme.IsEOS() then
+                    break;
+
+            if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure")
+                or PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger")
+            then begin
+                case true of
+                    PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure"):
+                        Parsed := TryParseProcedureSignature(UserFunction);
+                    PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger"):
+                        Parsed := TryParseOnRunSignature(UserFunction);
+                    else
+                        Error('Unimplemented error.');
+                end;
+
+                if Parsed then
+                    Parsed := Runtime.TryDefineFunction(UserFunction);
+
+                if UserFunction.StartsBefore(Line, Column) then begin
+                    ClosestUserFunction := UserFunction;
+                    FunctionFound := true;
+                end;
+
+                Clear(UserFunction);
+            end else
+                NextLexeme();
+        end;
+
+        exit(FunctionFound);
     end;
 
     local procedure ParseFunctions(Runtime: Codeunit "Runtime FS")
@@ -34,6 +142,8 @@ codeunit 69001 "Parser FS"
         UserFunction: Codeunit "User Function FS";
     begin
         while true do begin
+            State.ProcedureOrTrigger();
+
             PeekedLexeme := PeekNextLexeme();
             if PeekedLexeme.IsEOS() then
                 break;
@@ -47,21 +157,44 @@ codeunit 69001 "Parser FS"
                     Error('Expected keyword ''procedure'' or ''trigger''');
             end;
 
-            Runtime.DefineFunction(
-                UserFunction
-            );
+            Runtime.DefineFunction(UserFunction);
         end;
     end;
 
     local procedure ParseOnRun(): Codeunit "User Function FS"
     var
+        UserFunction: Codeunit "User Function FS";
+    begin
+        ParseOnRun(UserFunction);
+        exit(UserFunction);
+    end;
+
+    local procedure ParseOnRun(var UserFunction: Codeunit "User Function FS")
+    begin
+        UserFunction := ParseOnRunSignature();
+        ParseProcedureBody(UserFunction);
+    end;
+
+    [TryFunction]
+    local procedure TryParseOnRunSignature(var UserFunction: Codeunit "User Function FS")
+    begin
+        UserFunction := ParseOnRunSignature();
+    end;
+
+    local procedure ParseOnRunSignature(): Codeunit "User Function FS"
+    var
         Lexeme: Record "Lexeme FS";
         SymbolTable: Codeunit "Symbol Table FS";
         UserFunction: Codeunit "User Function FS";
-        Statements: Interface "Node FS";
         Name: Text[120];
     begin
-        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"trigger"));
+        Lexeme := AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"trigger"));
+        UserFunction.SetPositionStart(
+            Lexeme."Start Line",
+            Lexeme."Start Column"
+        );
+
+        State.Identifier(); // XXX OnRun is the only allowed name, suggest?
 
         Lexeme := AssertNextLexeme(Lexeme.Identifier());
         if Lexeme."Identifier Name".ToLower() <> 'onrun' then
@@ -72,27 +205,73 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::")"));
 
         SymbolTable.DefineReturnType(SymbolTable.VoidSymbol());
-        Statements := ParseProcedure(SymbolTable);
 
         UserFunction.Init(
             Name,
-            SymbolTable,
-            Statements
+            SymbolTable
         );
         exit(UserFunction);
     end;
 
+    [TryFunction]
+    local procedure TryParseFunction
+    (
+        var UserFunction: Codeunit "User Function FS"
+    )
+    var
+        PeekedLexeme: Record "Lexeme FS";
+    begin
+        State.ProcedureOrTrigger();
+
+        PeekedLexeme := PeekNextLexeme();
+        if PeekedLexeme.IsEOS() then
+            exit;
+
+        case true of
+            PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure"):
+                ParseProcedure(UserFunction);
+            PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger"):
+                ParseOnRun(UserFunction);
+            else
+                Error('Expected keyword ''procedure'' or ''trigger''');
+        end;
+    end;
+
     local procedure ParseProcedure(): Codeunit "User Function FS"
+    var
+        UserFunction: Codeunit "User Function FS";
+    begin
+        ParseProcedure(UserFunction);
+        exit(UserFunction);
+    end;
+
+    local procedure ParseProcedure(var UserFunction: Codeunit "User Function FS")
+    begin
+        ParseProcedureSignature(UserFunction);
+        ParseProcedureBody(UserFunction);
+    end;
+
+    [TryFunction]
+    local procedure TryParseProcedureSignature(var UserFunction: Codeunit "User Function FS")
+    begin
+        ParseProcedureSignature(UserFunction);
+    end;
+
+    local procedure ParseProcedureSignature(var UserFunction: Codeunit "User Function FS")
     var
         PeekedLexeme, Lexeme : Record "Lexeme FS";
         ParameterSymbol, ReturnTypeSymbol : Record "Symbol FS";
         SymbolTable: Codeunit "Symbol Table FS";
-        UserFunction: Codeunit "User Function FS";
-        Statements: Interface "Node FS";
         Pointer: Boolean;
         Name: Text[120];
     begin
-        AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
+        Lexeme := AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"procedure"));
+        UserFunction.SetPositionStart(
+            Lexeme."Start Line",
+            Lexeme."Start Column"
+        );
+
+        State.Identifier();
 
         Lexeme := AssertNextLexeme(Lexeme.Identifier());
         Name := Lexeme."Identifier Name";
@@ -102,11 +281,15 @@ codeunit 69001 "Parser FS"
         PeekedLexeme := PeekNextLexeme();
         if not PeekedLexeme.IsOperator(Enum::"Operator FS"::")") then
             while true do begin
+                State.VarOrIdentifier();
+
                 Pointer := false;
                 PeekedLexeme := PeekNextLexeme();
                 if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
                     NextLexeme();
                     Pointer := true;
+
+                    State.Identifier();
                 end;
 
                 ParameterSymbol := ParseVariableDefinition(true);
@@ -123,19 +306,17 @@ codeunit 69001 "Parser FS"
 
         ReturnTypeSymbol := SymbolTable.VoidSymbol();
         PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then
+        if PeekedLexeme.IsIdentifier() or PeekedLexeme.IsOperator(Enum::"Operator FS"::":") then begin
+            State.Identifier();
             ReturnTypeSymbol := ParseVariableDefinition(false);
+        end;
 
         SymbolTable.DefineReturnType(ReturnTypeSymbol);
 
-        Statements := ParseProcedure(SymbolTable);
-
         UserFunction.Init(
             Name,
-            SymbolTable,
-            Statements
+            SymbolTable
         );
-        exit(UserFunction);
     end;
 
     local procedure ParseVariableDefinition(NameRequired: Boolean): Record "Symbol FS"
@@ -150,18 +331,21 @@ codeunit 69001 "Parser FS"
         end;
 
         AssertNextLexeme(Lexeme.Operator(Enum::"Operator FS"::":"));
+
+        State.Type();
         TypeLexeme := AssertNextLexeme(Lexeme.Identifier());
         Symbol.Type := ParseType(TypeLexeme."Identifier Name");
 
-        PeekedLexeme := PeekNextLexeme();
-        if PeekedLexeme.IsIdentifier() then begin
-            SubtypeLexeme := AssertNextLexeme(PeekedLexeme);
+        if IsSubtypeMandatory(Symbol.Type) then begin
+            State.SubtypeOf(Symbol.Type);
+            SubtypeLexeme := AssertNextLexeme(PeekedLexeme.Identifier());
             Symbol.Subtype := SubtypeLexeme."Identifier Name";
-
-            PeekedLexeme := PeekNextLexeme();
         end;
 
+        PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsOperator(Enum::"Operator FS"::"[") then begin
+            State.TypeLength();
+
             AssertNextLexeme(PeekedLexeme);
 
             Lexeme := AssertNextLexeme(PeekedLexeme.Integer());
@@ -173,20 +357,27 @@ codeunit 69001 "Parser FS"
         exit(Symbol);
     end;
 
-    local procedure ParseProcedure
+    local procedure ParseProcedureBody
     (
-        SymbolTable: Codeunit "Symbol Table FS"
-    ): Interface "Node FS"
+        UserFunction: Codeunit "User Function FS"
+    )
     var
         Lexeme, PeekedLexeme : Record "Lexeme FS";
         VariableSymbol: Record "Symbol FS";
+        SymbolTable: Codeunit "Symbol Table FS";
         CompoundStatement: Interface "Node FS";
     begin
+        State.VarOrBegin();
+
+        SymbolTable := UserFunction.GetSymbolTable();
+
         PeekedLexeme := PeekNextLexeme();
         if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"var") then begin
             AssertNextLexeme(PeekedLexeme);
 
             while true do begin
+                State.IdentifierOrBegin();
+
                 PeekedLexeme := PeekNextLexeme();
                 if not PeekedLexeme.IsIdentifier() then
                     break;
@@ -205,7 +396,7 @@ codeunit 69001 "Parser FS"
             Lexeme.Operator(Enum::"Operator FS"::";")
         );
 
-        exit(CompoundStatement);
+        UserFunction.SetStatements(CompoundStatement);
     end;
 
     local procedure ParseCompoundStatement(): Interface "Node FS"
@@ -227,7 +418,7 @@ codeunit 69001 "Parser FS"
     local procedure ParseCompoundStatement
     (
         OpeningKeyword: Enum "Keyword FS";
-                            ClosingKeyword: Enum "Keyword FS"
+        ClosingKeyword: Enum "Keyword FS"
     ): Interface "Node FS"
     var
         Lexeme: Record "Lexeme FS";
@@ -236,12 +427,14 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(
             Lexeme.Keyword(OpeningKeyword)
         );
+        State.PushKeyword(OpeningKeyword);
 
         StatementList := ParseStatementList();
 
         AssertNextLexeme(
             Lexeme.Keyword(ClosingKeyword)
         );
+        State.PopKeyword(OpeningKeyword);
 
         exit(StatementList);
     end;
@@ -255,12 +448,14 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"if")
         );
+        State.PushKeyword(Enum::"Keyword FS"::"if");
 
         Expression := ParseExpression();
 
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"then")
         );
+        State.PopKeyword(Enum::"Keyword FS"::"if");
 
         Statement := ParseStatement();
 
@@ -294,6 +489,7 @@ codeunit 69001 "Parser FS"
         DownToLoop: Boolean;
     begin
         AssertNextLexeme(Lexeme.Keyword(Enum::"Keyword FS"::"for"));
+        State.PushKeyword(Enum::"Keyword FS"::"for");
 
         VariableExpression := ParseGetExpression(false);
 
@@ -314,12 +510,15 @@ codeunit 69001 "Parser FS"
                     Enum::"Keyword FS"::"downto"
                 );
         end;
+        State.PopKeyword(Enum::"Keyword FS"::"for");
+        State.PushKeyword(Enum::"Keyword FS"::"do");
 
         FinalValueExpression := ParseExpression();
 
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"do")
         );
+        State.PopKeyword(Enum::"Keyword FS"::"do");
 
         Statement := ParseStatement();
 
@@ -343,12 +542,14 @@ codeunit 69001 "Parser FS"
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"while")
         );
+        State.PushKeyword(Enum::"Keyword FS"::"while");
 
         Expression := ParseExpression();
 
         AssertNextLexeme(
             Lexeme.Keyword(Enum::"Keyword FS"::"do")
         );
+        State.PopKeyword(Enum::"Keyword FS"::"while");
 
         Statement := ParseStatement();
 
@@ -421,6 +622,8 @@ codeunit 69001 "Parser FS"
     begin
         Lexeme := PeekNextLexeme();
 
+        State.Statement();
+
         case true of
             Lexeme.IsKeyword(Enum::"Keyword FS"::"begin"):
                 exit(ParseCompoundStatement());
@@ -443,6 +646,8 @@ codeunit 69001 "Parser FS"
 
     local procedure ParseExpression(): Interface "Node FS"
     begin
+        State.Expression();
+
         exit(ParseComparison());
     end;
 
@@ -656,6 +861,8 @@ codeunit 69001 "Parser FS"
         AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
         Call: Interface "Node FS";
     begin
+        State.Expression(); // resets PropsOf state
+
         Call := ParseCall();
 
         while true do begin
@@ -677,6 +884,8 @@ codeunit 69001 "Parser FS"
                 PeekedLexeme.IsOperator(Enum::"Operator FS"::"."):
                     begin
                         AssertNextLexeme(PeekedLexeme);
+
+                        State.PropsOf(Call);
 
                         Lexeme := AssertNextLexeme(Lexeme.Identifier());
 
@@ -728,6 +937,8 @@ codeunit 69001 "Parser FS"
         PeekedLexeme: Record "Lexeme FS";
         Arguments: Codeunit "Node Linked List FS";
     begin
+        // TODO suggest fields in methdos like setrange, setfilter, validate
+
         AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"("));
 
         PeekedLexeme := PeekNextLexeme();
@@ -747,7 +958,6 @@ codeunit 69001 "Parser FS"
         exit(Arguments);
     end;
 
-
     local procedure NextLexeme(): Record "Lexeme FS"
     var
         Lexeme: Record "Lexeme FS";
@@ -759,6 +969,12 @@ codeunit 69001 "Parser FS"
         end;
 
         exit(Lexer.Next());
+    end;
+
+    [TryFunction]
+    local procedure TryPeekNextLexeme(var Lexeme: Record "Lexeme FS")
+    begin
+        Lexeme := PeekNextLexeme();
     end;
 
     local procedure PeekNextLexeme(): Record "Lexeme FS"
@@ -834,5 +1050,10 @@ codeunit 69001 "Parser FS"
             else
                 Error('Unknown type %1.', Identifier);
         end;
+    end;
+
+    local procedure IsSubtypeMandatory(Type: Enum "Type FS"): Boolean
+    begin
+        exit(Type = Enum::"Type FS"::Record);
     end;
 }

@@ -11,6 +11,11 @@ table 69000 "Lexeme FS"
         field(1; "Entry No."; Integer) { }
         field(2; Type; Enum "Lexeme Type FS") { }
 
+        field(10; "Start Line"; Integer) { }
+        field(11; "Start Column"; Integer) { }
+        field(12; "End Line"; Integer) { }
+        field(13; "End Column"; Integer) { }
+
         field(1000; "Keyword Value"; Enum "Keyword FS") { }
 
         field(2000; "Operator Value"; Enum "Operator FS") { }
@@ -173,6 +178,20 @@ table 69000 "Lexeme FS"
             InStream,
             TypeHelper.LFSeparator()
         ));
+    end;
+
+    procedure SetPosition
+    (
+        StartLine: Integer;
+        StartColumn: Integer;
+        EndLine: Integer;
+        EndColumn: Integer
+    )
+    begin
+        Rec."Start Line" := StartLine;
+        Rec."Start Column" := StartColumn;
+        Rec."End Line" := EndLine;
+        Rec."End Column" := EndColumn;
     end;
 
     procedure GetValue(): Text

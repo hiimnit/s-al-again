@@ -3,18 +3,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import Editor from "@monaco-editor/react";
 
+import registerLanguage from "./al/al";
 import ConsoleManager, { ConsoleLine } from "./ConsoleManager";
 import EditorManager from "./EditorManager";
 
 function App() {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const [language, setLanguage] = useState("");
+  const [showEditorOverlay, setShowEditorOverlay] = useState(true);
 
   const setValue = useCallback((value: string) => {
     editorRef.current?.setValue(value);
   }, []);
 
   useEffect(() => {
-    return EditorManager.instance.subscribe(setValue);
+    return EditorManager.instance.subscribe({
+      replaceTextCallback: (value) => {
+        setValue(value);
+      },
+      symbolsLoadedCallback: () => setShowEditorOverlay(false),
+    });
   }, [setValue]);
 
   const tokenize = () => {
@@ -54,7 +62,7 @@ function App() {
           className="my-0.5 px-6 py-2 font-bc text-bc-small font-normal transition-colors hover:bg-bc-100"
           onClick={parse}
         >
-          Parse
+          Run
         </button>
         <div className="flex-grow" />
         <button
@@ -66,19 +74,34 @@ function App() {
       </div>
       <div className="flex-1 overflow-y-auto">
         <div className="grid h-full grid-cols-1 grid-rows-2 gap-1 md:grid-cols-2 md:grid-rows-1">
-          <Editor
-            language="al"
-            onMount={(editor) => {
-              editorRef.current = editor;
+          <div className="relative">
+            <Editor
+              language={language}
+              options={{
+                readOnly: showEditorOverlay,
+              }}
+              onMount={(editor, monaco) => {
+                registerLanguage(monaco);
+                setLanguage("al"); // hack to refresh model handled by Editor
 
-              if (window.Microsoft !== undefined) {
-                window.Microsoft.Dynamics.NAV.InvokeExtensibilityMethod(
-                  "EditorReady",
-                  []
-                );
-              }
-            }}
-          />
+                editorRef.current = editor;
+
+                if (window.Microsoft !== undefined) {
+                  window.Microsoft.Dynamics.NAV.InvokeExtensibilityMethod(
+                    "EditorReady",
+                    []
+                  );
+                }
+              }}
+            />
+            {showEditorOverlay && (
+              <div className="absolute inset-0 grid bg-gray-50 bg-opacity-80">
+                <div className="place-self-center font-bc text-gray-800">
+                  loading symbols...
+                </div>
+              </div>
+            )}
+          </div>
           <Console />
         </div>
       </div>
@@ -101,9 +124,15 @@ function Console() {
   }, [consoleRef, lines]);
 
   return (
-    <div ref={consoleRef} className="overflow-y-auto font-monaco text-xs">
+    <div
+      ref={consoleRef}
+      className="overflow-y-auto bg-gray-50 px-2 font-monaco text-xs"
+    >
       {lines.map((e) => (
-        <div key={e.entryNo} className="whitespace-pre-wrap break-all">
+        <div
+          key={e.entryNo}
+          className="min-h-[1rem] whitespace-pre-wrap break-all"
+        >
           {e.content}
         </div>
       ))}

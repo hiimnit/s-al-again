@@ -8,13 +8,55 @@ codeunit 69025 "User Function FS" implements "Function FS"
     procedure Init
     (
         NewName: Text[120];
-        NewSymbolTable: Codeunit "Symbol Table FS";
-        NewStatements: Interface "Node FS"
+        NewSymbolTable: Codeunit "Symbol Table FS"
     )
     begin
         Name := NewName;
         SymbolTable := NewSymbolTable;
+    end;
+
+    procedure SetStatements
+    (
+        NewStatements: Interface "Node FS"
+    )
+    begin
         Statements := NewStatements;
+    end;
+
+    var
+        StartLine, StartColumn : Integer;
+
+    procedure SetPositionStart
+    (
+        NewStartLine: Integer;
+        NewStartColumn: Integer
+    )
+    begin
+        StartLine := NewStartLine;
+        StartColumn := NewStartColumn;
+    end;
+
+    procedure GetStartLine(): Integer
+    begin
+        exit(StartLine);
+    end;
+
+    procedure GetStartColumn(): Integer
+    begin
+        exit(StartColumn);
+    end;
+
+    procedure StartsBefore
+    (
+        Line: Integer;
+        Column: Integer
+    ): Boolean
+    begin
+        if StartLine < Line then
+            exit(true);
+        if StartLine > Line then
+            exit(false);
+        exit(StartColumn <= Column);
     end;
 
     procedure GetName(): Text[120];
@@ -25,6 +67,11 @@ codeunit 69025 "User Function FS" implements "Function FS"
     procedure GetReturnType(TopLevel: Boolean): Record "Symbol FS"
     begin
         exit(SymbolTable.GetReturnType());
+    end;
+
+    procedure GetSymbolTable(): Codeunit "Symbol Table FS"
+    begin
+        exit(SymbolTable);
     end;
 
     procedure ValidateCallArguments
@@ -74,5 +121,37 @@ codeunit 69025 "User Function FS" implements "Function FS"
     begin
         SymbolTable.Validate();
         Statements.ValidateSemantics(Runtime, SymbolTable);
+    end;
+
+    procedure GetInsertText(): Text
+    begin
+        if SymbolTable.GetParameterCount() = 0 then
+            exit(GetName() + '()');
+        exit(GetName() + '($0)');
+    end;
+
+    procedure GetSignature(): Text
+    var
+        ParameterSymbol, ReturnTypeSymbol : Record "Symbol FS";
+        SignatureBuilder: TextBuilder;
+    begin
+        SignatureBuilder.Append(GetName());
+
+        SignatureBuilder.Append('(');
+        SymbolTable.GetParameters(ParameterSymbol);
+        ParameterSymbol.SetCurrentKey(Order);
+        if ParameterSymbol.FindSet() then
+            repeat
+                if SignatureBuilder.Length <> 0 then
+                    SignatureBuilder.Append('; ');
+                SignatureBuilder.Append(ParameterSymbol.ToText());
+            until ParameterSymbol.Next() = 0;
+        SignatureBuilder.Append(')');
+
+        ReturnTypeSymbol := GetReturnType(false);
+        if ReturnTypeSymbol.Type <> ReturnTypeSymbol.Type::Void then
+            SignatureBuilder.Append(ReturnTypeSymbol.ToText());
+
+        exit(SignatureBuilder.ToText());
     end;
 }

@@ -26,12 +26,28 @@ codeunit 69011 "Runtime FS"
         UserFunction: Codeunit "User Function FS"
     )
     begin
-        if FunctionCount = ArrayLen(Functions) then
+        if FunctionCount >= ArrayLen(Functions) then
             Error('Reached maximum allowed number of local functions %1.', ArrayLen(Functions));
 
         FunctionCount += 1;
         FunctionMap.Add(UserFunction.GetName().ToLower(), FunctionCount);
         Functions[FunctionCount] := UserFunction;
+    end;
+
+    procedure TryDefineFunction
+    (
+        UserFunction: Codeunit "User Function FS"
+    ): Boolean
+    begin
+        if FunctionCount >= ArrayLen(Functions) then
+            exit(false);
+
+        if FunctionMap.ContainsKey(UserFunction.GetName().ToLower()) then
+            exit(false);
+
+        DefineFunction(UserFunction);
+
+        exit(true);
     end;
 
     procedure LookupFunction(Name: Text[120]): Interface "Function FS"
@@ -44,6 +60,16 @@ codeunit 69011 "Runtime FS"
         end;
 
         exit(LookupBuiltInFunction(Name));
+    end;
+
+    procedure GetFunctionCount(): Integer
+    begin
+        exit(FunctionCount);
+    end;
+
+    procedure GetFunction(i: Integer): Codeunit "User Function FS"
+    begin
+        exit(Functions[i]);
     end;
 
     local procedure LookupBuiltInFunction(Name: Text[120]): Interface "Function FS"
@@ -85,7 +111,7 @@ codeunit 69011 "Runtime FS"
         StrLenFunction: Codeunit "StrLen Function FS";
         StrPosFunction: Codeunit "StrPos Function FS";
         StrSubstNoFunction: Codeunit "StrSubstNo Function FS";
-        UpperCaseEndFunction: Codeunit "UpperCaseEnd Function FS";
+        UpperCaseFunction: Codeunit "UpperCase Function FS";
     begin
         case Name.ToLower() of
             AbsFunction.GetName().ToLower():
@@ -162,8 +188,8 @@ codeunit 69011 "Runtime FS"
                 exit(StrPosFunction);
             StrSubstNoFunction.GetName().ToLower():
                 exit(StrSubstNoFunction);
-            UpperCaseEndFunction.GetName().ToLower():
-                exit(UpperCaseEndFunction);
+            UpperCaseFunction.GetName().ToLower():
+                exit(UpperCaseFunction);
             else
                 Error('Function %1 does not exist.', Name);
         end;
