@@ -9,7 +9,7 @@ import { Monaco } from "@monaco-editor/react";
 
 import LSPMessenger from "../LSPMessenger";
 
-import type { IRange } from "monaco-editor";
+import type { CancellationToken, IRange, Position } from "monaco-editor";
 
 const conf: languages.LanguageConfiguration = {
   wordPattern:
@@ -220,10 +220,8 @@ const registerLanguage = (monaco: Monaco) => {
     provideCompletionItems: async (model, position, _, token) => {
       // TODO record methods like setrange and validate need special treatment - suggest fields
 
-      // TODO do not show editor before symbols are loaded?
       const staticSymbols = LSPMessenger.instance.staticSymbols;
       if (!staticSymbols) {
-        // TODO toasts?
         // FIXME add a text suggestion with the error?
         console.error("Static symbols are not defined.");
 
@@ -232,16 +230,10 @@ const registerLanguage = (monaco: Monaco) => {
         };
       }
 
-      const abortController = new AbortController();
-      token.onCancellationRequested(() =>
-        abortController.abort(new Error("AbortError"))
-      );
-
-      // TODO this can throw the abort error - catch
-      const result = await LSPMessenger.instance.getSuggestions({
+      const result = await tryGetSuggestions({
         input: model.getValue(),
         position,
-        signal: abortController.signal,
+        token,
       });
 
       if (!result) {
@@ -251,8 +243,6 @@ const registerLanguage = (monaco: Monaco) => {
           suggestions: [],
         };
       }
-
-      console.log({ result, staticSymbols });
 
       const word = model.getWordUntilPosition(position);
       const range = {
@@ -355,6 +345,33 @@ const registerLanguage = (monaco: Monaco) => {
       };
     },
   });
+};
+
+const tryGetSuggestions = async ({
+  input,
+  position,
+  token,
+}: {
+  input: string;
+  position: Position;
+  token: CancellationToken;
+}): Promise<AlParsingResult | undefined> => {
+  const abortController = new AbortController();
+  token.onCancellationRequested(() =>
+    abortController.abort(new Error("AbortError"))
+  );
+
+  try {
+    return await LSPMessenger.instance.getSuggestions({
+      input,
+      position,
+      signal: abortController.signal,
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "AbortError") {
+      return undefined;
+    }
+  }
 };
 
 type CompletionItemAdderCommonProps = {
