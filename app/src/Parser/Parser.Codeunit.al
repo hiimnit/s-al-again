@@ -103,9 +103,10 @@ codeunit 69001 "Parser FS"
         Parsed, FunctionFound : Boolean;
     begin
         while true do begin
-            PeekedLexeme := PeekNextLexeme();
-            if PeekedLexeme.IsEOS() then
-                break;
+            Clear(PeekedLexeme);
+            if TryPeekNextLexeme(PeekedLexeme) then
+                if PeekedLexeme.IsEOS() then
+                    break;
 
             if PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"procedure")
                 or PeekedLexeme.IsKeyword(Enum::"Keyword FS"::"trigger")
@@ -968,6 +969,12 @@ codeunit 69001 "Parser FS"
         end;
 
         exit(Lexer.Next());
+    end;
+
+    [TryFunction]
+    local procedure TryPeekNextLexeme(var Lexeme: Record "Lexeme FS")
+    begin
+        Lexeme := PeekNextLexeme();
     end;
 
     local procedure PeekNextLexeme(): Record "Lexeme FS"
