@@ -42,6 +42,10 @@ table 69001 "Symbol FS"
         {
             Caption = 'Length Defined';
         }
+        field(50; Values; Text[2047]) // length used in Field.OptionString // TODO investigate - can it be longer?
+        {
+            Caption = 'Values';
+        }
     }
 
     keys
@@ -255,6 +259,11 @@ table 69001 "Symbol FS"
                     if AllObj.IsEmpty() then
                         Error('Table "%1" does not exist.', Rec.Subtype);
                 end;
+            Rec.Type::Option:
+                begin
+                    // TODO check for duplicates in "Values"
+                    Error('Unimplemented');
+                end;
         end;
 
         if Rec."Length Defined" then begin
@@ -308,11 +317,14 @@ table 69001 "Symbol FS"
             Rec.Type::Guid:
                 exit(Target.Type in [Target.Type::Text, Target.Type::Code]);
             Rec.Type::Char:
-                exit(Target.Type in [Target.Type::Text, Target.Type::Code, Target.Type::Integer, Target.Type::Decimal]);
+                exit(Target.Type in [Target.Type::Text, Target.Type::Code, Target.Type::Integer, Target.Type::Decimal, Target.Type::Option]);
             Rec.Type::Integer:
-                exit(Target.Type in [Target.Type::Char, Target.Type::Decimal]);
+                exit(Target.Type in [Target.Type::Char, Target.Type::Decimal, Target.Type::Option]);
             Rec.Type::Decimal:
-                exit(Target.Type in [Target.Type::Char, Target.Type::Integer]);
+                exit(Target.Type in [Target.Type::Char, Target.Type::Integer, Target.Type::Option]);
+            Rec.Type::Option:
+                // TODO add option here and in binary operator node
+                exit(Target.Type in [Target.Type::Char, Target.Type::Integer, Target.Type::Decimal]);
         end;
 
         exit(false);
@@ -348,6 +360,8 @@ table 69001 "Symbol FS"
         AllObj: Record AllObj;
         Field: Record Field;
         Symbol: Record "Symbol FS";
+        RecordRef: RecordRef;
+        FieldRef: FieldRef;
     begin
         if Rec.Type <> Rec.Type::Record then
             Error('Type %1 does not support property access.', Rec.Type);
@@ -393,6 +407,12 @@ table 69001 "Symbol FS"
                 exit(SymbolTable.DateTimeSymbol());
             Field.Type::Guid:
                 exit(SymbolTable.GuidSymbol());
+            Field.Type::Option:
+                begin
+                    RecordRef.Open(Field.TableNo);
+                    FieldRef := RecordRef.Field(Field."No.");
+                    exit(SymbolTable.OptionSymbol(FieldRef.OptionMembers)); // TODO resolve overflow
+                end;
             else
                 Error('Accessing property "%1" of type %2 is not supported.', PropertyName, Field.Type);
         end;
@@ -407,6 +427,8 @@ table 69001 "Symbol FS"
     var
         AllObj: Record AllObj;
         Field: Record Field;
+        RecordRef: RecordRef;
+        FieldRef: FieldRef;
     begin
         if Rec.Type <> Rec.Type::Record then
             exit(false);
@@ -450,6 +472,12 @@ table 69001 "Symbol FS"
                 Symbol := SymbolTable.DateTimeSymbol();
             Field.Type::Guid:
                 Symbol := SymbolTable.GuidSymbol();
+            Field.Type::Option:
+                begin
+                    RecordRef.Open(Field.TableNo);
+                    FieldRef := RecordRef.Field(Field."No.");
+                    Symbol := SymbolTable.OptionSymbol(FieldRef.OptionMembers); // TODO resolve overflow
+                end;
             else
                 exit(false);
         end;
@@ -457,7 +485,7 @@ table 69001 "Symbol FS"
         exit(true);
     end;
 
-    procedure ValidateIndexAcces
+    procedure ValidateIndexAccess
     (
         Runtime: Codeunit "Runtime FS";
         SymbolTable: Codeunit "Symbol Table FS";
@@ -488,6 +516,37 @@ table 69001 "Symbol FS"
         end;
 
         exit(ResultSymbol);
+    end;
+
+    procedure ValidateScopeAccess
+    (
+        Runtime: Codeunit "Runtime FS";
+        SymbolTable: Codeunit "Symbol Table FS";
+        ScopeSymbol: Record "Symbol FS";
+        AccessedValue: Text[120]
+    ): Integer
+    var
+        OptionValues: List of [Text];
+        Result: Integer;
+    begin
+        case ScopeSymbol.Type of
+            ScopeSymbol.Type::Option:
+                begin
+                    OptionValues := ScopeSymbol.Values.ToLower().Split(',');
+                    Result := OptionValues.IndexOf(AccessedValue.ToLower()) - 1;
+
+                    if Result < 0 then
+                        Error(
+                            '''%1'' does not contain a definition for ''%2''.',
+                            ScopeSymbol.TypeToText(), // FIXME standard shows the option name here - add in lookup?
+                            AccessedValue
+                        );
+                end;
+            else
+                Error('Type %1 does not support scope access.', ScopeSymbol.TypeToText());
+        end;
+
+        exit(Result);
     end;
 
     procedure ToJson(): JsonObject

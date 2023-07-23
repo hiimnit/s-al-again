@@ -106,6 +106,7 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
         GuidValue: Codeunit "Guid Value FS";
         DateFormulaValue: Codeunit "DateFormula Value FS";
         CharValue: Codeunit "Char Value FS";
+        OptionValue: Codeunit "Option Value FS";
     begin
         case true of
             Variant.IsInteger():
@@ -162,6 +163,15 @@ codeunit 69113 "Record Field Value FS" implements "Value FS"
                 begin
                     CharValue.SetValue(Variant);
                     exit(CharValue);
+                end;
+            Variant.IsOption():
+                begin
+                    OptionValue.Init(
+                        FieldRef.OptionMembers(),
+                        FieldRef.OptionCaption()
+                    );
+                    OptionValue.SetValue(Variant);
+                    exit(OptionValue);
                 end;
             else
                 Error('Initilization of type from value %1 is not supported.', Variant);

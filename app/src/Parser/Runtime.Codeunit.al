@@ -603,6 +603,6 @@ codeunit 69011 "Runtime FS"
     local procedure NextNodeValue(var Node: Codeunit "Value Linked List Node FS"): Variant
     begin
         Node := Node.Next();
-        exit(Node.Value().GetValue());
+        exit(Node.Value().Format());
     end;
 }
