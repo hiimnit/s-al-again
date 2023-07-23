@@ -14,7 +14,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
                 NewReturnTypeSymbol.Type,
                 NewReturnTypeSymbol.Subtype,
                 Enum::"Scope FS"::Local,
-                false
+                false,
+                NewReturnTypeSymbol.Values
             );
     end;
 
@@ -30,7 +31,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
             VariableSymbol.Type,
             VariableSymbol.Subtype,
             Enum::"Scope FS"::Local,
-            false
+            false,
+            VariableSymbol.Values
         );
     end;
 
@@ -41,7 +43,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
             ParameterSymbol.Type,
             ParameterSymbol.Subtype,
             Enum::"Scope FS"::Parameter,
-            Pointer
+            Pointer,
+            ParameterSymbol.Values
         );
     end;
 
@@ -51,7 +54,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Type: Enum "Type FS";
         Subtype: Text[120];
         Scope: Enum "Scope FS";
-        Pointer: Boolean
+        Pointer: Boolean;
+        Values: Text[2047]
     )
     begin
         if Symbol.Get(Name) then
@@ -64,6 +68,7 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         Symbol.Scope := Scope;
         Symbol.Order := GetNextOrder();
         Symbol."Pointer Parameter" := Pointer;
+        Symbol.Values := Values; // TODO validate doubled definition somewhere?
         Symbol.Insert();
     end;
 
@@ -173,6 +178,15 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
         exit(Char);
     end;
 
+    procedure OptionSymbol(Values: Text[2047]): Record "Symbol FS"
+    var
+        Option: Record "Symbol FS";
+    begin
+        Option.Type := Option.Type::Option;
+        Option.Values := Values;
+        exit(Option);
+    end;
+
     procedure SymbolFromType(Type: Enum "Type FS"): Record "Symbol FS"
     begin
         case Type of
@@ -194,6 +208,8 @@ codeunit 69099 "Symbol Table FS" // TODO scoping?
                 exit(DateTimeSymbol());
             Type::Guid:
                 exit(GuidSymbol());
+            Type::Option:
+                exit(OptionSymbol('')); // TODO remove this function, move simplified version to literal value
             Type::Void:
                 exit(VoidSymbol());
             else

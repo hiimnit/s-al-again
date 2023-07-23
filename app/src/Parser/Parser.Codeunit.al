@@ -323,6 +323,7 @@ codeunit 69001 "Parser FS"
     var
         Symbol: Record "Symbol FS";
         Lexeme, PeekedLexeme, NameLexeme, TypeLexeme, SubtypeLexeme : Record "Lexeme FS";
+        ValuesBuilder: TextBuilder;
     begin
         PeekedLexeme := PeekNextLexeme();
         if NameRequired or PeekedLexeme.IsIdentifier() then begin
@@ -340,6 +341,37 @@ codeunit 69001 "Parser FS"
             State.SubtypeOf(Symbol.Type);
             SubtypeLexeme := AssertNextLexeme(PeekedLexeme.Identifier());
             Symbol.Subtype := SubtypeLexeme."Identifier Name";
+        end;
+
+        PeekedLexeme := PeekNextLexeme();
+        if Symbol.Type = Symbol.Type::Option then begin
+            State.Identifier();
+            if PeekedLexeme.IsIdentifier() then begin
+                Lexeme := AssertNextLexeme(Lexeme.Identifier());
+
+                if Lexeme."Identifier Name".Contains(',') then
+                    Error('Option members cannot contain comma.');
+
+                ValuesBuilder.Append(Lexeme."Identifier Name");
+
+                PeekedLexeme := PeekNextLexeme();
+                while true do begin
+                    PeekedLexeme := PeekNextLexeme();
+                    if not PeekedLexeme.IsOperator(Enum::"Operator FS"::"comma") then
+                        exit;
+                    NextLexeme();
+
+                    Lexeme := AssertNextLexeme(Lexeme.Identifier());
+
+                    if Lexeme."Identifier Name".Contains(',') then
+                        Error('Option members cannot contain comma.');
+
+                    ValuesBuilder.Append(',');
+                    ValuesBuilder.Append(Lexeme."Identifier Name");
+                end;
+            end;
+
+            Symbol.Values := ValuesBuilder.ToText(); // TODO resolve overflow
         end;
 
         PeekedLexeme := PeekNextLexeme();
@@ -858,6 +890,7 @@ codeunit 69001 "Parser FS"
         MethodCallNode: Codeunit "Method Call Node FS";
         PropertyAccessNode: Codeunit "Property Access Node FS";
         IndexAccessNode: Codeunit "Index Access Node FS";
+        ScopeAccessNode: Codeunit "Scope Access Node FS";
         AssignmentStatementNode: Codeunit "Assignment Statement Node FS";
         Call: Interface "Node FS";
     begin
@@ -921,6 +954,22 @@ codeunit 69001 "Parser FS"
 
                         Call := IndexAccessNode;
                         AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"]"));
+                    end;
+                PeekedLexeme.IsOperator(Enum::"Operator FS"::"::"):
+                    begin
+                        AssertNextLexeme(PeekedLexeme.Operator(Enum::"Operator FS"::"::"));
+
+                        // FIXME implement intellisense State.ValuesOf(Call); // TODO
+
+                        Lexeme := AssertNextLexeme(Lexeme.Identifier());
+
+                        Clear(ScopeAccessNode); // create new instance
+                        ScopeAccessNode.Init(
+                            Call,
+                            Lexeme."Identifier Name"
+                        );
+
+                        Call := ScopeAccessNode;
                     end;
                 else
                     break;
@@ -1047,6 +1096,8 @@ codeunit 69001 "Parser FS"
                 exit(Enum::"Type FS"::Guid);
             'char':
                 exit(Enum::"Type FS"::Char);
+            'option':
+                exit(Enum::"Type FS"::Option);
             else
                 Error('Unknown type %1.', Identifier);
         end;

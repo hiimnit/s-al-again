@@ -1,26 +1,28 @@
-codeunit 69029 "Index Access Node FS" implements "Node FS"
+codeunit 69031 "Scope Access Node FS" implements "Node FS"
 {
     var
-        ValueExpression, IndexExpression : Interface "Node FS";
+        ScopeExpression: Interface "Node FS";
+        ValueIdentifier: Text[120];
+        Value: Integer;
 
     procedure Init
     (
-        NewValueExpression: Interface "Node FS";
-        NewIndexExpression: Interface "Node FS"
+        NewScopeExpression: Interface "Node FS";
+        NewValueIdentifier: Text[120]
     )
     begin
-        ValueExpression := NewValueExpression;
-        IndexExpression := NewIndexExpression;
+        ScopeExpression := NewScopeExpression;
+        ValueIdentifier := NewValueIdentifier;
     end;
 
     procedure GetType(): Enum "Node Type FS";
     begin
-        exit(Enum::"Node Type FS"::"Index Access");
+        exit(Enum::"Node Type FS"::"Scope Access");
     end;
 
     procedure Assignable(): Boolean
     begin
-        exit(ValueExpression.Assignable());
+        exit(ScopeExpression.Assignable());
     end;
 
     procedure IsLiteralValue(): Boolean
@@ -38,27 +40,28 @@ codeunit 69029 "Index Access Node FS" implements "Node FS"
 
     procedure Evaluate(Runtime: Codeunit "Runtime FS"): Interface "Value FS"
     var
-        Value, Index : Interface "Value FS";
+        NewValue: Interface "Value FS";
     begin
-        Value := ValueExpression.Evaluate(Runtime);
-        Index := IndexExpression.Evaluate(Runtime);
-
-        exit(Value.At(Value, Index));
+        // Copy is important - we do not want to mutate the underlying value, but create a new one
+        NewValue := ScopeExpression.Evaluate(Runtime).Copy();
+        NewValue.SetValue(Value);
+        exit(NewValue);
     end;
 
     procedure ValidateSemantics(Runtime: Codeunit "Runtime FS"; SymbolTable: Codeunit "Symbol Table FS"): Record "Symbol FS";
     var
-        ValueSymbol, IndexSymbol : Record "Symbol FS";
+        ScopeSymbol: Record "Symbol FS";
     begin
-        ValueSymbol := ValueExpression.ValidateSemantics(Runtime, SymbolTable);
-        IndexSymbol := IndexExpression.ValidateSemantics(Runtime, SymbolTable);
+        ScopeSymbol := ScopeExpression.ValidateSemantics(Runtime, SymbolTable);
 
-        exit(ValueSymbol.ValidateIndexAccess(
+        Value := ScopeSymbol.ValidateScopeAccess(
             Runtime,
             SymbolTable,
-            ValueSymbol,
-            IndexSymbol
-        ));
+            ScopeSymbol,
+            ValueIdentifier
+        );
+
+        exit(SymbolTable.IntegerSymbol()); // TODO is this ok?
     end;
 
     procedure ValidateSemanticsWithContext

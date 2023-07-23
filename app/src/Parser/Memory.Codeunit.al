@@ -31,7 +31,7 @@ codeunit 69009 "Memory FS"
 
                         Value := Node.Value();
                         if not Symbol."Pointer Parameter" then
-                            Value := Value.Copy();
+                            Value := Value.Copy(); // FIXME this might be an issue for options - formatting/evaluating will not work when coercible type is passed in - init new value instead?
 
                         InitializeSymbol(
                             Symbol,
@@ -94,6 +94,7 @@ codeunit 69009 "Memory FS"
         GuidValue: Codeunit "Guid Value FS";
         DateFormulaValue: Codeunit "DateFormula Value FS";
         CharValue: Codeunit "Char Value FS";
+        OptionValue: Codeunit "Option Value FS";
         Value: Interface "Value FS";
     begin
         case Symbol.Type of
@@ -132,6 +133,14 @@ codeunit 69009 "Memory FS"
                 Value := DateFormulaValue;
             Symbol.Type::Char:
                 Value := CharValue;
+            Symbol.Type::Option:
+                begin
+                    OptionValue.Init(
+                        Symbol.Values,
+                        Symbol.Values
+                    );
+                    Value := OptionValue;
+                end;
             else
                 Error('Initilization of type %1 is not supported.', Symbol.Type);
         end;
